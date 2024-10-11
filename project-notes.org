@@ -1,0 +1,311 @@
+* Crab News
+
+sketchpad for this project. notes, they come and go.
+
+
+** Elm-Crux Terms
+| Elm      | Crux                                      |
+|----------+-------------------------------------------|
+| Model    | Model                                     |
+| View     | ViewModel                                 |
+| Update   | impl crux_core::App for App { fn update } |
+| Messages | Events                                    |
+| "???"    | Capabilities                              |
+|          |                                           |
+
+
+** Model
+if this is like Elm Model, how do I imit?
+#+BEGIN_SRC rust
+pub struct Model {
+}
+#+END_SRC
+
+
+** Account
+Do I need a crate here? Does Crux provide native integration?
+*** Account
+#+BEGIN_SRC rust
+pub struct Account {
+    type: AccountType, // also unique ID
+    name: AccountName,
+    feeds: Vec<Feed>,
+}
+#+END_SRC
+
+*** AccountType
+#+BEGIN_SRC rust
+pub enum AccountType {
+    Local,
+    Apple,
+    Google,
+    Microsoft,
+    Canonical,
+    Dropbox,
+}
+#+END_SRC
+
+*** AccountAuth
+#+BEGIN_SRC rust
+pub enum AccountAuth {
+    LoggedIn Token,
+    LoggedOut,
+}
+#+END_SRC
+
+
+** Subscriptions
+crate: https://crates.io/crates/opml
+*** Example OPML
+#+begin_src xml
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<opml version="2.0">
+  <head>
+    <title>mySubscriptions.opml</title>
+    <dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated>
+    <ownerName>Crab News</ownerName>
+  </head>
+  <body>
+     <outline text="Gentle Wash Records" title="Gentle Wash Records" description="" type="rss" version="RSS" htmlUrl="https://gentlewashrecords.com/" xmlUrl="https://gentlewashrecords.com/atom.xml"/>
+  </body>
+</opml>
+#+end_src
+
+*** Subscriptions
+**** OPML
+#+BEGIN_SRC rust
+pub struct OPML {
+    pub version: String,
+    pub head: Option<Head>,
+    pub body: Body,
+}
+#+END_SRC
+
+**** Head
+#+BEGIN_SRC rust
+pub struct Head {
+    pub title: Option<String>,
+    pub date_created: Option<String>,
+    pub date_modified: Option<String>,
+    pub owner_name: Option<String>,
+    pub owner_email: Option<String>,
+    pub owner_id: Option<String>,
+    pub docs: Option<String>,
+    pub expansion_state: Option<String>,
+    pub vert_scroll_state: Option<i32>,
+    pub window_top: Option<i32>,
+    pub window_left: Option<i32>,
+    pub window_bottom: Option<i32>,
+    pub window_right: Option<i32>,
+}
+#+END_SRC
+
+**** Body
+#+BEGIN_SRC rust
+pub struct Body {
+    pub outlines: Vec<Outline>,
+}
+#+END_SRC
+
+**** Outline
+#+BEGIN_SRC rust
+pub struct Outline {
+    pub text: String,
+    pub type: Option<String>,
+    pub is_comment: Option<bool>,
+    pub is_breakpoint: Option<bool>,
+    pub created: Option<String>,
+    pub category: Option<String>,
+    pub outlines: Vec<Outline>,
+    pub xml_url: Option<String>,
+    pub description: Option<String>,
+    pub html_url: Option<String>,
+    pub language: Option<String>,
+    pub title: Option<String>,
+    pub version: Option<String>,
+    pub url: Option<String>,
+}
+#+END_SRC
+
+
+** Feeds
+crate: https://crates.io/crates/feed-rs
+*** Feed
+#+BEGIN_SRC rust
+pub struct Feed {
+    pub feed_type: FeedType,
+    pub id: String,
+    pub title: Option<Text>,
+    pub updated: Option<DateTime<Utc>>,
+    pub authors: Vec<Person>,
+    pub description: Option<Text>,
+    pub links: Vec<Link>,
+    pub categories: Vec<Category>,
+    pub contributors: Vec<Person>,
+    pub generator: Option<Generator>,
+    pub icon: Option<Image>,
+    pub language: Option<String>,
+    pub logo: Option<Image>,
+    pub published: Option<DateTime<Utc>>,
+    pub rating: Option<MediaRating>,
+    pub rights: Option<Text>,
+    pub ttl: Option<u32>,
+    pub entries: Vec<Entry>,
+}
+#+END_SRC
+
+*** Entry
+#+BEGIN_SRC rust
+pub struct Entry {
+    pub id: String,
+    pub title: Option<Text>,
+    pub updated: Option<DateTime<Utc>>,
+    pub authors: Vec<Person>,
+    pub content: Option<Content>,
+    pub links: Vec<Link>,
+    pub summary: Option<Text>,
+    pub categories: Vec<Category>,
+    pub contributors: Vec<Person>,
+    pub published: Option<DateTime<Utc>>,
+    pub source: Option<String>,
+    pub rights: Option<Text>,
+    pub media: Vec<MediaObject>,
+    pub language: Option<String>,
+    pub base: Option<String>,
+}
+#+END_SRC
+
+*** Content
+#+begin_src rust
+pub struct Content {
+    pub body: Option<String>,
+    pub content_type: MediaTypeBuf,
+    pub length: Option<u64>,
+    pub src: Option<Link>,
+}
+#+end_src
+
+
+** DB Entries
+Almost all data eventually goes into the db. adding as I go.
+crate: https://crates.io/crates/surrealdb
+embed: https://surrealdb.com/docs/surrealdb/embedding/rust
+*** EntryReadStatus
+#+BEGIN_SRC rust
+pub enum EntryReadStatus {
+    Read,
+    Unread,
+}
+#+END_SRC
+
+*** EntryStarStatus
+#+BEGIN_SRC rust
+pub enum EntryStarStatus {
+    Starred,
+    Unstarred,
+}
+#+END_SRC
+
+*** EntryOpenInBrowser
+#+BEGIN_SRC rust
+pub enum Browser {
+    Default,
+    Safari,
+    Firefox,
+    Brave,
+    Chrome,
+    Opera,
+    Edge,
+}
+#+END_SRC
+
+*** EntryOpeningMethod
+#+BEGIN_SRC rust
+pub enum EntryOpeningMethod {
+    Background,
+    Foreground,
+}
+#+end_src
+
+*** UITextSize
+#+BEGIN_SRC rust
+pub enum TextSize {
+    Small,
+    Medium,
+    Large,
+    XLarge,
+    XXLarge,
+}
+#+END_SRC
+
+*** UIFeedStore
+#+BEGIN_SRC rust
+pub enum FeedStore {
+    File,
+    Directory,
+}
+#+END_SRC
+
+*** UIFeedView
+#+BEGIN_SRC rust
+pub enum FeedView {
+    Today,
+    Unread,
+    Starred,
+    Directory,
+    Feed,
+}
+#+END_SRC
+
+*** RefreshInterval
+#+BEGIN_SRC rust
+pub enum RefreshInterval {
+    MinutesFifteen,
+    MinutesThirthy,
+    HoursOne,
+    HoursTwo,
+    HoursFour,
+    HoursEight,
+}
+#+END_SRC
+
+
+** Events
+#+begin_src rust
+pub enum Event {
+    // events from the shell
+    SubsImport,
+    SubsExport,
+    SubsRefresh,
+    SetSubsRefreshRate,
+    DirAdd Account,
+    DirDel Account,
+    DirRename Account,
+    FeedStore,
+    FeedAdd,
+    FeedDel,
+    FeedMove,
+    FeedRename,
+    FeedRead,
+    FeedUnread,
+    FeedStar,
+    FeedUnstar,
+    EntryOpen Browser Method,
+    ...
+
+    // events local to the core
+    #[serde(skip)]
+    Fetch(crux_http::Result<crux_http::Response<Feed>, Box<dyn Error>>),
+    ...
+}
+#+end_src
+
+
+** UI Params
+*** Themes
+#+BEGIN_SRC rust
+pub enum Theme {
+    Default,
+    YadaYada,
+}
+#+END_SRC
