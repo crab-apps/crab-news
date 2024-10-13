@@ -1,0 +1,39 @@
+* Crab News
+:PROPERTIES:
+:CUSTOM_ID: crab-news
+:END:
+Crab News is a multi-platform RSS client for desktop and mobile written
+in Rust.
+
+** State of the Art
+:PROPERTIES:
+:CUSTOM_ID: state-of-the-art
+:END:
+This is my first attempt at a [[https://rust-lang.org/][Rust]]
+application. I love to code to internalize a programming language
+concepts with practice.
+
+*** Is it stable?
+:PROPERTIES:
+:CUSTOM_ID: is-it-stable
+:END:
+One day it could be a fully fledged app. In the meantime keep relying on
+your favorite client.
+
+** Why an RSS reader?
+:PROPERTIES:
+:CUSTOM_ID: why-an-rss-reader
+:END:
+[[https://awesome-rust.com][Awesome Rust]] doesn't have a RSS reader
+listed. I would love to contribute one that I'd use every day. Also,
+sounds like a great project to both make and learn a lot from.
+
+** Made With
+:PROPERTIES:
+:CUSTOM_ID: made-with
+:END:
+- [[https://redbadger.github.io/crux/][Crux]]
+- [[https://ratatui.rs][Ratatui]]
+- [[https://iced.rs][Iced]]
+- [[https://developer.apple.com/xcode/swiftui/][SwiftUI]]
+- [[https://developer.android.com/compose][Jetpack Compose]]

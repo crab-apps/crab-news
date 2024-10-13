@@ -1,0 +1,6 @@
+* The Rust Code of Conduct
+:PROPERTIES:
+:CUSTOM_ID: the-rust-code-of-conduct
+:END:
+The Code of Conduct for this repository
+[[https://www.rust-lang.org/conduct.html][can be found online]].
