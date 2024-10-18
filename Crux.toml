@@ -8,11 +8,6 @@ source = "shared"
 type_gen = "shared_types"
 crux_version = "0.6.3"
 
-[shells.cli]
-template = "cli"
-source = "cli"
-cores = ["shared"]
-
 [shells.tui]
 template = "tui"
 source = "ratatui"

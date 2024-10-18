@@ -19,8 +19,6 @@ sketchpad for this project. notes, they come and go.
 
 - The =pub struct ViewModel {=} exposes its data via =pub=. Is this an Adapter?
 
-- The =pub struct Capabilies {=} exposes its data via =pub=. Is this an Adapter?
-
 - All else have =pub struct {=} only. Is this a Port?
 
 ** Elm vs Crux
@@ -183,13 +181,7 @@ pub struct ViewModel {
 }
 #+end_src
 
-** Types
-:PROPERTIES:
-:CUSTOM_ID: types
-:END:
-- improve data structures
-
-*** Preferences
+** Preferences
 :PROPERTIES:
 :CUSTOM_ID: preferences
 :END:
@@ -252,7 +244,7 @@ pub enum RefreshInterval {
 }
 #+end_src
 
-*** Account
+** Account
 :PROPERTIES:
 :CUSTOM_ID: account
 :END:
@@ -311,7 +303,7 @@ pub enum AccountCloud {
 }
 #+end_src
 
-*** Subscriptions
+** Subscriptions
 :PROPERTIES:
 :CUSTOM_ID: subscriptions
 :END:
@@ -391,7 +383,7 @@ pub struct Outline {
 </opml>
 #+end_src
 
-*** Feeds
+** Feeds
 :PROPERTIES:
 :CUSTOM_ID: feeds
 :END:
@@ -402,46 +394,47 @@ pub struct Outline {
 
 #+begin_src rust
 // what do I want in Feed?
-
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
+pub struct Subscription {
+}
 #+end_src
 
-**** Related to Feeds
+*** Related to Feeds
 :PROPERTIES:
 :CUSTOM_ID: related-to-feeds
 :END:
+#+begin_src rust
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
+pub enum FeedStore {
+    #[default]
+    Root(Path),
+    Folder(Path),
+}
 
-  #+begin_src rust
-  #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-  pub enum FeedStore {
-      #[default]
-      Root(Path),
-      Folder(Path),
-  }
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
+pub enum ReadStatus {
+    Read,
+    #[default]
+    Unread,
+}
 
-  #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-  pub enum ReadStatus {
-      Read,
-      #[default]
-      Unread,
-  }
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
+pub enum StarStatus {
+    Starred,
+    #[default]
+    Unstarred,
+}
 
-  #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-  pub enum StarStatus {
-      Starred,
-      #[default]
-      Unstarred,
-  }
-
-  #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-  pub enum FeedView {
-      Today,
-      #[default]
-      Unread,
-      Starred,
-      Folder,
-      Feed,
-  }
-  #+end_src
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
+pub enum FeedView {
+    Today,
+    #[default]
+    Unread,
+    Starred,
+    Folder,
+    Feed,
+}
+#+end_src
 
 ** Database
 :PROPERTIES:
@@ -455,7 +448,6 @@ pub struct Outline {
 :PROPERTIES:
 :CUSTOM_ID: events
 :END:
-
 - all the events to start coding, more later?
 
 #+begin_src rust
