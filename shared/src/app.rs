@@ -49,3 +49,89 @@ impl App for Counter {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crux_core::{assert_effect, testing::AppTester};
+
+    #[test]
+    fn renders() {
+        let app = AppTester::<Counter, _>::default();
+        let mut model = Model::default();
+
+        let update = app.update(Event::Reset, &mut model);
+
+        // Check update asked us to `Render`
+        assert_effect!(update, Effect::Render(_));
+    }
+
+    #[test]
+    fn shows_initial_count() {
+        let app = AppTester::<Counter, _>::default();
+        let model = Model::default();
+
+        let actual_view = app.view(&model).count;
+        let expected_view = "Count is: 0";
+        assert_eq!(actual_view, expected_view);
+    }
+
+    #[test]
+    fn increments_count() {
+        let app = AppTester::<Counter, _>::default();
+        let mut model = Model::default();
+
+        let update = app.update(Event::Increment, &mut model);
+
+        let actual_view = app.view(&model).count;
+        let expected_view = "Count is: 1";
+        assert_eq!(actual_view, expected_view);
+
+        // Check update asked us to `Render`
+        assert_effect!(update, Effect::Render(_));
+    }
+
+    #[test]
+    fn decrements_count() {
+        let app = AppTester::<Counter, _>::default();
+        let mut model = Model::default();
+
+        let update = app.update(Event::Decrement, &mut model);
+
+        let actual_view = app.view(&model).count;
+        let expected_view = "Count is: -1";
+        assert_eq!(actual_view, expected_view);
+
+        // Check update asked us to `Render`
+        assert_effect!(update, Effect::Render(_));
+    }
+
+    #[test]
+    fn resets_count() {
+        let app = AppTester::<Counter, _>::default();
+        let mut model = Model::default();
+
+        app.update(Event::Increment, &mut model);
+        app.update(Event::Reset, &mut model);
+
+        let actual_view = app.view(&model).count;
+        let expected_view = "Count is: 0";
+        assert_eq!(actual_view, expected_view);
+    }
+
+    #[test]
+    fn counts_up_and_down() {
+        let app = AppTester::<Counter, _>::default();
+        let mut model = Model::default();
+
+        app.update(Event::Increment, &mut model);
+        app.update(Event::Reset, &mut model);
+        app.update(Event::Decrement, &mut model);
+        app.update(Event::Increment, &mut model);
+        app.update(Event::Increment, &mut model);
+
+        let actual_view = app.view(&model).count;
+        let expected_view = "Count is: 1";
+        assert_eq!(actual_view, expected_view);
+    }
+}
