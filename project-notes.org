@@ -307,9 +307,10 @@ pub enum AccountCloud {
 :PROPERTIES:
 :CUSTOM_ID: subscriptions
 :END:
-- [[http://opml.org/spec2.opml]]
-- import/export fn of OPML file
 - crate: [[https://crates.io/crates/opml]]
+- [[http://opml.org/spec2.opml]]
+- http://outlinerhowto.opml.org
+- import/export fn of OPML file
 
 #+begin_src rust
 // "OPML" would use a template holdimg OPML, Head, Body and then loop over all Outline(s) data for import/export
