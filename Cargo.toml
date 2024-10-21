@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "shared",
-    "shared_types",
+  "shared",
+  "shared_types",
 ]
 resolver = "1"
 

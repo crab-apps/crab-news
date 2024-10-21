@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<opml version="2.0">
+  <head>
+    <title>Subscriptions.opml</title>
+    <dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated>
+    <ownerName>Crab News</ownerName>
+  </head>
+  <body>
+     <outline text="Gentle Wash Records" title="Gentle Wash Records" description="" type="rss" version="RSS" htmlUrl="https://gentlewashrecords.com/" xmlUrl="https://gentlewashrecords.com/atom.xml"/>
+  </body>
+</opml>

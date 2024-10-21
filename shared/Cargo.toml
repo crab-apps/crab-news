@@ -17,6 +17,8 @@ serde = { workspace = true, features = ["derive"] }
 lazy_static = "1.5.0"
 uniffi = "0.28.1"
 wasm-bindgen = "0.2.93"
+feed-rs = "2.1.1"
+opml = "1.1.6"
 
 [target.uniffi-bindgen.dependencies]
 uniffi = { version = "0.28.1", features = ["cli"] }

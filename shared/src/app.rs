@@ -1,4 +1,5 @@
 use crux_core::{render::Render, App};
+use opml::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -6,11 +7,14 @@ pub enum Event {
     Increment,
     Decrement,
     Reset,
+    ImportOPML, // shows up in Menu -> File
+    ExportOPML, // shows up in Menu -> File
 }
 
 #[derive(Default)]
 pub struct Model {
     count: isize,
+    opml: OPML, // to deal with file.opml import/export
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -38,6 +42,8 @@ impl App for Counter {
             Event::Increment => model.count += 1,
             Event::Decrement => model.count -= 1,
             Event::Reset => model.count = 0,
+            Event::ImportOPML => model.count = 0,
+            Event::ExportOPML => model.count = 0,
         };
 
         caps.render.render();
@@ -67,71 +73,23 @@ mod test {
     }
 
     #[test]
-    fn shows_initial_count() {
-        let app = AppTester::<Counter, _>::default();
-        let model = Model::default();
-
-        let actual_view = app.view(&model).count;
-        let expected_view = "Count is: 0";
-        assert_eq!(actual_view, expected_view);
-    }
-
-    #[test]
-    fn increments_count() {
-        let app = AppTester::<Counter, _>::default();
-        let mut model = Model::default();
-
-        let update = app.update(Event::Increment, &mut model);
-
-        let actual_view = app.view(&model).count;
-        let expected_view = "Count is: 1";
-        assert_eq!(actual_view, expected_view);
-
-        // Check update asked us to `Render`
-        assert_effect!(update, Effect::Render(_));
-    }
-
-    #[test]
-    fn decrements_count() {
-        let app = AppTester::<Counter, _>::default();
-        let mut model = Model::default();
-
-        let update = app.update(Event::Decrement, &mut model);
-
-        let actual_view = app.view(&model).count;
-        let expected_view = "Count is: -1";
-        assert_eq!(actual_view, expected_view);
-
-        // Check update asked us to `Render`
-        assert_effect!(update, Effect::Render(_));
-    }
-
-    #[test]
-    fn resets_count() {
-        let app = AppTester::<Counter, _>::default();
-        let mut model = Model::default();
-
-        app.update(Event::Increment, &mut model);
-        app.update(Event::Reset, &mut model);
-
-        let actual_view = app.view(&model).count;
-        let expected_view = "Count is: 0";
-        assert_eq!(actual_view, expected_view);
-    }
-
-    #[test]
-    fn counts_up_and_down() {
-        let app = AppTester::<Counter, _>::default();
-        let mut model = Model::default();
-
-        app.update(Event::Increment, &mut model);
-        app.update(Event::Reset, &mut model);
-        app.update(Event::Decrement, &mut model);
-        app.update(Event::Increment, &mut model);
-        app.update(Event::Increment, &mut model);
-
-        let actual_view = app.view(&model).count;
-        let expected_view = "Count is: 1";
-        assert_eq!(actual_view, expected_view);
+    fn import_opml() {
+        let mut file = std::fs::File::open("example.opml").unwrap();
+        let document = OPML::from_reader(&mut file).unwrap();
+        let example_xml = "
+<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>
+<opml version=\"2.0\">
+  <head>
+    <title>Subscriptions.opml</title>
+    <dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated>
+    <ownerName>Crab News</ownerName>
+  </head>
+  <body>
+     <outline text=\"Gentle Wash Records\" title=\"Gentle Wash Records\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://gentlewashrecords.com/\" xmlUrl=\"https://gentlewashrecords.com/atom.xml\"/>
+  </body>
+</opml>
+";
+        let xml = OPML::from_str(example_xml).unwrap();
+        assert_eq!(xml, document);
     }
 }

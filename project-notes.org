@@ -72,6 +72,8 @@ single run of `update()` goes in the Model.
 #+begin_src rust
 #[derive(Default, Serialize)]
 pub struct Model {
+    opml: OPML, // to deal with file.opml import/export
+
     ////////////////////////////
     // preferences UI
     ////////////////////////////
@@ -80,7 +82,8 @@ pub struct Model {
     browser: Browser,
     open_method: OpeningMethod,
     refresh_interval: RefreshInterval,
-    accounts: Vec<Account>, // contains subscriptions
+    // accounts: Vec<Account>, // contains subscriptions in the future
+    subscriptions: Vec<Subscription>,
 
     ////////////////////////////
     // nain UI
@@ -136,7 +139,8 @@ pub struct ViewModel {
     pub use_browser: Browser,
     pub open_method: OpeningMethod,
     pub refresh_interval: RefreshInterval,
-    pub accounts: Vec<Account>, // contains subscriptions
+    // accounts: Vec<Account>, // contains subscriptions in the future
+    subscriptions: Vec<Subscription>,
 
     ////////////////////////////
     // nain UI
@@ -324,49 +328,6 @@ pub struct Subscription {
     pub description: Option<Text>,
     pub links: Vec<Link>,
 }
-
-pub struct OPML {
-    pub version: String,
-    pub head: Option<Head>,
-    pub body: Body,
-}
-
-pub struct Head {
-    pub title: Option<String>,
-    pub date_created: Option<String>,
-    pub date_modified: Option<String>,
-    pub owner_name: Option<String>,
-    pub owner_email: Option<String>,
-    pub owner_id: Option<String>,
-    pub docs: Option<String>,
-    pub expansion_state: Option<String>,
-    pub vert_scroll_state: Option<i32>,
-    pub window_top: Option<i32>,
-    pub window_left: Option<i32>,
-    pub window_bottom: Option<i32>,
-    pub window_right: Option<i32>,
-}
-
-pub struct Body {
-    pub outlines: Vec<Outline>,
-}
-
-pub struct Outline {
-    pub text: String,
-    pub type: Option<String>,
-    pub is_comment: Option<bool>,
-    pub is_breakpoint: Option<bool>,
-    pub created: Option<String>,
-    pub category: Option<String>,
-    pub outlines: Vec<Outline>,
-    pub xml_url: Option<String>,
-    pub description: Option<String>,
-    pub html_url: Option<String>,
-    pub language: Option<String>,
-    pub title: Option<String>,
-    pub version: Option<String>,
-    pub url: Option<String>,
-}
 #+end_src
 
 #+begin_src xml
@@ -374,7 +335,7 @@ pub struct Outline {
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <opml version="2.0">
   <head>
-    <title>mySubscriptions.opml</title>
+    <title>Subscriptions.opml</title>
     <dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated>
     <ownerName>Crab News</ownerName>
   </head>
@@ -479,8 +440,8 @@ pub enum Event {
 
     // ANCHOR: Main UI
     // Subscriptions live in struct Account {}
-    ImportSubscriptions, // shows up in Menu -> File
-    ExportSubscriptions, // shows up in Menu -> File
+    ImportOPML, // shows up in Menu -> File
+    ExportOPML, // shows up in Menu -> File
 
     // FeedStore -> root + 1st level folder. no more
     AddNewFolder, // shows up in Menu -> File
@@ -530,6 +491,11 @@ mod test {
     use super::*;
     use crux_core::{assert_effect, testing::AppTester};
 
+    // OPML tests
+    // import -> from example.opml to Vec<Feed> -> match content
+    // export -> from OPML Example to example.opml -> match content
+    // delete -> from OPML Example file -> check emtpy? deleted?
+
     #[test]
     fn renders() {
         let app = AppTester::<Counter, _>::default();
@@ -539,75 +505,6 @@ mod test {
 
         // Check update asked us to `Render`
         assert_effect!(update, Effect::Render(_));
-    }
-
-    #[test]
-    fn shows_initial_count() {
-        let app = AppTester::<Counter, _>::default();
-        let model = Model::default();
-
-        let actual_view = app.view(&model).count;
-        let expected_view = "Count is: 0";
-        assert_eq!(actual_view, expected_view);
-    }
-
-    #[test]
-    fn increments_count() {
-        let app = AppTester::<Counter, _>::default();
-        let mut model = Model::default();
-
-        let update = app.update(Event::Increment, &mut model);
-
-        let actual_view = app.view(&model).count;
-        let expected_view = "Count is: 1";
-        assert_eq!(actual_view, expected_view);
-
-        // Check update asked us to `Render`
-        assert_effect!(update, Effect::Render(_));
-    }
-
-    #[test]
-    fn decrements_count() {
-        let app = AppTester::<Counter, _>::default();
-        let mut model = Model::default();
-
-        let update = app.update(Event::Decrement, &mut model);
-
-        let actual_view = app.view(&model).count;
-        let expected_view = "Count is: -1";
-        assert_eq!(actual_view, expected_view);
-
-        // Check update asked us to `Render`
-        assert_effect!(update, Effect::Render(_));
-    }
-
-    #[test]
-    fn resets_count() {
-        let app = AppTester::<Counter, _>::default();
-        let mut model = Model::default();
-
-        app.update(Event::Increment, &mut model);
-        app.update(Event::Reset, &mut model);
-
-        let actual_view = app.view(&model).count;
-        let expected_view = "Count is: 0";
-        assert_eq!(actual_view, expected_view);
-    }
-
-    #[test]
-    fn counts_up_and_down() {
-        let app = AppTester::<Counter, _>::default();
-        let mut model = Model::default();
-
-        app.update(Event::Increment, &mut model);
-        app.update(Event::Reset, &mut model);
-        app.update(Event::Decrement, &mut model);
-        app.update(Event::Increment, &mut model);
-        app.update(Event::Increment, &mut model);
-
-        let actual_view = app.view(&model).count;
-        let expected_view = "Count is: 1";
-        assert_eq!(actual_view, expected_view);
     }
 }
 #+end_src
