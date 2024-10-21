@@ -6,6 +6,9 @@
     <ownerName>Crab News</ownerName>
   </head>
   <body>
-     <outline text="Gentle Wash Records" title="Gentle Wash Records" description="" type="rss" version="RSS" htmlUrl="https://gentlewashrecords.com/" xmlUrl="https://gentlewashrecords.com/atom.xml"/>
+    <outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/>
+    <outline text="Group Name" title="Group Name">
+      <outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/>
+    </outline>
   </body>
 </opml>
