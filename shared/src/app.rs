@@ -1,6 +1,7 @@
 use crux_core::{render::Render, App};
 use opml::*;
 use serde::{Deserialize, Serialize};
+use std::fs::File;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
@@ -74,21 +75,9 @@ mod test {
 
     #[test]
     fn import_opml() {
-        let mut file = std::fs::File::open("example.opml").unwrap();
+        let mut file = File::open("example.opml").unwrap();
         let document = OPML::from_reader(&mut file).unwrap();
-        let example_xml = "
-<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>
-<opml version=\"2.0\">
-  <head>
-    <title>Subscriptions.opml</title>
-    <dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated>
-    <ownerName>Crab News</ownerName>
-  </head>
-  <body>
-     <outline text=\"Gentle Wash Records\" title=\"Gentle Wash Records\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://gentlewashrecords.com/\" xmlUrl=\"https://gentlewashrecords.com/atom.xml\"/>
-  </body>
-</opml>
-";
+        let example_xml = r#"<?xml version="1.0" encoding="ISO-8859-1"?><opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Gentle Wash Records" title="Gentle Wash Records" description="" type="rss" version="RSS" htmlUrl="https://gentlewashrecords.com/" xmlUrl="https://gentlewashrecords.com/atom.xml"/></body></opml>"#;
         let xml = OPML::from_str(example_xml).unwrap();
         assert_eq!(xml, document);
     }
