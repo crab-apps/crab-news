@@ -74,7 +74,9 @@ impl App for CrabNews {
     }
 }
 
-// TODO FIXME change these to test Events/Capaabilities -- for now I'm understanding crates
+// FIXME change these to test Events/Capabilities
+// for now I'm understanding crates by laying down
+// "batch jobs" to get familiar with "the flow of things"
 #[cfg(test)]
 mod test {
     use super::*;
@@ -102,23 +104,27 @@ mod test {
     fn export_subscriptions() {
         let model: Model = Model::default();
         let mut subscriptions: Vec<OPML> = model.subscriptions;
-        let example_feed = r#"<?xml version="1.0" encoding="ISO-8859-1"?><opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
+        let example_feed = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
         let current_subscriptions = OPML::from_str(example_feed).unwrap();
         subscriptions.push(current_subscriptions);
 
+        let xml_header = r#"<?xml version="1.0" encoding="ISO-8859-1"?>"#.to_string();
         let exported_feed = subscriptions.first().unwrap().to_string().unwrap();
-        let _ = std::fs::write("example_export.opml", &exported_feed);
+        let export_content = xml_header + &exported_feed;
+        let _ = std::fs::write("example_export.opml", &export_content);
 
         let mut file = std::fs::File::open("example_export.opml").unwrap();
-        let document = OPML::from_reader(&mut file).unwrap();
-        let expected_feed = document.to_string().unwrap();
+        let expected_feed = OPML::from_reader(&mut file).unwrap();
+        let expected_feed = expected_feed.to_string().unwrap();
+        let xml_header = r#"<?xml version="1.0" encoding="ISO-8859-1"?>"#.to_string();
+        let import_content = xml_header + &expected_feed;
 
-        assert_eq!(exported_feed, expected_feed);
+        assert_eq!(export_content, import_content);
     }
 
     // TODO use Events::AddNewFeed(FeedStore::Root)
     #[test]
-    fn add_new_root_feed() {
+    fn add_new_feed_to_root() {
         let model: Model = Model::default();
         let mut subscriptions: Vec<OPML> = model.subscriptions;
         let mut new_sub: OPML = OPML::default();
@@ -145,15 +151,22 @@ mod test {
 
     // TODO use Events::AddNewFeed(FeedStore::Folder)
     #[test]
-    fn add_new_nested_feed() {
-        // let model: Model = Model::default();
-        // let subscriptions: Vec<OPML> = model.subscriptions;
-        let mut group = Outline::default();
+    fn add_new_feed_to_folder() {
+        let mut model = Model::default();
+        let new_sub = OPML::default();
+        let new_folder = Outline {
+            text: "Folder Name".to_string(),
+            title: Some("Folder Name".to_string()),
+            ..Outline::default()
+        };
 
-        // <outline text="Group Name" title="Group Name">
-        group.add_feed("Feed Name", "https://example.com/");
+        model.subscriptions.push(new_sub);
+        let mut body = model.subscriptions.first().unwrap().body.clone();
+        body.outlines.push(new_folder.clone());
+        let mut first_outline = body.outlines.first().unwrap().clone();
+        first_outline.add_feed("Feed Name", "https://example.com/");
 
-        let added_feed = group.outlines.first().unwrap();
+        let added_feed = first_outline.outlines.first().unwrap();
         let expected_feed = &Outline {
             text: "Feed Name".to_string(),
             xml_url: Some("https://example.com/".to_string()),
@@ -166,8 +179,8 @@ mod test {
     // TODO use Events::AddNewFolder
     #[test]
     fn add_new_folder() {
-        let new_sub: OPML = OPML::default();
         let mut model: Model = Model::default();
+        let new_sub: OPML = OPML::default();
         model.subscriptions.push(new_sub);
         let mut body: opml::Body = model.subscriptions.first().unwrap().body.clone();
         let new_folder = &Outline {
@@ -179,11 +192,7 @@ mod test {
         body.outlines.push(new_folder.clone());
 
         let added_folder = body.outlines.first().unwrap();
-        let expected_folder = &Outline {
-            text: "Folder Name".to_string(),
-            title: Some("Folder Name".to_string()),
-            ..Outline::default()
-        };
+        let expected_folder = new_folder;
 
         assert_eq!(added_folder, expected_folder);
     }
