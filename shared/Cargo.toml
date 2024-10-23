@@ -1,8 +1,11 @@
 [package]
 name = "shared"
 version = "0.1.0"
-edition = "2021"
-rust-version = "1.66"
+authors.workspace = true
+repository.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
 
 [lib]
 crate-type = ["lib", "staticlib", "cdylib"]
@@ -16,13 +19,13 @@ crux_core.workspace = true
 crux_http.workspace = true
 serde = { workspace = true, features = ["derive"] }
 lazy_static = "1.5.0"
-uniffi = "0.28.1"
-wasm-bindgen = "0.2.93"
+uniffi = "0.28.2"
+wasm-bindgen = "0.2.95"
 feed-rs = "2.1.1"
 opml = "1.1.6"
 
 [target.uniffi-bindgen.dependencies]
-uniffi = { version = "0.28.1", features = ["cli"] }
+uniffi = { version = "0.28.2", features = ["cli"] }
 
 [build-dependencies]
-uniffi = { version = "0.28.1", features = ["build"] }
+uniffi = { version = "0.28.2", features = ["build"] }
