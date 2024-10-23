@@ -349,7 +349,7 @@ OPML crate to deal with subs for:
 - [[https://www.rssboard.org/rss-specification]]
 
 This crate is to deal with feeds data *after* subscribtions. The main UI would
-deal with all data using this crate.
+deal with all data to display "news" in the entry and content columns.
 
 *** Related to Feeds
 :PROPERTIES:

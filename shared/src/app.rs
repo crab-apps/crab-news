@@ -80,11 +80,12 @@ mod test {
     use super::*;
     // use crux_core::{assert_effect, testing::AppTester};
 
+    // TODO Events::ImportSubscriptions,
     #[test]
     fn import_subscriptions() {
         let model: Model = Model::default();
         let mut subscriptions: Vec<OPML> = model.subscriptions;
-        let mut file = std::fs::File::open("example.opml").unwrap();
+        let mut file = std::fs::File::open("example_import.opml").unwrap();
         let document = OPML::from_reader(&mut file).unwrap();
         let example_feed = r#"<?xml version="1.0" encoding="ISO-8859-1"?><opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
 
@@ -96,8 +97,24 @@ mod test {
         assert_eq!(added_feed, expected_feed);
     }
 
+    // TODO Events::ExportSubscriptions,
     #[test]
-    fn export_subscriptions() {}
+    fn export_subscriptions() {
+        let model: Model = Model::default();
+        let mut subscriptions: Vec<OPML> = model.subscriptions;
+        let example_feed = r#"<?xml version="1.0" encoding="ISO-8859-1"?><opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
+        let current_subscriptions = OPML::from_str(example_feed).unwrap();
+        subscriptions.push(current_subscriptions);
+
+        let exported_feed = subscriptions.first().unwrap().to_string().unwrap();
+        let _ = std::fs::write("example_export.opml", &exported_feed);
+
+        let mut file = std::fs::File::open("example_export.opml").unwrap();
+        let document = OPML::from_reader(&mut file).unwrap();
+        let expected_feed = document.to_string().unwrap();
+
+        assert_eq!(exported_feed, expected_feed);
+    }
 
     // TODO use Events::AddNewFeed(FeedStore::Root)
     #[test]
