@@ -72,8 +72,6 @@ single run of `update()` goes in the Model.
 #+begin_src rust
 #[derive(Default, Serialize)]
 pub struct Model {
-    opml: OPML, // to deal with file.opml import/export
-
     ////////////////////////////
     // preferences UI
     ////////////////////////////
@@ -88,18 +86,20 @@ pub struct Model {
     // nain UI
     ////////////////////////////
     // "specials"
-    subscriptions: Vec<OPML>,
     unread_count: u16,
     starred_count: u16, // isUnread && isStarred
     entry_read: ReadStatus,
     entry_star: StarStatus,
     feed_url: String,
 
+    // subscriptions,
+    subscriptions: Vec<OPML>,
+    subscriptions_folder: SubscriptionsFolder, // root or folder
+
     // left column
     feed_view: FeedView, // Smart View = today | all unread | starred | folder | feed
     // for any account,
     account_name: String, // extrapolated from account
-    feed_store: FeedStore, // root or folder
     feeds: Vec<Feed>,
     feed_name: String,
 
@@ -206,11 +206,11 @@ pub enum Theme {
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub enum TextSize {
-    Small { desc: String, size: u8 },
+    Small { desc: &str, size: u8 },
     #[default]
-    Medium { desc: String, size: u8 },
-    Large { desc: String, size: u8 },
-    ExtraLarge { desc: String, size: u8 },
+    Medium { desc: &str, size: u8 },
+    Large { desc: &str, size: u8 },
+    ExtraLarge { desc: &str, size: u8 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
@@ -234,13 +234,13 @@ pub enum OpeningMethod {
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub enum RefreshInterval {
-    MinFifteen { desc: String, time: u8 },
+    MinFifteen { desc: &str, time: u8 },
     #[default]
-    MinThirthy { desc: String, time: u8 },
-    HoursOne { desc: String, time: u8 },
-    HoursTwo { desc: String, time: u8 },
-    HoursFour { desc: String, time: u8 },
-    HoursEight { desc: String, time: u8 },
+    MinThirthy { desc: &str, time: u8 },
+    HoursOne { desc: &str, time: u8 },
+    HoursTwo { desc: &str, time: u8 },
+    HoursFour { desc: &str, time: u8 },
+    HoursEight { desc: &str, time: u8 },
 }
 #+end_src
 
@@ -311,12 +311,16 @@ pub enum AccountCloud {
 - [[http://opml.org/spec2.opml]]
 - http://outlinerhowto.opml.org
 
-OPML crate to deal with subs for:
-- import/export from/to file.opml (to_string/from_reader)
-  - would use a template holdimg OPML, Head, Body and then loop over all Outline(s)?
-- create subs with https://docs.rs/opml/1.1.6/opml/struct.Outline.html#method.add_feed
-  - here we deal with FeedStore?
-  - where to "hold" the feed?
+- OPML crate to deal with subs for:
+#+begin_quote
+ImportSubscriptions,
+ExportSubscriptions,
+AddNewSubscription,
+DeleteSubscription,
+RenameSubscription,
+SubscriptionFolder,
+MoveSubscriptionToFolder,
+#+end_quote
 
 #+begin_src xml
 <!-- Example OPML -->

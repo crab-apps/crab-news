@@ -3,23 +3,18 @@ use crux_core::{render::Render, App};
 use feed_rs::{model::Feed, parser};
 use opml::{Outline, OPML};
 use serde::{Deserialize, Serialize};
-// use std::fs::File;
+use std::fs::File;
 // use url::Url;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
     ImportSubscriptions,
     ExportSubscriptions,
-    // Feeds
-    // TO ADD AN OUTLINE TO ROOT USE https://docs.rs/opml/1.1.6/opml/struct.OPML.html#method.add_feed
-    // TO ADD AN OUTLINE TO FOLDER USE https://docs.rs/opml/1.1.6/opml/struct.Outline.html#method.add_feed
-    AddNewFeed, // account | root | folder // shows up in Menu -> File
-    DeleteFeed,
-    RenameFeed,
-    MoveFeedToFolder, // location -> root | folder
-    // FeedStore -> root + 1st level folder. no more
-    // THIS ADDS AN OUTLINE TO OPML::Body
-    AddNewFolder, // shows up in Menu -> File
+    AddNewSubscription,
+    DeleteSubscription,
+    RenameSubscription,
+    MoveSubscriptionToFolder,
+    AddNewFolder,
     DeleteFolder,
     RenameFolder,
 
@@ -31,7 +26,7 @@ pub enum Event {
 #[derive(Default)]
 pub struct Model {
     subscriptions: Vec<OPML>,
-    feeds: Vec<Feed>,
+    subscription_folder: Outline,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -56,14 +51,14 @@ impl App for CrabNews {
         match event {
             Event::ImportSubscriptions => todo!(),
             Event::ExportSubscriptions => todo!(),
-            Event::AddNewFeed => todo!(),
-            Event::DeleteFeed => todo!(),
-            Event::RenameFeed => todo!(),
-            Event::MoveFeedToFolder => todo!(),
-            Event::Fetch(_) => todo!(),
+            Event::AddNewSubscription => todo!(),
+            Event::DeleteSubscription => todo!(),
+            Event::RenameSubscription => todo!(),
+            Event::MoveSubscriptionToFolder => todo!(),
             Event::AddNewFolder => todo!(),
             Event::DeleteFolder => todo!(),
             Event::RenameFolder => todo!(),
+            Event::Fetch(_) => todo!(),
         };
 
         caps.render.render();
@@ -85,6 +80,7 @@ mod test {
     // TODO Events::ImportSubscriptions,
     #[test]
     fn import_subscriptions() {
+        // let app = AppTester::<CrabNews, _>::default();
         let model: Model = Model::default();
         let mut subscriptions: Vec<OPML> = model.subscriptions;
         let mut file = std::fs::File::open("example_import.opml").unwrap();
@@ -122,9 +118,10 @@ mod test {
         assert_eq!(export_content, import_content);
     }
 
-    // TODO use Events::AddNewFeed(FeedStore::Root)
+    // TODO use Events::AddNewSubscription(FeedStore::Root)
+    // https://docs.rs/opml/1.1.6/opml/struct.OPML.html#method.add_feed
     #[test]
-    fn add_new_feed_to_root() {
+    fn add_new_subscription_to_root() {
         let model: Model = Model::default();
         let mut subscriptions: Vec<OPML> = model.subscriptions;
         let mut new_sub: OPML = OPML::default();
@@ -149,9 +146,10 @@ mod test {
         assert_eq!(added_feed, expected_feed);
     }
 
-    // TODO use Events::AddNewFeed(FeedStore::Folder)
+    // TODO use Events::AddNewSubscription(FeedStore::Folder)
+    // https://docs.rs/opml/1.1.6/opml/struct.Outline.html#method.add_feed
     #[test]
-    fn add_new_feed_to_folder() {
+    fn add_new_subscription_to_folder() {
         let mut model = Model::default();
         let new_sub = OPML::default();
         let new_folder = Outline {
@@ -176,7 +174,16 @@ mod test {
         assert_eq!(added_feed, expected_feed);
     }
 
+    // TODO use Events::DeleteSubscription
+    #[test]
+    fn delete_subscription() {}
+
+    // TODO use Events::RenameSubscription
+    #[test]
+    fn rename_subscription() {}
+
     // TODO use Events::AddNewFolder
+    // THIS ADDS AN OUTLINE TO OPML::Body
     #[test]
     fn add_new_folder() {
         let mut model: Model = Model::default();
@@ -196,4 +203,12 @@ mod test {
 
         assert_eq!(added_folder, expected_folder);
     }
+
+    // TODO use Events::DeleteFolder
+    #[test]
+    fn delete_folder() {}
+
+    // TODO use Events::RenameFolder
+    #[test]
+    fn rename_folder() {}
 }

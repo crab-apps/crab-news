@@ -18,14 +18,9 @@ template = "iOS"
 source = "iOS"
 cores = ["shared"]
 
-[shells.iPadOS]
-template = "iPadOS"
-source = "iPadOS"
-cores = ["shared"]
-
-[shells.macOS]
-template = "macOS"
-source = "macOS"
+[shells.catalyst]
+template = "catalyst"
+source = "catalyst"
 cores = ["shared"]
 
 [shells.web_iced]
