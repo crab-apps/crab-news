@@ -1,23 +1,33 @@
+use chrono::prelude::Local;
 use crux_core::{render::Render, App};
-// use crux_http::Http;
 use feed_rs::{model::Feed, parser};
 use opml::{Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
+// use crux_http::Http;
 // use url::Url;
-use chrono::prelude::Local;
+
+// perhaps useful later?
+const XML_TAG: &str = r#"<?xml version="1.0" encoding="ISO-8859-1"?>"#;
+
+// https://doc.rust-lang.org/reference/items/type-aliases.html
+type OpmlFile = String;
+type OpmlTitle = String;
+type FolderName = String;
+type OldFolderName = String;
+type NewFolderName = String;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
-    ImportSubscriptions(String),
-    ExportSubscriptions(String, String),
+    ImportSubscriptions(OpmlFile),
+    ExportSubscriptions(OpmlFile, OpmlTitle),
     AddNewSubscription,
     DeleteSubscription,
     RenameSubscription,
     MoveSubscriptionToFolder,
-    AddNewFolder,
-    DeleteFolder,
-    RenameFolder,
+    AddNewFolder(FolderName),
+    DeleteFolder(FolderName),
+    RenameFolder(OldFolderName, NewFolderName),
 
     // EVENTS LOCAL TO THE CORE
     #[serde(skip)]
@@ -54,10 +64,10 @@ impl App for CrabNews {
                 let mut file = File::open(subs_opml_file).unwrap();
                 model.subscriptions = OPML::from_reader(&mut file).unwrap();
             }
-            Event::ExportSubscriptions(subs_opml_file, subs_opml_name) => {
-                let xml_tag = r#"<?xml version="1.0" encoding="ISO-8859-1"?>"#.to_string();
+            Event::ExportSubscriptions(subs_opml_file, subs_opml_title) => {
+                let xml_tag = XML_TAG.to_string();
                 let custom_head = Head {
-                    title: Some(subs_opml_name),
+                    title: Some(subs_opml_title),
                     date_created: Some(Local::now().format("%Y, %a %b %e %T").to_string()),
                     owner_name: Some("Crab News".to_string()),
                     ..Head::default()
@@ -74,9 +84,37 @@ impl App for CrabNews {
             Event::DeleteSubscription => todo!(),
             Event::RenameSubscription => todo!(),
             Event::MoveSubscriptionToFolder => todo!(),
-            Event::AddNewFolder => todo!(),
-            Event::DeleteFolder => todo!(),
-            Event::RenameFolder => todo!(),
+            Event::AddNewFolder(folder_name) => {
+                let new_folder = Outline {
+                    text: folder_name.clone(),
+                    title: Some(folder_name.clone()),
+                    ..Outline::default()
+                };
+                model.subscriptions.body.outlines.push(new_folder);
+            }
+            Event::DeleteFolder(folder_name) => {
+                let outline_to_delete = model
+                    .subscriptions
+                    .body
+                    .outlines
+                    .clone()
+                    .into_iter()
+                    .position(|outline| outline.text == folder_name)
+                    .unwrap();
+                model.subscriptions.body.outlines.remove(outline_to_delete);
+            }
+            Event::RenameFolder(old_name, new_name) => {
+                let outline_to_rename = model
+                    .subscriptions
+                    .body
+                    .outlines
+                    .clone()
+                    .into_iter()
+                    .position(|outline| outline.text == old_name)
+                    .unwrap();
+                model.subscriptions.body.outlines[outline_to_rename].text = new_name.clone();
+                model.subscriptions.body.outlines[outline_to_rename].title = Some(new_name.clone());
+            }
             Event::Fetch(_) => todo!(),
         };
 
@@ -105,8 +143,8 @@ mod test {
         let _ = app.update(Event::ImportSubscriptions(subs_opml_file), &mut model);
         let added_subs = model.subscriptions;
 
-        let example_opml = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
-        let expected_subs = OPML::from_str(example_opml).unwrap();
+        let example_subs = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
+        let expected_subs = OPML::from_str(example_subs).unwrap();
 
         assert_eq!(added_subs, expected_subs);
     }
@@ -119,9 +157,9 @@ mod test {
         let subs_opml_name = "Subscriptions.opml".to_string();
         let date_created = Some(Local::now().format("%Y, %a %b %e %T").to_string());
 
-        let example_subs = format!("<opml version=\"2.0\"><head><title>Subscriptions.opml</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", date_created.unwrap());
+        let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
         model.subscriptions = OPML::from_str(&example_subs).unwrap();
-        let import_content = model.subscriptions.clone();
+        let imported_content = model.subscriptions.clone();
 
         let _ = app.update(
             Event::ExportSubscriptions(subs_opml_file.clone(), subs_opml_name.clone()),
@@ -129,9 +167,9 @@ mod test {
         );
 
         let mut exported_file = std::fs::File::open(subs_opml_file.clone()).unwrap();
-        let export_content = OPML::from_reader(&mut exported_file).unwrap();
+        let exported_content = OPML::from_reader(&mut exported_file).unwrap();
 
-        assert_eq!(export_content, import_content);
+        assert_eq!(exported_content, imported_content);
     }
 
     // TODO use Events::AddNewSubscription(FeedStore::Root)
@@ -191,33 +229,64 @@ mod test {
     #[test]
     fn rename_subscription() {}
 
-    // TODO use Events::AddNewFolder
-    // THIS ADDS AN OUTLINE TO OPML::Body
     #[test]
     fn add_new_folder() {
+        let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let new_sub: OPML = OPML::default();
-        model.subscriptions = new_sub;
-        let mut body: opml::Body = model.subscriptions.body.clone();
-        let new_folder = &Outline {
-            text: "Folder Name".to_string(),
-            title: Some("Folder Name".to_string()),
+        let folder_name = "dada".to_string();
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let added_folder = model.subscriptions.body.outlines.first().unwrap();
+        let expected_folder = &Outline {
+            text: folder_name.to_string(),
+            title: Some(folder_name.to_string()),
             ..Outline::default()
         };
-
-        body.outlines.push(new_folder.clone());
-
-        let added_folder = body.outlines.first().unwrap();
-        let expected_folder = new_folder;
 
         assert_eq!(added_folder, expected_folder);
     }
 
-    // TODO use Events::DeleteFolder
     #[test]
-    fn delete_folder() {}
+    fn delete_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let first_folder_name = "dada".to_string();
+        let second_folder_name = "fafa".to_string();
 
-    // TODO use Events::RenameFolder
+        let _ = app.update(Event::AddNewFolder(first_folder_name.clone()), &mut model);
+        let _ = app.update(Event::AddNewFolder(second_folder_name.clone()), &mut model);
+        let _ = app.update(Event::DeleteFolder(first_folder_name.clone()), &mut model);
+
+        let added_folder = model.subscriptions.body.outlines.first().unwrap();
+        let expected_folder = &Outline {
+            text: second_folder_name.to_string(),
+            title: Some(second_folder_name.to_string()),
+            ..Outline::default()
+        };
+
+        assert_eq!(added_folder, expected_folder);
+    }
+
     #[test]
-    fn rename_folder() {}
+    fn rename_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let old_name = "dada".to_string();
+        let new_name = "tada".to_string();
+
+        let _ = app.update(Event::AddNewFolder(old_name.clone()), &mut model);
+        let _ = app.update(
+            Event::RenameFolder(old_name.clone(), new_name.clone()),
+            &mut model,
+        );
+
+        let renamed_folder = model.subscriptions.body.outlines.first().unwrap();
+        let expected_folder = &Outline {
+            text: new_name.to_string(),
+            title: Some(new_name.to_string()),
+            ..Outline::default()
+        };
+
+        assert_eq!(renamed_folder, expected_folder);
+    }
 }
