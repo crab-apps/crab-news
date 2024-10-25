@@ -1,15 +1,16 @@
 use crux_core::{render::Render, App};
 // use crux_http::Http;
 use feed_rs::{model::Feed, parser};
-use opml::{Outline, OPML};
+use opml::{Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 // use url::Url;
+use chrono::prelude::Local;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
-    ImportSubscriptions,
-    ExportSubscriptions,
+    ImportSubscriptions(String),
+    ExportSubscriptions(String, String),
     AddNewSubscription,
     DeleteSubscription,
     RenameSubscription,
@@ -25,8 +26,8 @@ pub enum Event {
 
 #[derive(Default)]
 pub struct Model {
-    subscriptions: Vec<OPML>,
-    subscription_folder: Outline,
+    subscriptions: OPML,
+    // subscription_folder: Outline,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -49,8 +50,26 @@ impl App for CrabNews {
 
     fn update(&self, event: Self::Event, model: &mut Self::Model, caps: &Self::Capabilities) {
         match event {
-            Event::ImportSubscriptions => todo!(),
-            Event::ExportSubscriptions => todo!(),
+            Event::ImportSubscriptions(subs_opml_file) => {
+                let mut file = File::open(subs_opml_file).unwrap();
+                model.subscriptions = OPML::from_reader(&mut file).unwrap();
+            }
+            Event::ExportSubscriptions(subs_opml_file, subs_opml_name) => {
+                let xml_tag = r#"<?xml version="1.0" encoding="ISO-8859-1"?>"#.to_string();
+                let custom_head = Head {
+                    title: Some(subs_opml_name),
+                    date_created: Some(Local::now().format("%Y, %a %b %e %T").to_string()),
+                    owner_name: Some("Crab News".to_string()),
+                    ..Head::default()
+                };
+                let custon_opml = OPML {
+                    head: Some(custom_head),
+                    body: model.subscriptions.body.clone(),
+                    ..OPML::default()
+                };
+                let export_content = xml_tag + &custon_opml.to_string().unwrap();
+                let _ = std::fs::write(subs_opml_file, &export_content);
+            }
             Event::AddNewSubscription => todo!(),
             Event::DeleteSubscription => todo!(),
             Event::RenameSubscription => todo!(),
@@ -75,45 +94,42 @@ impl App for CrabNews {
 #[cfg(test)]
 mod test {
     use super::*;
-    // use crux_core::{assert_effect, testing::AppTester};
+    use crux_core::testing::AppTester;
 
-    // TODO Events::ImportSubscriptions,
     #[test]
     fn import_subscriptions() {
-        // let app = AppTester::<CrabNews, _>::default();
-        let model: Model = Model::default();
-        let mut subscriptions: Vec<OPML> = model.subscriptions;
-        let mut file = std::fs::File::open("example_import.opml").unwrap();
-        let document = OPML::from_reader(&mut file).unwrap();
-        let example_feed = r#"<?xml version="1.0" encoding="ISO-8859-1"?><opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model = Model::default();
+        let subs_opml_file = "example_import.opml".to_string();
 
-        subscriptions.push(document);
+        let _ = app.update(Event::ImportSubscriptions(subs_opml_file), &mut model);
+        let added_subs = model.subscriptions;
 
-        let added_feed = subscriptions.first().unwrap().clone();
-        let expected_feed = OPML::from_str(example_feed).unwrap();
+        let example_opml = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
+        let expected_subs = OPML::from_str(example_opml).unwrap();
 
-        assert_eq!(added_feed, expected_feed);
+        assert_eq!(added_subs, expected_subs);
     }
 
-    // TODO Events::ExportSubscriptions,
     #[test]
     fn export_subscriptions() {
-        let model: Model = Model::default();
-        let mut subscriptions: Vec<OPML> = model.subscriptions;
-        let example_feed = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
-        let current_subscriptions = OPML::from_str(example_feed).unwrap();
-        subscriptions.push(current_subscriptions);
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let subs_opml_file = "example_export.opml".to_string();
+        let subs_opml_name = "Subscriptions.opml".to_string();
+        let date_created = Some(Local::now().format("%Y, %a %b %e %T").to_string());
 
-        let xml_header = r#"<?xml version="1.0" encoding="ISO-8859-1"?>"#.to_string();
-        let exported_feed = subscriptions.first().unwrap().to_string().unwrap();
-        let export_content = xml_header + &exported_feed;
-        let _ = std::fs::write("example_export.opml", &export_content);
+        let example_subs = format!("<opml version=\"2.0\"><head><title>Subscriptions.opml</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", date_created.unwrap());
+        model.subscriptions = OPML::from_str(&example_subs).unwrap();
+        let import_content = model.subscriptions.clone();
 
-        let mut file = std::fs::File::open("example_export.opml").unwrap();
-        let expected_feed = OPML::from_reader(&mut file).unwrap();
-        let expected_feed = expected_feed.to_string().unwrap();
-        let xml_header = r#"<?xml version="1.0" encoding="ISO-8859-1"?>"#.to_string();
-        let import_content = xml_header + &expected_feed;
+        let _ = app.update(
+            Event::ExportSubscriptions(subs_opml_file.clone(), subs_opml_name.clone()),
+            &mut model,
+        );
+
+        let mut exported_file = std::fs::File::open(subs_opml_file.clone()).unwrap();
+        let export_content = OPML::from_reader(&mut exported_file).unwrap();
 
         assert_eq!(export_content, import_content);
     }
@@ -122,20 +138,13 @@ mod test {
     // https://docs.rs/opml/1.1.6/opml/struct.OPML.html#method.add_feed
     #[test]
     fn add_new_subscription_to_root() {
-        let model: Model = Model::default();
-        let mut subscriptions: Vec<OPML> = model.subscriptions;
+        let mut model: Model = Model::default();
         let mut new_sub: OPML = OPML::default();
 
         new_sub.add_feed("Feed Name", "https://example.com/");
-        subscriptions.push(new_sub);
+        model.subscriptions = new_sub;
 
-        let added_feed = subscriptions
-            .first()
-            .unwrap()
-            .body
-            .outlines
-            .first()
-            .unwrap();
+        let added_feed = model.subscriptions.body.outlines.first().unwrap();
 
         let expected_feed = &Outline {
             text: "Feed Name".to_string(),
@@ -158,8 +167,8 @@ mod test {
             ..Outline::default()
         };
 
-        model.subscriptions.push(new_sub);
-        let mut body = model.subscriptions.first().unwrap().body.clone();
+        model.subscriptions = new_sub;
+        let mut body = model.subscriptions.body.clone();
         body.outlines.push(new_folder.clone());
         let mut first_outline = body.outlines.first().unwrap().clone();
         first_outline.add_feed("Feed Name", "https://example.com/");
@@ -188,8 +197,8 @@ mod test {
     fn add_new_folder() {
         let mut model: Model = Model::default();
         let new_sub: OPML = OPML::default();
-        model.subscriptions.push(new_sub);
-        let mut body: opml::Body = model.subscriptions.first().unwrap().body.clone();
+        model.subscriptions = new_sub;
+        let mut body: opml::Body = model.subscriptions.body.clone();
         let new_folder = &Outline {
             text: "Folder Name".to_string(),
             title: Some("Folder Name".to_string()),

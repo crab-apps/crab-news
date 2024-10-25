@@ -93,8 +93,8 @@ pub struct Model {
     feed_url: String,
 
     // subscriptions,
-    subscriptions: Vec<OPML>,
-    subscriptions_folder: SubscriptionsFolder, // root or folder
+    subscriptions: OPML,
+    subscriptions_folder: SubscriptionFolder, // root or folder
 
     // left column
     feed_view: FeedView, // Smart View = today | all unread | starred | folder | feed
@@ -141,7 +141,7 @@ pub struct ViewModel {
     // nain UI
     ////////////////////////////
     // "specials"
-    pub subscriptions: Vec<OPML>,
+    pub subscriptions: OPML,
     pub unread_count: u16,
     pub starred_count: u16,
     pub entry_read: ReadStatus,
@@ -322,6 +322,15 @@ SubscriptionFolder,
 MoveSubscriptionToFolder,
 #+end_quote
 
+#+begin_src rust
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
+pub enum SubscriptionFolder {
+    #[default]
+    Root(Path),
+    Folder(Path),
+}
+#+end_src
+
 #+begin_src xml
 <!-- Example OPML -->
 <?xml version="1.0" encoding="ISO-8859-1"?>
@@ -360,13 +369,6 @@ deal with all data to display "news" in the entry and content columns.
 :CUSTOM_ID: related-to-feeds
 :END:
 #+begin_src rust
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-pub enum FeedStore {
-    #[default]
-    Root(Path),
-    Folder(Path),
-}
-
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub enum ReadStatus {
     Read,
