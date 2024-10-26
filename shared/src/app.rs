@@ -1,47 +1,60 @@
+// ANCHOR: app
 use chrono::prelude::Local;
 use crux_core::{render::Render, App};
-use feed_rs::{model::Feed, parser};
+use feed_rs::model::Feed;
 use opml::{Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 // use crux_http::Http;
 // use url::Url;
 
-// perhaps useful later?
-const XML_TAG: &str = r#"<?xml version="1.0" encoding="ISO-8859-1"?>"#;
+// ANCHOR: constants
+const OPML_DATE_FORMAT: &str = "%Y - %a %b %e %T";
+// ANCHOR_END: constants
 
-// https://doc.rust-lang.org/reference/items/type-aliases.html
-type OpmlFile = String;
-type OpmlTitle = String;
-type FolderName = String;
-type OldFolderName = String;
-type NewFolderName = String;
-
+// ANCHOR: events
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
     ImportSubscriptions(OpmlFile),
-    ExportSubscriptions(OpmlFile, OpmlTitle),
-    AddNewSubscription,
-    DeleteSubscription,
-    RenameSubscription,
-    MoveSubscriptionToFolder,
+    ExportSubscriptions(OpmlName),
     AddNewFolder(FolderName),
     DeleteFolder(FolderName),
-    RenameFolder(OldFolderName, NewFolderName),
+    RenameFolder(OldName, NewName),
+    AddNewSubscription(Option<FolderName>, SubscriptionName, SubscriptionURL),
+    DeleteSubscription(Option<FolderName>, SubscriptionName),
+    RenameSubscription(Option<FolderName>, OldName, NewName),
+    MoveSubscriptionToFolder(OldFolder, NewFolder, SubscriptionName),
 
     // EVENTS LOCAL TO THE CORE
     #[serde(skip)]
     Fetch(crux_http::Result<crux_http::Response<Feed>>),
 }
+// ANCHOR_END: events
 
+// ANCHOR: types
+type OpmlFile = String;
+type OpmlName = String;
+type FolderName = String;
+type OldName = String;
+type NewName = String;
+type SubscriptionName = String;
+type SubscriptionURL = String;
+type OldFolder = Option<FolderName>;
+type NewFolder = Option<FolderName>;
+// ANCHOR_END: types
+
+// ANCHOR: model
 #[derive(Default)]
 pub struct Model {
     subscriptions: OPML,
-    // subscription_folder: Outline,
 }
+// ANCHOR_END: model
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-pub struct ViewModel {}
+pub struct ViewModel {
+    // pub subscription_folder: String,
+    // pub subscription_name: String,
+}
 
 #[cfg_attr(feature = "typegen", derive(crux_core::macros::Export))]
 #[derive(crux_core::macros::Effect)]
@@ -52,6 +65,7 @@ pub struct Capabilities {
 #[derive(Default)]
 pub struct CrabNews;
 
+// ANCHOR: impl_app
 impl App for CrabNews {
     type Event = Event;
     type Model = Model;
@@ -64,11 +78,11 @@ impl App for CrabNews {
                 let mut file = File::open(subs_opml_file).unwrap();
                 model.subscriptions = OPML::from_reader(&mut file).unwrap();
             }
-            Event::ExportSubscriptions(subs_opml_file, subs_opml_title) => {
-                let xml_tag = XML_TAG.to_string();
+            Event::ExportSubscriptions(subs_opml_name) => {
+                let xml_tag = r#"<?xml version="1.0" encoding="ISO-8859-1"?>"#.to_string();
                 let custom_head = Head {
-                    title: Some(subs_opml_title),
-                    date_created: Some(Local::now().format("%Y, %a %b %e %T").to_string()),
+                    title: Some(subs_opml_name.clone()),
+                    date_created: Some(Local::now().format(OPML_DATE_FORMAT).to_string()),
                     owner_name: Some("Crab News".to_string()),
                     ..Head::default()
                 };
@@ -78,12 +92,8 @@ impl App for CrabNews {
                     ..OPML::default()
                 };
                 let export_content = xml_tag + &custon_opml.to_string().unwrap();
-                let _ = std::fs::write(subs_opml_file, &export_content);
+                let _ = std::fs::write(subs_opml_name, &export_content);
             }
-            Event::AddNewSubscription => todo!(),
-            Event::DeleteSubscription => todo!(),
-            Event::RenameSubscription => todo!(),
-            Event::MoveSubscriptionToFolder => todo!(),
             Event::AddNewFolder(folder_name) => {
                 let new_folder = Outline {
                     text: folder_name.clone(),
@@ -93,42 +103,104 @@ impl App for CrabNews {
                 model.subscriptions.body.outlines.push(new_folder);
             }
             Event::DeleteFolder(folder_name) => {
-                let outline_to_delete = model
+                model
                     .subscriptions
                     .body
                     .outlines
-                    .clone()
-                    .into_iter()
-                    .position(|outline| outline.text == folder_name)
-                    .unwrap();
-                model.subscriptions.body.outlines.remove(outline_to_delete);
+                    .retain(|name| name.text != folder_name);
             }
             Event::RenameFolder(old_name, new_name) => {
-                let outline_to_rename = model
+                model
                     .subscriptions
                     .body
                     .outlines
-                    .clone()
-                    .into_iter()
-                    .position(|outline| outline.text == old_name)
-                    .unwrap();
-                model.subscriptions.body.outlines[outline_to_rename].text = new_name.clone();
-                model.subscriptions.body.outlines[outline_to_rename].title = Some(new_name.clone());
+                    .iter_mut()
+                    .filter(|outline| outline.text == old_name)
+                    .for_each(|sub| {
+                        sub.text = new_name.clone();
+                        sub.title = Some(new_name.clone());
+                    });
             }
+            Event::AddNewSubscription(folder_name, sub_name, sub_url) => {
+                if let Some(folder_text) = folder_name {
+                    model
+                        .subscriptions
+                        .body
+                        .outlines
+                        .iter_mut()
+                        .filter(|outline| outline.text == folder_text)
+                        .for_each(|sub| {
+                            sub.add_feed(sub_name.as_str(), sub_url.as_str());
+                        });
+                } else {
+                    model
+                        .subscriptions
+                        .add_feed(sub_name.as_str(), sub_url.as_str());
+                }
+            }
+            Event::DeleteSubscription(folder_name, sub_name) => {
+                if let Some(folder_text) = folder_name {
+                    model
+                        .subscriptions
+                        .body
+                        .outlines
+                        .iter_mut()
+                        .filter(|outline| outline.text == folder_text)
+                        .for_each(|sub| sub.outlines.retain(|name| name.text != sub_name));
+                } else {
+                    model
+                        .subscriptions
+                        .body
+                        .outlines
+                        .retain(|name| name.text != sub_name);
+                }
+            }
+            Event::RenameSubscription(folder_name, old_name, new_name) => {
+                if let Some(folder_text) = folder_name {
+                    model
+                        .subscriptions
+                        .body
+                        .outlines
+                        .iter_mut()
+                        .filter(|outline| outline.text == folder_text)
+                        .for_each(|folder| {
+                            folder
+                                .outlines
+                                .iter_mut()
+                                .filter(|sub| sub.text == old_name)
+                                .for_each(|sub| {
+                                    sub.text = new_name.clone();
+                                });
+                        });
+                } else {
+                    let _ = model
+                        .subscriptions
+                        .body
+                        .outlines
+                        .iter_mut()
+                        .filter(|outline| outline.text == old_name)
+                        .for_each(|sub| sub.text = new_name.clone());
+                }
+            }
+            Event::MoveSubscriptionToFolder(old_folder, new_folder, sub_name) => {}
             Event::Fetch(_) => todo!(),
         };
 
         caps.render.render();
     }
 
-    fn view(&self, model: &Self::Model) -> Self::ViewModel {
-        ViewModel {}
+    fn view(&self, _model: &Self::Model) -> Self::ViewModel {
+        ViewModel {
+            // subscription_folder: format!("Count is: {}", model.subscription_folder),
+            // subscription_name: format!("Count is: {}", model.subscription_name),
+        }
     }
 }
+// ANCHOR_END: impl_app
+// ANCHOR_END: app
 
-// FIXME change these to test Events/Capabilities
-// for now I'm understanding crates by laying down
-// "batch jobs" to get familiar with "the flow of things"
+// ANCHOR: test
+// TODO add all checks for dupes and so on
 #[cfg(test)]
 mod test {
     use super::*;
@@ -139,11 +211,10 @@ mod test {
         let app = AppTester::<CrabNews, _>::default();
         let mut model = Model::default();
         let subs_opml_file = "example_import.opml".to_string();
+        let example_subs = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
 
         let _ = app.update(Event::ImportSubscriptions(subs_opml_file), &mut model);
         let added_subs = model.subscriptions;
-
-        let example_subs = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
         let expected_subs = OPML::from_str(example_subs).unwrap();
 
         assert_eq!(added_subs, expected_subs);
@@ -153,118 +224,58 @@ mod test {
     fn export_subscriptions() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let subs_opml_file = "example_export.opml".to_string();
-        let subs_opml_name = "Subscriptions.opml".to_string();
-        let date_created = Some(Local::now().format("%Y, %a %b %e %T").to_string());
-
+        let date_created = Some(Local::now().format(OPML_DATE_FORMAT).to_string());
+        let subs_opml_name = format!("{} - Subscriptions.opml", date_created.clone().unwrap());
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
+
         model.subscriptions = OPML::from_str(&example_subs).unwrap();
         let imported_content = model.subscriptions.clone();
 
         let _ = app.update(
-            Event::ExportSubscriptions(subs_opml_file.clone(), subs_opml_name.clone()),
+            Event::ExportSubscriptions(subs_opml_name.clone()),
             &mut model,
         );
 
-        let mut exported_file = std::fs::File::open(subs_opml_file.clone()).unwrap();
+        let mut exported_file = std::fs::File::open(subs_opml_name.clone()).unwrap();
         let exported_content = OPML::from_reader(&mut exported_file).unwrap();
 
         assert_eq!(exported_content, imported_content);
     }
-
-    // TODO use Events::AddNewSubscription(FeedStore::Root)
-    // https://docs.rs/opml/1.1.6/opml/struct.OPML.html#method.add_feed
-    #[test]
-    fn add_new_subscription_to_root() {
-        let mut model: Model = Model::default();
-        let mut new_sub: OPML = OPML::default();
-
-        new_sub.add_feed("Feed Name", "https://example.com/");
-        model.subscriptions = new_sub;
-
-        let added_feed = model.subscriptions.body.outlines.first().unwrap();
-
-        let expected_feed = &Outline {
-            text: "Feed Name".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
-            ..Outline::default()
-        };
-
-        assert_eq!(added_feed, expected_feed);
-    }
-
-    // TODO use Events::AddNewSubscription(FeedStore::Folder)
-    // https://docs.rs/opml/1.1.6/opml/struct.Outline.html#method.add_feed
-    #[test]
-    fn add_new_subscription_to_folder() {
-        let mut model = Model::default();
-        let new_sub = OPML::default();
-        let new_folder = Outline {
-            text: "Folder Name".to_string(),
-            title: Some("Folder Name".to_string()),
-            ..Outline::default()
-        };
-
-        model.subscriptions = new_sub;
-        let mut body = model.subscriptions.body.clone();
-        body.outlines.push(new_folder.clone());
-        let mut first_outline = body.outlines.first().unwrap().clone();
-        first_outline.add_feed("Feed Name", "https://example.com/");
-
-        let added_feed = first_outline.outlines.first().unwrap();
-        let expected_feed = &Outline {
-            text: "Feed Name".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
-            ..Outline::default()
-        };
-
-        assert_eq!(added_feed, expected_feed);
-    }
-
-    // TODO use Events::DeleteSubscription
-    #[test]
-    fn delete_subscription() {}
-
-    // TODO use Events::RenameSubscription
-    #[test]
-    fn rename_subscription() {}
 
     #[test]
     fn add_new_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
         let folder_name = "dada".to_string();
-
-        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
-        let added_folder = model.subscriptions.body.outlines.first().unwrap();
         let expected_folder = &Outline {
             text: folder_name.to_string(),
             title: Some(folder_name.to_string()),
             ..Outline::default()
         };
 
-        assert_eq!(added_folder, expected_folder);
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let does_contain_folder = model.subscriptions.body.outlines.contains(expected_folder);
+
+        assert_eq!(does_contain_folder, true);
     }
 
     #[test]
     fn delete_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let first_folder_name = "dada".to_string();
-        let second_folder_name = "fafa".to_string();
-
-        let _ = app.update(Event::AddNewFolder(first_folder_name.clone()), &mut model);
-        let _ = app.update(Event::AddNewFolder(second_folder_name.clone()), &mut model);
-        let _ = app.update(Event::DeleteFolder(first_folder_name.clone()), &mut model);
-
-        let added_folder = model.subscriptions.body.outlines.first().unwrap();
+        let folder_name = "dada".to_string();
         let expected_folder = &Outline {
-            text: second_folder_name.to_string(),
-            title: Some(second_folder_name.to_string()),
+            text: folder_name.to_string(),
+            title: Some(folder_name.to_string()),
             ..Outline::default()
         };
 
-        assert_eq!(added_folder, expected_folder);
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(Event::DeleteFolder(folder_name.clone()), &mut model);
+
+        let does_contain_folder = model.subscriptions.body.outlines.contains(expected_folder);
+
+        assert_eq!(does_contain_folder, false);
     }
 
     #[test]
@@ -273,6 +284,11 @@ mod test {
         let mut model: Model = Model::default();
         let old_name = "dada".to_string();
         let new_name = "tada".to_string();
+        let expected_folder = &Outline {
+            text: new_name.to_string(),
+            title: Some(new_name.to_string()),
+            ..Outline::default()
+        };
 
         let _ = app.update(Event::AddNewFolder(old_name.clone()), &mut model);
         let _ = app.update(
@@ -280,13 +296,411 @@ mod test {
             &mut model,
         );
 
-        let renamed_folder = model.subscriptions.body.outlines.first().unwrap();
-        let expected_folder = &Outline {
-            text: new_name.to_string(),
-            title: Some(new_name.to_string()),
+        let does_contain_folder = model.subscriptions.body.outlines.contains(expected_folder);
+
+        assert_eq!(does_contain_folder, true);
+    }
+
+    #[test]
+    fn add_new_subscription_to_root() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let sub_name = "Feed Name".to_string();
+        let sub_url = "https://example.com/".to_string();
+        let expected_feed = &Outline {
+            text: sub_name.to_string(),
+            xml_url: Some(sub_url.to_string()),
             ..Outline::default()
         };
 
-        assert_eq!(renamed_folder, expected_folder);
+        let _ = app.update(
+            Event::AddNewSubscription(None, sub_name.clone(), sub_url.clone()),
+            &mut model,
+        );
+
+        let does_contain_feed = model.subscriptions.body.outlines.contains(expected_feed);
+
+        assert_eq!(does_contain_feed, true);
+    }
+
+    #[test]
+    fn add_new_subscription_to_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_name = "dada".to_string();
+        let sub_name = "Feed Name".to_string();
+        let sub_url = "https://example.com/".to_string();
+        let expected_feed = &Outline {
+            text: sub_name.to_string(),
+            xml_url: Some(sub_url.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(Some(folder_name.clone()), sub_name.clone(), sub_url.clone()),
+            &mut model,
+        );
+
+        let does_contain_feed = model
+            .subscriptions
+            .body
+            .outlines
+            .iter()
+            .filter(|outline| outline.text == folder_name)
+            .find_map(|folder| Some(folder.outlines.contains(expected_feed)))
+            .unwrap();
+
+        assert_eq!(does_contain_feed, true);
+    }
+
+    #[test]
+    fn delete_subscription_from_root() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let sub_name = "Feed Name".to_string();
+        let sub_url = "https://example.com/".to_string();
+        let expected_feed = &Outline {
+            text: sub_name.to_string(),
+            xml_url: Some(sub_url.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(
+            Event::AddNewSubscription(None, sub_name.clone(), sub_url.clone()),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::DeleteSubscription(None, sub_name.clone()),
+            &mut model,
+        );
+
+        let does_contain_feed = model.subscriptions.body.outlines.contains(expected_feed);
+
+        assert_eq!(does_contain_feed, false);
+    }
+
+    #[test]
+    fn delete_subscription_from_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_name = "dada".to_string();
+        let sub_name = "Feed Name".to_string();
+        let sub_url = "https://example.com/".to_string();
+        let expected_feed = &Outline {
+            text: sub_name.to_string(),
+            xml_url: Some(sub_url.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(Some(folder_name.clone()), sub_name.clone(), sub_url.clone()),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::DeleteSubscription(Some(folder_name.clone()), sub_name.clone()),
+            &mut model,
+        );
+
+        let does_contain_feed = model
+            .subscriptions
+            .body
+            .outlines
+            .iter()
+            .filter(|outline| outline.text == folder_name)
+            .find_map(|folder| Some(folder.outlines.contains(expected_feed)))
+            .unwrap();
+
+        assert_eq!(does_contain_feed, false);
+    }
+
+    #[test]
+    fn delete_subscription_from_folder_with_multi_subs() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_name = "dada".to_string();
+        let sub_one_name = "Feed One Name".to_string();
+        let sub_one_url = "https://example.com/".to_string();
+        let sub_two_name = "Feed Two Name".to_string();
+        let sub_two_url = "https://example.com/".to_string();
+        let deleted_feed = &Outline {
+            text: sub_one_name.to_string(),
+            xml_url: Some(sub_one_url.to_string()),
+            ..Outline::default()
+        };
+        let expected_feed = &Outline {
+            text: sub_two_name.to_string(),
+            xml_url: Some(sub_two_url.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(
+                Some(folder_name.clone()),
+                sub_one_name.clone(),
+                sub_one_url.clone(),
+            ),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::AddNewSubscription(
+                Some(folder_name.clone()),
+                sub_two_name.clone(),
+                sub_two_url.clone(),
+            ),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::DeleteSubscription(Some(folder_name.clone()), sub_one_name.clone()),
+            &mut model,
+        );
+
+        let does_contain_feed_one = model
+            .subscriptions
+            .body
+            .outlines
+            .iter()
+            .filter(|outline| outline.text == folder_name)
+            .find_map(|folder| Some(folder.outlines.contains(deleted_feed)))
+            .unwrap();
+
+        let does_contain_feed_two = model
+            .subscriptions
+            .body
+            .outlines
+            .iter()
+            .filter(|outline| outline.text == folder_name)
+            .find_map(|folder| Some(folder.outlines.contains(expected_feed)))
+            .unwrap();
+
+        assert_eq!((does_contain_feed_two && !does_contain_feed_one), true);
+    }
+
+    #[test]
+    fn rename_subscription_in_root() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let old_name = "Feed Name".to_string();
+        let sub_url = "https://example.com/".to_string();
+        let new_name = "New Name".to_string();
+        let expected_feed = &Outline {
+            text: new_name.to_string(),
+            xml_url: Some(sub_url.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(
+            Event::AddNewSubscription(None, old_name.clone(), sub_url.clone()),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::RenameSubscription(None, old_name.clone(), new_name.clone()),
+            &mut model,
+        );
+
+        let does_contain_feed = model.subscriptions.body.outlines.contains(expected_feed);
+
+        assert_eq!(does_contain_feed, true);
+    }
+
+    #[test]
+    fn rename_subscription_in_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let old_name = "Feed Name".to_string();
+        let sub_url = "https://example.com/".to_string();
+        let new_name = "New Name".to_string();
+        let folder_name = "dada".to_string();
+        let expected_feed = &Outline {
+            text: new_name.to_string(),
+            xml_url: Some(sub_url.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(Some(folder_name.clone()), old_name.clone(), sub_url.clone()),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::RenameSubscription(
+                Some(folder_name.clone()),
+                old_name.clone(),
+                new_name.clone(),
+            ),
+            &mut model,
+        );
+
+        let does_contain_feed = model
+            .subscriptions
+            .body
+            .outlines
+            .iter()
+            .filter(|outline| outline.text == folder_name)
+            .find_map(|folder| Some(folder.outlines.contains(expected_feed)))
+            .unwrap();
+
+        assert_eq!(does_contain_feed, true);
+    }
+
+    #[test]
+    fn rename_subscription_in_folder_with_multi_subs() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_name = "dada".to_string();
+        let sub_one_name = "Feed One Name".to_string();
+        let sub_one_url = "https://example.com/".to_string();
+        let sub_two_name = "Feed Two Name".to_string();
+        let sub_two_url = "https://exampleaaaa.com/".to_string();
+        let new_name = "Renamed Name".to_string();
+        let expected_feed = &Outline {
+            text: new_name.to_string(),
+            xml_url: Some(sub_one_url.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(
+                Some(folder_name.clone()),
+                sub_one_name.clone(),
+                sub_one_url.clone(),
+            ),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::AddNewSubscription(
+                Some(folder_name.clone()),
+                sub_two_name.clone(),
+                sub_two_url.clone(),
+            ),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::RenameSubscription(
+                Some(folder_name.clone()),
+                sub_one_name.clone(),
+                new_name.clone(),
+            ),
+            &mut model,
+        );
+
+        let does_contain_feed = model
+            .subscriptions
+            .body
+            .outlines
+            .iter()
+            .filter(|outline| outline.text == folder_name)
+            .find_map(|folder| Some(folder.outlines.contains(expected_feed)))
+            .unwrap();
+
+        assert_eq!(does_contain_feed, true);
+    }
+
+    #[test]
+    fn move_subscription_from_root_to_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let sub_name = "Feed Name".to_string();
+        let sub_url = "https://example.com/".to_string();
+        let folder_name = "dada".to_string();
+        let expected_feed = &Outline {
+            text: sub_name.to_string(),
+            xml_url: Some(sub_url.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(None, sub_name.clone(), sub_url.clone()),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::MoveSubscriptionToFolder(None, Some(folder_name.clone()), sub_name.clone()),
+            &mut model,
+        );
+
+        let does_contain_feed = model
+            .subscriptions
+            .body
+            .outlines
+            .iter()
+            .filter(|outline| outline.text == folder_name)
+            .find_map(|folder| Some(folder.outlines.contains(expected_feed)))
+            .unwrap();
+
+        assert_eq!(does_contain_feed, true);
+    }
+
+    #[test]
+    fn move_subscription_from_folder_to_root() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_name = "dada".to_string();
+        let sub_name = "Feed Name".to_string();
+        let sub_url = "https://example.com/".to_string();
+        let expected_feed = &Outline {
+            text: sub_name.to_string(),
+            xml_url: Some(sub_url.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(Some(folder_name.clone()), sub_name.clone(), sub_url.clone()),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::MoveSubscriptionToFolder(Some(folder_name.clone()), None, sub_name.clone()),
+            &mut model,
+        );
+
+        let does_contain_feed = model.subscriptions.body.outlines.contains(expected_feed);
+
+        assert_eq!(does_contain_feed, true);
+    }
+
+    #[test]
+    fn move_subscription_from_folder_to_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_one = "Folder One".to_string();
+        let folder_two = "Folder Two".to_string();
+        let sub_name = "Feed Name".to_string();
+        let sub_url = "https://example.com/".to_string();
+        let expected_feed = &Outline {
+            text: sub_name.to_string(),
+            xml_url: Some(sub_url.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_one.clone()), &mut model);
+        let _ = app.update(Event::AddNewFolder(folder_two.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(Some(folder_one.clone()), sub_name.clone(), sub_url.clone()),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::MoveSubscriptionToFolder(
+                Some(folder_one.clone()),
+                Some(folder_two.clone()),
+                sub_name.clone(),
+            ),
+            &mut model,
+        );
+
+        let does_contain_feed = model
+            .subscriptions
+            .body
+            .outlines
+            .iter()
+            .filter(|outline| outline.text == folder_two)
+            .find_map(|folder| Some(folder.outlines.contains(expected_feed)))
+            .unwrap();
+
+        assert_eq!(does_contain_feed, true);
     }
 }
+// ANCHOR_END: test
