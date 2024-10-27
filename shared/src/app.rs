@@ -4,7 +4,7 @@ use crux_core::{render::Render, App};
 use feed_rs::model::Feed;
 use opml::{Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
-use std::fs::File;
+use std::{fs::File, slice::IterMut};
 // use crux_http::Http;
 // use url::Url;
 
@@ -65,6 +65,18 @@ pub struct Capabilities {
 #[derive(Default)]
 pub struct CrabNews;
 
+// ANCHOR: traits
+trait BodyOutlineIter {
+    fn body_outlines_iter_mut(model: &mut Model) -> IterMut<'_, Outline>;
+}
+
+impl BodyOutlineIter for CrabNews {
+    fn body_outlines_iter_mut(model: &mut Model) -> IterMut<'_, Outline> {
+        model.subscriptions.body.outlines.iter_mut()
+    }
+}
+// ANCHOR_END: traits
+
 // ANCHOR: impl_app
 impl App for CrabNews {
     type Event = Event;
@@ -110,11 +122,7 @@ impl App for CrabNews {
                     .retain(|name| name.text != folder_name);
             }
             Event::RenameFolder(old_name, new_name) => {
-                model
-                    .subscriptions
-                    .body
-                    .outlines
-                    .iter_mut()
+                CrabNews::body_outlines_iter_mut(model)
                     .filter(|outline| outline.text == old_name)
                     .for_each(|sub| {
                         sub.text = new_name.clone();
@@ -123,11 +131,7 @@ impl App for CrabNews {
             }
             Event::AddNewSubscription(folder_name, sub_name, sub_url) => {
                 if let Some(folder_text) = folder_name {
-                    model
-                        .subscriptions
-                        .body
-                        .outlines
-                        .iter_mut()
+                    CrabNews::body_outlines_iter_mut(model)
                         .filter(|outline| outline.text == folder_text)
                         .for_each(|sub| {
                             sub.add_feed(sub_name.as_str(), sub_url.as_str());
@@ -140,11 +144,7 @@ impl App for CrabNews {
             }
             Event::DeleteSubscription(folder_name, sub_name) => {
                 if let Some(folder_text) = folder_name {
-                    model
-                        .subscriptions
-                        .body
-                        .outlines
-                        .iter_mut()
+                    CrabNews::body_outlines_iter_mut(model)
                         .filter(|outline| outline.text == folder_text)
                         .for_each(|sub| sub.outlines.retain(|name| name.text != sub_name));
                 } else {
@@ -157,11 +157,7 @@ impl App for CrabNews {
             }
             Event::RenameSubscription(folder_name, old_name, new_name) => {
                 if let Some(folder_text) = folder_name {
-                    model
-                        .subscriptions
-                        .body
-                        .outlines
-                        .iter_mut()
+                    CrabNews::body_outlines_iter_mut(model)
                         .filter(|outline| outline.text == folder_text)
                         .for_each(|folder| {
                             folder
@@ -173,11 +169,7 @@ impl App for CrabNews {
                                 });
                         });
                 } else {
-                    let _ = model
-                        .subscriptions
-                        .body
-                        .outlines
-                        .iter_mut()
+                    CrabNews::body_outlines_iter_mut(model)
                         .filter(|outline| outline.text == old_name)
                         .for_each(|sub| sub.text = new_name.clone());
                 }
