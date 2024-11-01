@@ -1,7 +1,7 @@
 use chrono::Local;
 use opml::{Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
-use std::{fs::File, slice::IterMut};
+use std::fs::File;
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Subscriptions {
@@ -9,19 +9,12 @@ pub struct Subscriptions {
 }
 
 impl Subscriptions {
-    pub fn new() -> Self {
-        Subscriptions {
-            opml: OPML::default(),
-        }
-    }
-
-    // ANCHOR: helper functions
-    fn body_outlines_iter_mut(&mut self) -> IterMut<'_, Outline> {
-        self.opml.body.outlines.iter_mut()
-    }
-
-    // fn find_duplicates() -> i32 {}
-    // ANCHOR_END: helper functions
+    // do I need New() at all?
+    // pub fn new() -> Self {
+    //     Subscriptions {
+    //         opml: OPML::default(),
+    //     }
+    // }
 
     pub fn import(&mut self, subs_opml_file: String) {
         let mut file = File::open(subs_opml_file).unwrap();
@@ -62,7 +55,10 @@ impl Subscriptions {
     }
 
     pub fn rename_folder(&mut self, old_folder_name: String, new_folder_name: String) {
-        Self::body_outlines_iter_mut(self)
+        self.opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == old_folder_name)
             .for_each(|folder| {
                 folder.text = new_folder_name.clone();
@@ -77,7 +73,10 @@ impl Subscriptions {
         sub_url: String,
     ) {
         if let Some(folder_text) = folder_name {
-            Self::body_outlines_iter_mut(self)
+            self.opml
+                .body
+                .outlines
+                .iter_mut()
                 .filter(|outline| outline.text == folder_text)
                 .for_each(|folder| {
                     folder.add_feed(sub_name.as_str(), sub_url.as_str());
@@ -89,7 +88,10 @@ impl Subscriptions {
 
     pub fn delete_subscription(&mut self, folder_name: Option<String>, sub_name: String) {
         if let Some(folder_text) = folder_name {
-            Self::body_outlines_iter_mut(self)
+            self.opml
+                .body
+                .outlines
+                .iter_mut()
                 .filter(|outline| outline.text == folder_text)
                 .for_each(|folder| folder.outlines.retain(|name| name.text != sub_name));
         } else {
@@ -104,7 +106,10 @@ impl Subscriptions {
         new_name: String,
     ) {
         if let Some(folder_text) = folder_name {
-            Self::body_outlines_iter_mut(self)
+            self.opml
+                .body
+                .outlines
+                .iter_mut()
                 .filter(|outline| outline.text == folder_text)
                 .for_each(|folder| {
                     folder
@@ -116,7 +121,10 @@ impl Subscriptions {
                         });
                 });
         } else {
-            Self::body_outlines_iter_mut(self)
+            self.opml
+                .body
+                .outlines
+                .iter_mut()
                 .filter(|outline| outline.text == old_name)
                 .for_each(|sub| sub.text = new_name.clone());
         }
