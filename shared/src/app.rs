@@ -1,8 +1,6 @@
 // ANCHOR: app
-use chrono::prelude::Local;
 use crux_core::{render::Render, App};
 use feed_rs::model::Feed;
-use opml::{Outline, OPML};
 use serde::{Deserialize, Serialize};
 // use crux_http::Http;
 // use url::Url;
@@ -137,7 +135,9 @@ impl App for CrabNews {
 #[cfg(test)]
 mod test {
     use super::*;
+    use chrono::prelude::Local;
     use crux_core::testing::AppTester;
+    use opml::{Outline, OPML};
 
     #[test]
     fn import_subscriptions() {
