@@ -3,6 +3,19 @@ use opml::{Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 
+// ANCHOR: type aliases
+pub type OpmlFile = String;
+pub type OpmlName = String;
+pub type FolderName = String;
+pub type OldName = String;
+pub type NewName = String;
+pub type OldFolder = Option<FolderName>;
+pub type NewFolder = Option<FolderName>;
+pub type Subscription = Outline;
+pub type SubscriptionName = String;
+pub type SubscriptionURL = String;
+// ANCHOR_END: types aliases
+
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Subscriptions {
     pub opml: OPML,
@@ -16,12 +29,12 @@ impl Subscriptions {
     //     }
     // }
 
-    pub fn import(&mut self, subs_opml_file: String) {
+    pub fn import(&mut self, subs_opml_file: OpmlFile) {
         let mut file = File::open(subs_opml_file).unwrap();
         self.opml = OPML::from_reader(&mut file).unwrap();
     }
 
-    pub fn export(&self, subs_opml_name: String) {
+    pub fn export(&self, subs_opml_name: OpmlName) {
         let xml_tag = r#"<?xml version="1.0" encoding="UTF-8"?>"#.to_string();
         let custom_head = Head {
             title: Some(subs_opml_name.clone()),
@@ -38,7 +51,7 @@ impl Subscriptions {
         let _ = std::fs::write(subs_opml_name, &export_content);
     }
 
-    pub fn add_folder(&mut self, folder_name: String) {
+    pub fn add_folder(&mut self, folder_name: FolderName) {
         let new_folder = Outline {
             text: folder_name.clone(),
             title: Some(folder_name.clone()),
@@ -47,14 +60,14 @@ impl Subscriptions {
         self.opml.body.outlines.push(new_folder);
     }
 
-    pub fn delete_folder(&mut self, folder_name: String) {
+    pub fn delete_folder(&mut self, folder_name: FolderName) {
         self.opml
             .body
             .outlines
             .retain(|name| name.text != folder_name);
     }
 
-    pub fn rename_folder(&mut self, old_folder_name: String, new_folder_name: String) {
+    pub fn rename_folder(&mut self, old_folder_name: OldName, new_folder_name: NewName) {
         self.opml
             .body
             .outlines
@@ -68,9 +81,9 @@ impl Subscriptions {
 
     pub fn add_subscription(
         &mut self,
-        folder_name: Option<String>,
-        sub_name: String,
-        sub_url: String,
+        folder_name: Option<FolderName>,
+        sub_name: SubscriptionName,
+        sub_url: SubscriptionURL,
     ) {
         if let Some(folder_text) = folder_name {
             self.opml
@@ -86,7 +99,11 @@ impl Subscriptions {
         }
     }
 
-    pub fn delete_subscription(&mut self, folder_name: Option<String>, sub_name: String) {
+    pub fn delete_subscription(
+        &mut self,
+        folder_name: Option<FolderName>,
+        sub_name: SubscriptionName,
+    ) {
         if let Some(folder_text) = folder_name {
             self.opml
                 .body
@@ -101,9 +118,9 @@ impl Subscriptions {
 
     pub fn rename_subscription(
         &mut self,
-        folder_name: Option<String>,
-        old_name: String,
-        new_name: String,
+        folder_name: Option<FolderName>,
+        old_name: OldName,
+        new_name: NewName,
     ) {
         if let Some(folder_text) = folder_name {
             self.opml
@@ -132,9 +149,9 @@ impl Subscriptions {
 
     pub fn move_subscription(
         &mut self,
-        subscription: Outline,
-        old_folder: Option<String>,
-        new_folder: Option<String>,
+        subscription: Subscription,
+        old_folder: OldFolder,
+        new_folder: NewFolder,
     ) {
         match (old_folder, new_folder) {
             (None, Some(folder_new)) => {

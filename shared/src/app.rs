@@ -8,7 +8,10 @@ use serde::{Deserialize, Serialize};
 // use url::Url;
 
 mod subscriptions;
-pub use subscriptions::Subscriptions;
+pub use subscriptions::{
+    FolderName, NewFolder, NewName, OldFolder, OldName, OpmlFile, OpmlName, Subscription,
+    SubscriptionName, SubscriptionURL, Subscriptions,
+};
 
 // ANCHOR: events
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -28,22 +31,6 @@ pub enum Event {
     Fetch(crux_http::Result<crux_http::Response<Feed>>),
 }
 // ANCHOR_END: events
-
-// ANCHOR: type aliases
-type OpmlFile = String;
-type OpmlName = String;
-type FolderName = String;
-type OldName = String;
-type NewName = String;
-type OldFolder = Option<FolderName>;
-type NewFolder = Option<FolderName>;
-type Subscription = Outline;
-type SubscriptionName = String;
-type SubscriptionURL = String;
-// ANCHOR_END: types aliases
-
-// ANCHOR: newtypes
-// ANCHOR_END: newtypes
 
 // ANCHOR: model
 #[derive(Default)]
