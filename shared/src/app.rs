@@ -2,15 +2,13 @@
 use chrono::prelude::Local;
 use crux_core::{render::Render, App};
 use feed_rs::model::Feed;
-use opml::{Head, Outline, OPML};
+use opml::{Outline, OPML};
 use serde::{Deserialize, Serialize};
-use std::{fs::File, slice::IterMut};
 // use crux_http::Http;
 // use url::Url;
 
-// ANCHOR: constants
-const OPML_DATE_FORMAT: &str = "%Y - %a %b %e %T";
-// ANCHOR_END: constants
+mod subscriptions;
+pub use subscriptions::Subscriptions;
 
 // ANCHOR: events
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -50,14 +48,15 @@ type SubscriptionURL = String;
 // ANCHOR: model
 #[derive(Default)]
 pub struct Model {
-    subscriptions: OPML,
+    subscriptions: Subscriptions,
 }
 
 // ANCHOR: view model
-#[derive(Serialize, Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug)]
 pub struct ViewModel {
     // pub subscription_folder: String,
     // pub subscription_name: String,
+    // subscriptions: Subscriptions,
 }
 // ANCHOR_END: view model
 // ANCHOR_END: model
@@ -72,15 +71,6 @@ pub struct Capabilities {
 pub struct CrabNews;
 
 // ANCHOR: traits
-trait BodyOutlinesIterMut {
-    fn body_outlines_iter_mut(model: &mut Model) -> IterMut<'_, Outline>;
-}
-
-impl BodyOutlinesIterMut for CrabNews {
-    fn body_outlines_iter_mut(model: &mut Model) -> IterMut<'_, Outline> {
-        model.subscriptions.body.outlines.iter_mut()
-    }
-}
 // ANCHOR_END: traits
 
 // ANCHOR: impl_app
@@ -93,145 +83,50 @@ impl App for CrabNews {
     fn update(&self, event: Self::Event, model: &mut Self::Model, caps: &Self::Capabilities) {
         match event {
             Event::ImportSubscriptions(subs_opml_file) => {
-                let mut file = File::open(subs_opml_file).unwrap();
-                model.subscriptions = OPML::from_reader(&mut file).unwrap();
+                Subscriptions::import(&mut model.subscriptions, subs_opml_file);
             }
             Event::ExportSubscriptions(subs_opml_name) => {
-                let xml_tag = r#"<?xml version="1.0" encoding="UTF-8"?>"#.to_string();
-                let custom_head = Head {
-                    title: Some(subs_opml_name.clone()),
-                    date_created: Some(Local::now().format(OPML_DATE_FORMAT).to_string()),
-                    owner_name: Some("Crab News".to_string()),
-                    ..Head::default()
-                };
-                let custon_opml = OPML {
-                    head: Some(custom_head),
-                    body: model.subscriptions.body.clone(),
-                    ..OPML::default()
-                };
-                let export_content = xml_tag + &custon_opml.to_string().unwrap();
-                let _ = std::fs::write(subs_opml_name, &export_content);
+                Subscriptions::export(&model.subscriptions, subs_opml_name);
             }
             Event::AddNewFolder(folder_name) => {
-                let new_folder = Outline {
-                    text: folder_name.clone(),
-                    title: Some(folder_name.clone()),
-                    ..Outline::default()
-                };
-                model.subscriptions.body.outlines.push(new_folder);
+                Subscriptions::add_folder(&mut model.subscriptions, folder_name);
             }
             Event::DeleteFolder(folder_name) => {
-                model
-                    .subscriptions
-                    .body
-                    .outlines
-                    .retain(|name| name.text != folder_name);
+                Subscriptions::delete_folder(&mut model.subscriptions, folder_name);
             }
             Event::RenameFolder(old_folder_name, new_folder_name) => {
-                CrabNews::body_outlines_iter_mut(model)
-                    .filter(|outline| outline.text == old_folder_name)
-                    .for_each(|folder| {
-                        folder.text = new_folder_name.clone();
-                        folder.title = Some(new_folder_name.clone());
-                    });
+                Subscriptions::rename_folder(
+                    &mut model.subscriptions,
+                    old_folder_name,
+                    new_folder_name,
+                );
             }
             Event::AddNewSubscription(folder_name, sub_name, sub_url) => {
-                if let Some(folder_text) = folder_name {
-                    CrabNews::body_outlines_iter_mut(model)
-                        .filter(|outline| outline.text == folder_text)
-                        .for_each(|folder| {
-                            folder.add_feed(sub_name.as_str(), sub_url.as_str());
-                        });
-                } else {
-                    model
-                        .subscriptions
-                        .add_feed(sub_name.as_str(), sub_url.as_str());
-                }
+                Subscriptions::add_subscription(
+                    &mut model.subscriptions,
+                    folder_name,
+                    sub_name,
+                    sub_url,
+                );
             }
             Event::DeleteSubscription(folder_name, sub_name) => {
-                if let Some(folder_text) = folder_name {
-                    CrabNews::body_outlines_iter_mut(model)
-                        .filter(|outline| outline.text == folder_text)
-                        .for_each(|folder| folder.outlines.retain(|name| name.text != sub_name));
-                } else {
-                    model
-                        .subscriptions
-                        .body
-                        .outlines
-                        .retain(|name| name.text != sub_name);
-                }
+                Subscriptions::delete_subscription(&mut model.subscriptions, folder_name, sub_name);
             }
             Event::RenameSubscription(folder_name, old_name, new_name) => {
-                if let Some(folder_text) = folder_name {
-                    CrabNews::body_outlines_iter_mut(model)
-                        .filter(|outline| outline.text == folder_text)
-                        .for_each(|folder| {
-                            folder
-                                .outlines
-                                .iter_mut()
-                                .filter(|sub| sub.text == old_name)
-                                .for_each(|sub| {
-                                    sub.text = new_name.clone();
-                                });
-                        });
-                } else {
-                    CrabNews::body_outlines_iter_mut(model)
-                        .filter(|outline| outline.text == old_name)
-                        .for_each(|sub| sub.text = new_name.clone());
-                }
+                Subscriptions::rename_subscription(
+                    &mut model.subscriptions,
+                    folder_name,
+                    old_name,
+                    new_name,
+                );
             }
             Event::MoveSubscriptionToFolder(subscription, old_folder, new_folder) => {
-                match (old_folder, new_folder) {
-                    (None, Some(folder_new)) => {
-                        self.update(
-                            Event::AddNewSubscription(
-                                Some(folder_new),
-                                subscription.text.clone(),
-                                subscription.xml_url.unwrap(),
-                            ),
-                            model,
-                            caps,
-                        );
-                        self.update(
-                            Event::DeleteSubscription(None, subscription.text.clone()),
-                            model,
-                            caps,
-                        )
-                    }
-                    (Some(folder_old), None) => {
-                        self.update(
-                            Event::AddNewSubscription(
-                                None,
-                                subscription.text.clone(),
-                                subscription.xml_url.unwrap(),
-                            ),
-                            model,
-                            caps,
-                        );
-                        self.update(
-                            Event::DeleteSubscription(Some(folder_old), subscription.text.clone()),
-                            model,
-                            caps,
-                        );
-                    }
-                    (Some(folder_old), Some(folder_new)) => {
-                        self.update(
-                            Event::AddNewSubscription(
-                                Some(folder_new),
-                                subscription.text.clone(),
-                                subscription.xml_url.unwrap(),
-                            ),
-                            model,
-                            caps,
-                        );
-                        self.update(
-                            Event::DeleteSubscription(Some(folder_old), subscription.text.clone()),
-                            model,
-                            caps,
-                        );
-                    }
-                    _ => panic!(),
-                };
+                Subscriptions::move_subscription(
+                    &mut model.subscriptions,
+                    subscription,
+                    old_folder,
+                    new_folder,
+                );
             }
             Event::Fetch(_) => todo!(),
         };
@@ -243,6 +138,7 @@ impl App for CrabNews {
         ViewModel {
             // subscription_folder: format!("Count is: {}", model.subscription_folder),
             // subscription_name: format!("Count is: {}", model.subscription_name),
+            // subscriptions: format!("Count is: {:?}", model.subscriptions),
         }
     }
 }
@@ -265,7 +161,9 @@ mod test {
 
         let _ = app.update(Event::ImportSubscriptions(subs_opml_file), &mut model);
         let added_subs = model.subscriptions;
-        let expected_subs = OPML::from_str(example_subs).unwrap();
+        let expected_subs = Subscriptions {
+            opml: OPML::from_str(example_subs).unwrap(),
+        };
 
         assert_eq!(added_subs, expected_subs);
     }
@@ -274,11 +172,13 @@ mod test {
     fn export_subscriptions() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let date_created = Some(Local::now().format(OPML_DATE_FORMAT).to_string());
+        let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
         let subs_opml_name = format!("{} - Subscriptions.opml", date_created.clone().unwrap());
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
 
-        model.subscriptions = OPML::from_str(&example_subs).unwrap();
+        model.subscriptions = Subscriptions {
+            opml: OPML::from_str(&example_subs).unwrap(),
+        };
         let imported_content = model.subscriptions.clone();
 
         let _ = app.update(
@@ -287,7 +187,9 @@ mod test {
         );
 
         let mut exported_file = std::fs::File::open(subs_opml_name.clone()).unwrap();
-        let exported_content = OPML::from_reader(&mut exported_file).unwrap();
+        let exported_content = Subscriptions {
+            opml: OPML::from_reader(&mut exported_file).unwrap(),
+        };
 
         assert_eq!(exported_content, imported_content);
     }
@@ -304,7 +206,12 @@ mod test {
         };
 
         let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
-        let does_contain_folder = model.subscriptions.body.outlines.contains(added_folder);
+        let does_contain_folder = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .contains(added_folder);
 
         assert_eq!(does_contain_folder, true);
     }
@@ -322,7 +229,12 @@ mod test {
         let _ = app.update(Event::AddNewFolder(deleted_folder.text.clone()), &mut model);
         let _ = app.update(Event::DeleteFolder(deleted_folder.text.clone()), &mut model);
 
-        let does_contain_folder = model.subscriptions.body.outlines.contains(deleted_folder);
+        let does_contain_folder = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .contains(deleted_folder);
 
         assert_eq!(does_contain_folder, false);
     }
@@ -349,7 +261,12 @@ mod test {
             &mut model,
         );
 
-        let does_contain_folder = model.subscriptions.body.outlines.contains(expected_folder);
+        let does_contain_folder = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .contains(expected_folder);
 
         assert_eq!(does_contain_folder, true);
     }
@@ -371,7 +288,12 @@ mod test {
             &mut model,
         );
 
-        let does_contain_sub = model.subscriptions.body.outlines.contains(expected_sub);
+        let does_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .contains(expected_sub);
 
         assert_eq!(does_contain_sub, true);
     }
@@ -399,7 +321,12 @@ mod test {
             &mut model,
         );
 
-        let does_contain_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -430,7 +357,7 @@ mod test {
             &mut model,
         );
 
-        let does_contain_sub = model.subscriptions.body.outlines.contains(deleted_sub);
+        let does_contain_sub = model.subscriptions.opml.body.outlines.contains(deleted_sub);
 
         assert_eq!(does_contain_sub, false);
     }
@@ -460,7 +387,12 @@ mod test {
             &mut model,
         );
 
-        let does_contain_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(deleted_sub)))
             .unwrap();
@@ -506,12 +438,22 @@ mod test {
             &mut model,
         );
 
-        let does_contain_deleted_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_contain_deleted_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(delete_sub)))
             .unwrap();
 
-        let does_contain_expected_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_contain_expected_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -550,7 +492,12 @@ mod test {
             &mut model,
         );
 
-        let does_contain_sub = model.subscriptions.body.outlines.contains(expected_sub);
+        let does_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .contains(expected_sub);
 
         assert_eq!(does_contain_sub, true);
     }
@@ -589,7 +536,12 @@ mod test {
             &mut model,
         );
 
-        let does_contain_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -644,12 +596,22 @@ mod test {
             &mut model,
         );
 
-        let does_contain_untouched_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_contain_untouched_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(untouched_sub)))
             .unwrap();
 
-        let does_contain_expected_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_contain_expected_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -685,9 +647,19 @@ mod test {
             &mut model,
         );
 
-        let does_root_contain_sub = model.subscriptions.body.outlines.contains(expected_sub);
+        let does_root_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .contains(expected_sub);
 
-        let does_folder_contain_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_folder_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -720,9 +692,19 @@ mod test {
             &mut model,
         );
 
-        let does_root_contain_sub = model.subscriptions.body.outlines.contains(expected_sub);
+        let does_root_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .contains(expected_sub);
 
-        let does_folder_contain_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_folder_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -761,12 +743,22 @@ mod test {
             &mut model,
         );
 
-        let does_folder_one_contain_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_folder_one_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_one)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
-        let does_folder_two_contain_sub = CrabNews::body_outlines_iter_mut(&mut model)
+        let does_folder_two_contain_sub = model
+            .subscriptions
+            .opml
+            .body
+            .outlines
+            .iter_mut()
             .filter(|outline| outline.text == folder_two)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
