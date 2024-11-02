@@ -22,12 +22,53 @@ pub struct Subscriptions {
 }
 
 impl Subscriptions {
-    // do I need New() at all?
-    // pub fn new() -> Self {
-    //     Subscriptions {
-    //         opml: OPML::default(),
-    //     }
-    // }
+    pub fn is_duplicate(
+        &mut self,
+        folder_name: Option<FolderName>,
+        sub_name: Option<SubscriptionName>,
+        sub_url: Option<SubscriptionURL>,
+    ) -> bool {
+        let mut is_duplicate = false;
+
+        match (folder_name, sub_name, sub_url) {
+            (Some(folder_text), None, None) => {
+                let folder = &Outline {
+                    text: folder_text.clone(),
+                    title: Some(folder_text.clone()),
+                    ..Outline::default()
+                };
+                is_duplicate = self.opml.body.outlines.contains(folder);
+            }
+            (Some(folder_text), Some(sub_text), Some(sub_link)) => {
+                let subscription = &Outline {
+                    text: sub_text.to_string(),
+                    xml_url: Some(sub_link.to_string()),
+                    ..Outline::default()
+                };
+                let _ = self
+                    .opml
+                    .body
+                    .outlines
+                    .iter_mut()
+                    .filter(|outline| outline.text == folder_text)
+                    .for_each(|folder| {
+                        is_duplicate = folder.outlines.contains(subscription);
+                    });
+            }
+            (None, Some(sub_text), Some(sub_link)) => {
+                let subscription = &Outline {
+                    text: sub_text.to_string(),
+                    xml_url: Some(sub_link.to_string()),
+                    ..Outline::default()
+                };
+                is_duplicate = self.opml.body.outlines.contains(subscription);
+            }
+            _ => {
+                let _ = self.opml;
+            }
+        }
+        is_duplicate
+    }
 
     pub fn import(&mut self, subs_opml_file: OpmlFile) {
         let mut file = File::open(subs_opml_file).unwrap();

@@ -93,8 +93,8 @@ pub struct Model {
     feed_url: String,
 
     // subscriptions,
-    subscriptions: OPML,
-    subscriptions_folder: SubscriptionFolder, // root or folder
+    subscriptions: Subscriptions,
+    subscription_folder: SubscriptionFolder, // root or folder
 
     // left column
     feed_view: FeedView, // Smart View = today | all unread | starred | folder | feed
@@ -269,7 +269,7 @@ any of the crux_kv shell implementations.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Account {
     acct: AccountType,
-    subs: Vec<Subscription>,
+    subs: Subscriptions,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
@@ -311,25 +311,18 @@ pub enum AccountCloud {
 - [[http://opml.org/spec2.opml]]
 - http://outlinerhowto.opml.org
 
-- OPML crate to deal with subs for:
+- OPML crate to deal with subscriptions and outlines:
 #+begin_quote
-ImportSubscriptions,
-ExportSubscriptions,
-AddNewSubscription,
-DeleteSubscription,
-RenameSubscription,
-SubscriptionFolder,
-MoveSubscriptionToFolder,
+ImportSubscriptions(OpmlFile),
+ExportSubscriptions(OpmlName),
+AddNewFolder(FolderName),
+DeleteFolder(FolderName),
+RenameFolder(OldName, NewName),
+AddNewSubscription(Option<FolderName>, SubscriptionName, SubscriptionURL),
+DeleteSubscription(Option<FolderName>, SubscriptionName),
+RenameSubscription(Option<FolderName>, OldName, NewName),
+MoveSubscriptionToFolder(Subscription, OldFolder, NewFolder),
 #+end_quote
-
-#+begin_src rust
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-pub enum SubscriptionFolder {
-    #[default]
-    Root(Path),
-    Folder(Path),
-}
-#+end_src
 
 #+begin_src xml
 <!-- Example OPML -->
