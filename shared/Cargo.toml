@@ -24,6 +24,7 @@ wasm-bindgen = "0.2.95"
 feed-rs = "2.1.1"
 opml = "1.1.6"
 chrono = { version = "0.4", features = ["unstable-locales"] }
+thiserror = "1.0.66"
 
 [target.uniffi-bindgen.dependencies]
 uniffi = { version = "0.28.2", features = ["cli"] }
