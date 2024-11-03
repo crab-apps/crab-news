@@ -20,11 +20,11 @@ pub type SubscriptionURL = String;
 // https://github.com/Holllo/opml/issues/5
 #[derive(Debug, Error)]
 pub enum CustomErrors {
-    #[error("Cannot {action} {outline}. {subject} already exists.")]
+    #[error("Cannot {action} \"{outline}\". {reason}")]
     OutlineAlreadyExists {
         action: String,
         outline: String,
-        subject: String,
+        reason: String,
     },
 }
 
@@ -33,8 +33,15 @@ pub struct Subscriptions {
     pub opml: OPML,
 }
 
+#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct OutlineError {
+    pub title: String,
+    pub message: String,
+}
+
 impl Subscriptions {
     pub fn import(&mut self, subs_opml_file: OpmlFile) -> Result<&mut Self, opml::Error> {
+        // TODO use proper WASM/crate functionality to File operations
         let mut file = File::open(subs_opml_file).unwrap();
         self.opml = match OPML::from_reader(&mut file) {
             Ok(subscriptions) => subscriptions,
@@ -57,6 +64,7 @@ impl Subscriptions {
             ..OPML::default()
         };
         let export_content = xml_tag + &custon_opml.to_string().unwrap();
+        // TODO use proper WASM/crate functionality to File operations
         let _ = std::fs::write(subs_opml_name, &export_content);
     }
 
@@ -71,7 +79,7 @@ impl Subscriptions {
             return Err(self::CustomErrors::OutlineAlreadyExists {
                 action: "add new folder".to_string(),
                 outline: folder_name.to_string(),
-                subject: "It".to_string(),
+                reason: "It already exists.".to_string(),
             });
         } else {
             self.opml.body.outlines.push(test_folder);
@@ -99,9 +107,9 @@ impl Subscriptions {
 
         if self.opml.body.outlines.contains(&test_folder) {
             return Err(self::CustomErrors::OutlineAlreadyExists {
-                action: format!("rename folder {} to", old_folder_name.to_string()),
+                action: format!("rename folder \"{}\" to", old_folder_name.to_string()),
                 outline: new_folder_name.to_string(),
-                subject: format!("{}", new_folder_name.to_string()),
+                reason: "It already exists.".to_string(),
             });
         } else {
             self.opml
@@ -129,44 +137,45 @@ impl Subscriptions {
             ..Outline::default()
         };
 
-        if let Some(folder_text) = folder_name {
+        if let Some(folder_text) = &folder_name {
             if self
                 .opml
                 .body
                 .outlines
-                .iter_mut()
-                .filter(|outline| outline.text == folder_text)
+                .iter()
+                .filter(|outline| outline.text == *folder_text)
                 .find_map(|folder| Some(folder.outlines.contains(test_subscription)))
                 .unwrap()
             {
                 return Err(self::CustomErrors::OutlineAlreadyExists {
                     action: "add new subscription".to_string(),
                     outline: sub_name.to_string(),
-                    subject: "It".to_string(),
+                    reason: "You are already subscribed.".to_string(),
                 });
-            } else {
-                self.opml
-                    .body
-                    .outlines
-                    .iter_mut()
-                    .filter(|outline| outline.text == folder_text)
-                    .for_each(|folder| {
-                        folder.add_feed(sub_name.as_str(), sub_url.as_str());
-                    });
-                Ok(self)
             }
         } else {
             if self.opml.body.outlines.contains(test_subscription) {
                 return Err(self::CustomErrors::OutlineAlreadyExists {
                     action: "add new subscription".to_string(),
                     outline: sub_name.to_string(),
-                    subject: "It".to_string(),
-                    // subject: format!("{}", new_folder_name.to_string()),
+                    reason: "You are already subscribed.".to_string(),
                 });
-            } else {
-                self.opml.add_feed(sub_name.as_str(), sub_url.as_str());
-                Ok(self)
             }
+        };
+
+        if let Some(folder_text) = &folder_name {
+            self.opml
+                .body
+                .outlines
+                .iter_mut()
+                .filter(|outline| outline.text == *folder_text)
+                .for_each(|folder| {
+                    folder.add_feed(sub_name.as_str(), sub_url.as_str());
+                });
+            Ok(self)
+        } else {
+            self.opml.add_feed(sub_name.as_str(), sub_url.as_str());
+            Ok(self)
         }
     }
 
@@ -197,57 +206,61 @@ impl Subscriptions {
             text: new_name.to_string(),
             ..Outline::default()
         };
-        if let Some(folder_text) = folder_name {
+
+        if let Some(folder_text) = &folder_name {
             if self
                 .opml
                 .body
                 .outlines
-                .iter_mut()
-                .filter(|outline| outline.text == folder_text)
+                .iter()
+                .filter(|outline| outline.text == *folder_text)
                 .find_map(|folder| Some(folder.outlines.contains(test_subscription)))
                 .unwrap()
             {
                 return Err(self::CustomErrors::OutlineAlreadyExists {
                     action: format!("rename subscription {} to", old_name.to_string()),
                     outline: new_name.to_string(),
-                    subject: format!("{}", new_name.to_string()),
+                    reason: "It already exists.".to_string(),
                 });
-            } else {
-                self.opml
-                    .body
-                    .outlines
-                    .iter_mut()
-                    .filter(|outline| outline.text == folder_text)
-                    .for_each(|folder| {
-                        folder
-                            .outlines
-                            .iter_mut()
-                            .filter(|sub| sub.text == old_name)
-                            .for_each(|sub| {
-                                sub.text = new_name.clone();
-                            });
-                    });
-                Ok(self)
             }
         } else {
             if self.opml.body.outlines.contains(test_subscription) {
                 return Err(self::CustomErrors::OutlineAlreadyExists {
                     action: format!("rename subscription {} to", old_name.to_string()),
                     outline: new_name.to_string(),
-                    subject: format!("{}", new_name.to_string()),
+                    reason: "It already exists.".to_string(),
                 });
-            } else {
-                self.opml
-                    .body
-                    .outlines
-                    .iter_mut()
-                    .filter(|outline| outline.text == old_name)
-                    .for_each(|sub| sub.text = new_name.clone());
-                Ok(self)
             }
+        };
+
+        if let Some(folder_text) = folder_name {
+            self.opml
+                .body
+                .outlines
+                .iter_mut()
+                .filter(|outline| outline.text == folder_text)
+                .for_each(|folder| {
+                    folder
+                        .outlines
+                        .iter_mut()
+                        .filter(|sub| sub.text == old_name)
+                        .for_each(|sub| {
+                            sub.text = new_name.clone();
+                        });
+                });
+            Ok(self)
+        } else {
+            self.opml
+                .body
+                .outlines
+                .iter_mut()
+                .filter(|outline| outline.text == old_name)
+                .for_each(|sub| sub.text = new_name.clone());
+            Ok(self)
         }
     }
 
+    // TODO consider making thir a proper standalone fn
     pub fn move_subscription(
         &mut self,
         subscription: Subscription,

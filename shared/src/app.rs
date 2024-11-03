@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 
 mod subscriptions;
 pub use subscriptions::{
-    FolderName, NewFolder, NewName, OldFolder, OldName, OpmlFile, OpmlName, Subscription,
-    SubscriptionName, SubscriptionURL, Subscriptions,
+    FolderName, NewFolder, NewName, OldFolder, OldName, OpmlFile, OpmlName, OutlineError,
+    Subscription, SubscriptionName, SubscriptionURL, Subscriptions,
 };
 
 // ANCHOR: events
@@ -31,9 +31,10 @@ pub enum Event {
 // ANCHOR_END: events
 
 // ANCHOR: model
-#[derive(Default)]
+#[derive(Default, Serialize)]
 pub struct Model {
     subscriptions: Subscriptions,
+    outline_error: OutlineError,
 }
 
 // ANCHOR: view model
@@ -42,6 +43,7 @@ pub struct ViewModel {
     // pub subscription_folder: String,
     // pub subscription_name: String,
     // subscriptions: Subscriptions,
+    pub outline_error: OutlineError,
 }
 // ANCHOR_END: view model
 // ANCHOR_END: model
@@ -68,42 +70,87 @@ impl App for CrabNews {
     fn update(&self, event: Self::Event, model: &mut Self::Model, caps: &Self::Capabilities) {
         match event {
             Event::ImportSubscriptions(subs_opml_file) => {
-                Subscriptions::import(&mut model.subscriptions, subs_opml_file);
+                match Subscriptions::import(&mut model.subscriptions, subs_opml_file) {
+                    Ok(subscriptions) => subscriptions,
+                    Err(e) => {
+                        return model.outline_error = OutlineError {
+                            title: "Import Error".to_string(),
+                            message: e.to_string(),
+                        }
+                    }
+                };
+                ()
             }
             Event::ExportSubscriptions(subs_opml_name) => {
                 Subscriptions::export(&model.subscriptions, subs_opml_name);
             }
             Event::AddNewFolder(folder_name) => {
-                Subscriptions::add_folder(&mut model.subscriptions, folder_name);
+                match Subscriptions::add_folder(&mut model.subscriptions, folder_name) {
+                    Ok(subscriptions) => subscriptions,
+                    Err(e) => {
+                        return model.outline_error = OutlineError {
+                            title: "New Folder Error".to_string(),
+                            message: e.to_string(),
+                        }
+                    }
+                };
+                ()
             }
             Event::DeleteFolder(folder_name) => {
                 Subscriptions::delete_folder(&mut model.subscriptions, folder_name);
             }
             Event::RenameFolder(old_folder_name, new_folder_name) => {
-                Subscriptions::rename_folder(
+                match Subscriptions::rename_folder(
                     &mut model.subscriptions,
                     old_folder_name,
                     new_folder_name,
-                );
+                ) {
+                    Ok(subscriptions) => subscriptions,
+                    Err(e) => {
+                        return model.outline_error = OutlineError {
+                            title: "Rename Folder Error".to_string(),
+                            message: e.to_string(),
+                        }
+                    }
+                };
+                ()
             }
             Event::AddNewSubscription(folder_name, sub_name, sub_url) => {
-                Subscriptions::add_subscription(
+                match Subscriptions::add_subscription(
                     &mut model.subscriptions,
                     folder_name,
                     sub_name,
                     sub_url,
-                );
+                ) {
+                    Ok(subscriptions) => subscriptions,
+                    Err(e) => {
+                        return model.outline_error = OutlineError {
+                            title: "Subscription Error".to_string(),
+                            message: e.to_string(),
+                        }
+                    }
+                };
+                ()
             }
             Event::DeleteSubscription(folder_name, sub_name) => {
                 Subscriptions::delete_subscription(&mut model.subscriptions, folder_name, sub_name);
             }
             Event::RenameSubscription(folder_name, old_name, new_name) => {
-                Subscriptions::rename_subscription(
+                match Subscriptions::rename_subscription(
                     &mut model.subscriptions,
                     folder_name,
                     old_name,
                     new_name,
-                );
+                ) {
+                    Ok(subscriptions) => subscriptions,
+                    Err(e) => {
+                        return model.outline_error = OutlineError {
+                            title: "Subscription Error".to_string(),
+                            message: e.to_string(),
+                        }
+                    }
+                };
+                ()
             }
             Event::MoveSubscriptionToFolder(subscription, old_folder, new_folder) => {
                 Subscriptions::move_subscription(
@@ -119,8 +166,9 @@ impl App for CrabNews {
         caps.render.render();
     }
 
-    fn view(&self, _model: &Self::Model) -> Self::ViewModel {
+    fn view(&self, model: &Self::Model) -> Self::ViewModel {
         ViewModel {
+            outline_error: model.outline_error.clone(),
             // subscription_folder: format!("Count is: {}", model.subscription_folder),
             // subscription_name: format!("Count is: {}", model.subscription_name),
             // subscriptions: format!("Count is: {:?}", model.subscriptions),
@@ -131,7 +179,7 @@ impl App for CrabNews {
 // ANCHOR_END: app
 
 // ANCHOR: test
-// TODO add all checks for dupes and so on
+// TODO add all checks outline_error: model.outline_error.clone(),
 #[cfg(test)]
 mod test {
     use super::*;
@@ -153,6 +201,32 @@ mod test {
         };
 
         assert_eq!(added_subs, expected_subs);
+    }
+
+    #[test]
+    fn fail_import_for_invalid_xml() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model = Model::default();
+        let subs_opml_file = "invalid_xml.opml".to_string();
+
+        let _ = app.update(Event::ImportSubscriptions(subs_opml_file), &mut model);
+        let actual_error = model.outline_error.message;
+        let expected_error = "Failed to process XML file";
+
+        assert_eq!(actual_error, expected_error);
+    }
+
+    #[test]
+    fn fail_import_for_invalid_opml_version() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model = Model::default();
+        let subs_opml_file = "invalid_opml_version.opml".to_string();
+
+        let _ = app.update(Event::ImportSubscriptions(subs_opml_file), &mut model);
+        let actual_error = model.outline_error.message;
+        let expected_error = "Unsupported OPML version: \"0.1\"";
+
+        assert_eq!(actual_error, expected_error);
     }
 
     #[test]
@@ -201,6 +275,23 @@ mod test {
             .contains(added_folder);
 
         assert_eq!(does_contain_folder, true);
+    }
+
+    #[test]
+    fn fail_add_new_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_name = "Added Folder".to_string();
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let actual_error = model.outline_error.message;
+        let expected_error = format!(
+            "Cannot add new folder \"{}\". It already exists.",
+            folder_name
+        );
+
+        assert_eq!(actual_error, expected_error);
     }
 
     #[test]
@@ -256,6 +347,31 @@ mod test {
             .contains(expected_folder);
 
         assert_eq!(does_contain_folder, true);
+    }
+
+    #[test]
+    fn fail_rename_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let test_folder = &Outline {
+            text: "Expected Folder".to_string(),
+            title: Some("Expected Folder".to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(test_folder.text.clone()), &mut model);
+        let _ = app.update(
+            Event::RenameFolder(test_folder.text.clone(), test_folder.text.clone()),
+            &mut model,
+        );
+        let actual_error = model.outline_error.message;
+        let expected_error = format!(
+            "Cannot rename folder \"{}\" to \"{}\". It already exists.",
+            test_folder.text.to_string(),
+            test_folder.text.to_string()
+        );
+
+        assert_eq!(actual_error, expected_error);
     }
 
     #[test]
@@ -319,6 +435,76 @@ mod test {
             .unwrap();
 
         assert_eq!(does_contain_sub, true);
+    }
+
+    #[test]
+    fn fail_add_new_subscription_to_root() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_name = "New Sub Folder".to_string();
+        let sub_name = "Sub Name".to_string();
+        let sub_link = "https://example.com/".to_string();
+        let test_subscription = &Outline {
+            text: sub_name.to_string(),
+            xml_url: Some(sub_link.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(None, sub_name.clone(), sub_link.clone()),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::AddNewSubscription(None, sub_name.clone(), sub_link.clone()),
+            &mut model,
+        );
+        let actual_error = model.outline_error.message;
+        let expected_error = format!(
+            "Cannot add new subscription \"{}\". You are already subscribed.",
+            test_subscription.text.to_string()
+        );
+
+        assert_eq!(actual_error, expected_error);
+    }
+
+    #[test]
+    fn fail_add_new_subscription_to_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_name = "New Sub Folder".to_string();
+        let sub_name = "Sub Name".to_string();
+        let sub_link = "https://example.com/".to_string();
+        let test_subscription = &Outline {
+            text: sub_name.to_string(),
+            xml_url: Some(sub_link.to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(
+                Some(folder_name.clone()),
+                sub_name.clone(),
+                sub_link.clone(),
+            ),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::AddNewSubscription(
+                Some(folder_name.clone()),
+                sub_name.clone(),
+                sub_link.clone(),
+            ),
+            &mut model,
+        );
+        let actual_error = model.outline_error.message;
+        let expected_error = format!(
+            "Cannot add new subscription \"{}\". You are already subscribed.",
+            test_subscription.text.to_string()
+        );
+
+        assert_eq!(actual_error, expected_error);
     }
 
     #[test]
