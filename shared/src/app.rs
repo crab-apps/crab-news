@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 
 mod subscriptions;
 pub use subscriptions::{
-    FolderName, NewFolder, NewName, OldFolder, OldName, OpmlFile, OpmlName, OutlineError,
-    Subscription, SubscriptionName, SubscriptionURL, Subscriptions,
+    FolderName, NewFolder, NewName, OldFolder, OldName, OpmlFile, OpmlName, Subscription,
+    SubscriptionName, SubscriptionURL, Subscriptions,
 };
 
 // ANCHOR: events
@@ -35,6 +35,12 @@ pub enum Event {
 pub struct Model {
     subscriptions: Subscriptions,
     outline_error: OutlineError,
+}
+
+#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct OutlineError {
+    pub title: String,
+    pub message: String,
 }
 
 // ANCHOR: view model

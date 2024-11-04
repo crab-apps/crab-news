@@ -33,12 +33,6 @@ pub struct Subscriptions {
     pub opml: OPML,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-pub struct OutlineError {
-    pub title: String,
-    pub message: String,
-}
-
 impl Subscriptions {
     pub fn import(&mut self, subs_opml_file: OpmlFile) -> Result<&mut Self, opml::Error> {
         // TODO use proper WASM/crate functionality to File operations
