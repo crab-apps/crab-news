@@ -35,7 +35,7 @@ pub struct Subscriptions {
 
 impl Subscriptions {
     pub fn import(&mut self, subs_opml_file: OpmlFile) -> Result<&mut Self, opml::Error> {
-        // TODO use proper WASM/crate functionality to File operations
+        // TODO use proper Shell/WASM/crate functionality to File operations
         let mut file = File::open(subs_opml_file).unwrap();
         self.opml = match OPML::from_reader(&mut file) {
             Ok(subscriptions) => subscriptions,
@@ -58,7 +58,7 @@ impl Subscriptions {
             ..OPML::default()
         };
         let export_content = xml_tag + &custon_opml.to_string().unwrap();
-        // TODO use proper WASM/crate functionality to File operations
+        // TODO use proper Shell/WASM/crate functionality to File operations
         let _ = std::fs::write(subs_opml_name, &export_content);
     }
 
@@ -68,13 +68,14 @@ impl Subscriptions {
             title: Some(folder_name.clone()),
             ..Outline::default()
         };
+        let duplicate_err = self::CustomErrors::OutlineAlreadyExists {
+            action: "add new folder".to_string(),
+            outline: folder_name.to_string(),
+            reason: "It already exists.".to_string(),
+        };
 
         if self.opml.body.outlines.contains(&test_folder) {
-            return Err(self::CustomErrors::OutlineAlreadyExists {
-                action: "add new folder".to_string(),
-                outline: folder_name.to_string(),
-                reason: "It already exists.".to_string(),
-            });
+            Err(duplicate_err)
         } else {
             self.opml.body.outlines.push(test_folder);
             Ok(self)
@@ -98,13 +99,14 @@ impl Subscriptions {
             title: Some(new_folder_name.clone()),
             ..Outline::default()
         };
+        let duplicate_err = self::CustomErrors::OutlineAlreadyExists {
+            action: format!("rename folder \"{}\" to", old_folder_name.to_string()),
+            outline: new_folder_name.to_string(),
+            reason: "It already exists.".to_string(),
+        };
 
         if self.opml.body.outlines.contains(&test_folder) {
-            return Err(self::CustomErrors::OutlineAlreadyExists {
-                action: format!("rename folder \"{}\" to", old_folder_name.to_string()),
-                outline: new_folder_name.to_string(),
-                reason: "It already exists.".to_string(),
-            });
+            Err(duplicate_err)
         } else {
             self.opml
                 .body
@@ -119,6 +121,7 @@ impl Subscriptions {
         }
     }
 
+    // FIXME check against unique URL value instead
     pub fn add_subscription(
         &mut self,
         folder_name: Option<FolderName>,
@@ -130,7 +133,13 @@ impl Subscriptions {
             xml_url: Some(sub_url.to_string()),
             ..Outline::default()
         };
+        let duplicate_err = self::CustomErrors::OutlineAlreadyExists {
+            action: "add new subscription".to_string(),
+            outline: sub_name.to_string(),
+            reason: "You are already subscribed.".to_string(),
+        };
 
+        // NOTE adding a duplicate sub should always fail no matter where it exists
         if let Some(folder_text) = &folder_name {
             if self
                 .opml
@@ -141,20 +150,11 @@ impl Subscriptions {
                 .find_map(|folder| Some(folder.outlines.contains(test_subscription)))
                 .unwrap()
             {
-                return Err(self::CustomErrors::OutlineAlreadyExists {
-                    action: "add new subscription".to_string(),
-                    outline: sub_name.to_string(),
-                    reason: "You are already subscribed.".to_string(),
-                });
+                return Err(duplicate_err);
             }
-        } else {
-            if self.opml.body.outlines.contains(test_subscription) {
-                return Err(self::CustomErrors::OutlineAlreadyExists {
-                    action: "add new subscription".to_string(),
-                    outline: sub_name.to_string(),
-                    reason: "You are already subscribed.".to_string(),
-                });
-            }
+        }; // NOTE don't use else here!!
+        if self.opml.body.outlines.contains(test_subscription) {
+            return Err(duplicate_err);
         };
 
         if let Some(folder_text) = &folder_name {
@@ -200,7 +200,13 @@ impl Subscriptions {
             text: new_name.to_string(),
             ..Outline::default()
         };
+        let duplicate_err = self::CustomErrors::OutlineAlreadyExists {
+            action: format!("rename subscription {} to", old_name.to_string()),
+            outline: new_name.to_string(),
+            reason: "It already exists.".to_string(),
+        };
 
+        // NOTE rename to an existing sub should always fail no matter where it exists
         if let Some(folder_text) = &folder_name {
             if self
                 .opml
@@ -211,28 +217,20 @@ impl Subscriptions {
                 .find_map(|folder| Some(folder.outlines.contains(test_subscription)))
                 .unwrap()
             {
-                return Err(self::CustomErrors::OutlineAlreadyExists {
-                    action: format!("rename subscription {} to", old_name.to_string()),
-                    outline: new_name.to_string(),
-                    reason: "It already exists.".to_string(),
-                });
+                return Err(duplicate_err);
             }
-        } else {
-            if self.opml.body.outlines.contains(test_subscription) {
-                return Err(self::CustomErrors::OutlineAlreadyExists {
-                    action: format!("rename subscription {} to", old_name.to_string()),
-                    outline: new_name.to_string(),
-                    reason: "It already exists.".to_string(),
-                });
-            }
+        }; // NOTE don't use else here!!
+
+        if self.opml.body.outlines.contains(test_subscription) {
+            return Err(duplicate_err);
         };
 
-        if let Some(folder_text) = folder_name {
+        if let Some(folder_text) = &folder_name {
             self.opml
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == folder_text)
+                .filter(|outline| outline.text == *folder_text)
                 .for_each(|folder| {
                     folder
                         .outlines
@@ -254,7 +252,7 @@ impl Subscriptions {
         }
     }
 
-    // TODO consider making thir a proper standalone fn
+    // FIXME make sure deleting first isn't an issue
     pub fn move_subscription(
         &mut self,
         subscription: Subscription,
@@ -263,31 +261,31 @@ impl Subscriptions {
     ) {
         match (old_folder, new_folder) {
             (None, Some(folder_new)) => {
+                Self::delete_subscription(self, None, subscription.text.clone());
                 let _ = Self::add_subscription(
                     self,
                     Some(folder_new),
                     subscription.text.clone(),
                     subscription.xml_url.unwrap(),
                 );
-                Self::delete_subscription(self, None, subscription.text.clone());
             }
             (Some(folder_old), None) => {
+                Self::delete_subscription(self, Some(folder_old), subscription.text.clone());
                 let _ = Self::add_subscription(
                     self,
                     None,
                     subscription.text.clone(),
                     subscription.xml_url.unwrap(),
                 );
-                Self::delete_subscription(self, Some(folder_old), subscription.text.clone());
             }
             (Some(folder_old), Some(folder_new)) => {
+                Self::delete_subscription(self, Some(folder_old), subscription.text.clone());
                 let _ = Self::add_subscription(
                     self,
                     Some(folder_new),
                     subscription.text.clone(),
                     subscription.xml_url.unwrap(),
                 );
-                Self::delete_subscription(self, Some(folder_old), subscription.text.clone());
             }
             _ => panic!(),
         }

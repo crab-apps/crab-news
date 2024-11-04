@@ -253,6 +253,7 @@ mod test {
             &mut model,
         );
 
+        // TODO use proper Shell/WASM/crate functionality to File operations
         let mut exported_file = std::fs::File::open(subs_opml_name.clone()).unwrap();
         let exported_content = Subscriptions {
             opml: OPML::from_reader(&mut exported_file).unwrap(),
