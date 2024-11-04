@@ -35,6 +35,9 @@ pub enum Event {
 pub struct Model {
     subscriptions: Subscriptions,
     outline_error: OutlineError,
+    // subscription_folder: FolderName,
+    // subscription_name: SubscriptionName,
+    // subscription_url: SubscriptionURL,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
@@ -46,10 +49,11 @@ pub struct OutlineError {
 // ANCHOR: view model
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 pub struct ViewModel {
-    // pub subscription_folder: String,
-    // pub subscription_name: String,
-    // subscriptions: Subscriptions,
+    pub subscriptions: Subscriptions,
     pub outline_error: OutlineError,
+    // pub subscription_folder: FolderName,
+    // pub subscription_name: SubscriptionName,
+    // pub subscription_url: SubscriptionURL,
 }
 // ANCHOR_END: view model
 // ANCHOR_END: model
@@ -175,6 +179,7 @@ impl App for CrabNews {
     fn view(&self, model: &Self::Model) -> Self::ViewModel {
         ViewModel {
             outline_error: model.outline_error.clone(),
+            subscriptions: model.subscriptions.clone(),
             // subscription_folder: format!("Count is: {}", model.subscription_folder),
             // subscription_name: format!("Count is: {}", model.subscription_name),
             // subscriptions: format!("Count is: {:?}", model.subscriptions),
