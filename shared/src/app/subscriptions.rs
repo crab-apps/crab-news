@@ -14,7 +14,8 @@ pub type OldFolder = Option<FolderName>;
 pub type NewFolder = Option<FolderName>;
 pub type Subscription = Outline;
 pub type SubscriptionName = String;
-pub type SubscriptionURL = String;
+// pub type SubscriptionHome = String;
+pub type SubscriptionFeed = String;
 // ANCHOR_END: types aliases
 
 // https://github.com/Holllo/opml/issues/5
@@ -29,13 +30,19 @@ pub enum CustomErrors {
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct OutlineError {
+    pub title: String,
+    pub message: String,
+}
+
+#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Subscriptions {
     pub opml: OPML,
 }
 
 impl Subscriptions {
     pub fn import(&mut self, subs_opml_file: OpmlFile) -> Result<&mut Self, opml::Error> {
-        // TODO use proper Shell/WASM/crate functionality to File operations
+        // TODO use proper Shell/WASM functionality to pass on File operations
         let mut file = File::open(subs_opml_file).unwrap();
         self.opml = match OPML::from_reader(&mut file) {
             Ok(subscriptions) => subscriptions,
@@ -58,7 +65,7 @@ impl Subscriptions {
             ..OPML::default()
         };
         let export_content = xml_tag + &custon_opml.to_string().unwrap();
-        // TODO use proper Shell/WASM/crate functionality to File operations
+        // TODO use proper Shell/WASM functionality to pass on File operations
         let _ = std::fs::write(subs_opml_name, &export_content);
     }
 
@@ -121,16 +128,16 @@ impl Subscriptions {
         }
     }
 
-    // FIXME check against unique URL value instead
     pub fn add_subscription(
         &mut self,
         folder_name: Option<FolderName>,
         sub_name: SubscriptionName,
-        sub_url: SubscriptionURL,
+        sub_feed: SubscriptionFeed,
     ) -> Result<&mut Self, self::CustomErrors> {
         let test_subscription = &Outline {
             text: sub_name.to_string(),
-            xml_url: Some(sub_url.to_string()),
+            xml_url: Some(sub_feed.to_string()),
+            // TODO add: title, description, type, version, html_url. are these derived or manual?
             ..Outline::default()
         };
         let duplicate_err = self::CustomErrors::OutlineAlreadyExists {
@@ -164,11 +171,11 @@ impl Subscriptions {
                 .iter_mut()
                 .filter(|outline| outline.text == *folder_text)
                 .for_each(|folder| {
-                    folder.add_feed(sub_name.as_str(), sub_url.as_str());
+                    folder.add_feed(sub_name.as_str(), sub_feed.as_str());
                 });
             Ok(self)
         } else {
-            self.opml.add_feed(sub_name.as_str(), sub_url.as_str());
+            self.opml.add_feed(sub_name.as_str(), sub_feed.as_str());
             Ok(self)
         }
     }
@@ -198,6 +205,7 @@ impl Subscriptions {
     ) -> Result<&mut Self, self::CustomErrors> {
         let test_subscription = &Outline {
             text: new_name.to_string(),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
         let duplicate_err = self::CustomErrors::OutlineAlreadyExists {

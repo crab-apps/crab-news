@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 
 mod subscriptions;
 pub use subscriptions::{
-    FolderName, NewFolder, NewName, OldFolder, OldName, OpmlFile, OpmlName, Subscription,
-    SubscriptionName, SubscriptionURL, Subscriptions,
+    FolderName, NewFolder, NewName, OldFolder, OldName, OpmlFile, OpmlName, OutlineError,
+    Subscription, SubscriptionFeed, SubscriptionName, Subscriptions,
 };
 
 // ANCHOR: events
@@ -19,7 +19,7 @@ pub enum Event {
     AddNewFolder(FolderName),
     DeleteFolder(FolderName),
     RenameFolder(OldName, NewName),
-    AddNewSubscription(Option<FolderName>, SubscriptionName, SubscriptionURL),
+    AddNewSubscription(Option<FolderName>, SubscriptionName, SubscriptionFeed),
     DeleteSubscription(Option<FolderName>, SubscriptionName),
     RenameSubscription(Option<FolderName>, OldName, NewName),
     MoveSubscriptionToFolder(Subscription, OldFolder, NewFolder),
@@ -38,12 +38,6 @@ pub struct Model {
     // subscription_folder: FolderName,
     // subscription_name: SubscriptionName,
     // subscription_url: SubscriptionURL,
-}
-
-#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-pub struct OutlineError {
-    pub title: String,
-    pub message: String,
 }
 
 // ANCHOR: view model
@@ -125,12 +119,12 @@ impl App for CrabNews {
                 };
                 ()
             }
-            Event::AddNewSubscription(folder_name, sub_name, sub_url) => {
+            Event::AddNewSubscription(folder_name, sub_name, sub_feed) => {
                 match Subscriptions::add_subscription(
                     &mut model.subscriptions,
                     folder_name,
                     sub_name,
-                    sub_url,
+                    sub_feed,
                 ) {
                     Ok(subscriptions) => subscriptions,
                     Err(e) => {
@@ -393,6 +387,7 @@ mod folder {
     }
 }
 
+// TODO add: title, description, type, version, html_url. are these derived or manual?
 #[cfg(test)]
 mod add_subscription {
     use super::*;
@@ -404,15 +399,15 @@ mod add_subscription {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
         let sub_name = "New Sub Root".to_string();
-        let sub_link = "https://example.com/".to_string();
+        let sub_feed = "https://example.com/atom.xml".to_string();
         let expected_sub = &Outline {
             text: sub_name.to_string(),
-            xml_url: Some(sub_link.to_string()),
+            xml_url: Some(sub_feed.to_string()),
             ..Outline::default()
         };
 
         let _ = app.update(
-            Event::AddNewSubscription(None, sub_name.clone(), sub_link.clone()),
+            Event::AddNewSubscription(None, sub_name.clone(), sub_feed.clone()),
             &mut model,
         );
 
@@ -431,11 +426,11 @@ mod add_subscription {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
         let folder_name = "New Sub Folder".to_string();
-        let sub_name = "Sub Name".to_string();
-        let sub_link = "https://example.com/".to_string();
+        let sub_name = "New Sub Folder".to_string();
+        let sub_feed = "https://example.com/atom.xml".to_string();
         let expected_sub = &Outline {
             text: sub_name.to_string(),
-            xml_url: Some(sub_link.to_string()),
+            xml_url: Some(sub_feed.to_string()),
             ..Outline::default()
         };
 
@@ -444,7 +439,7 @@ mod add_subscription {
             Event::AddNewSubscription(
                 Some(folder_name.clone()),
                 sub_name.clone(),
-                sub_link.clone(),
+                sub_feed.clone(),
             ),
             &mut model,
         );
@@ -466,22 +461,20 @@ mod add_subscription {
     fn fail_add_new_subscription_to_root() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let folder_name = "New Sub Folder".to_string();
-        let sub_name = "Sub Name".to_string();
-        let sub_link = "https://example.com/".to_string();
+        let sub_name = "New Sub Root".to_string();
+        let sub_feed = "https://example.com/atom.xml".to_string();
         let test_subscription = &Outline {
             text: sub_name.to_string(),
-            xml_url: Some(sub_link.to_string()),
+            xml_url: Some(sub_feed.to_string()),
             ..Outline::default()
         };
 
-        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
         let _ = app.update(
-            Event::AddNewSubscription(None, sub_name.clone(), sub_link.clone()),
+            Event::AddNewSubscription(None, sub_name.clone(), sub_feed.clone()),
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(None, sub_name.clone(), sub_link.clone()),
+            Event::AddNewSubscription(None, sub_name.clone(), sub_feed.clone()),
             &mut model,
         );
         let actual_error = model.outline_error.message;
@@ -498,11 +491,11 @@ mod add_subscription {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
         let folder_name = "New Sub Folder".to_string();
-        let sub_name = "Sub Name".to_string();
-        let sub_link = "https://example.com/".to_string();
+        let sub_name = "New Sub Folder".to_string();
+        let sub_feed = "https://example.com/atom.xml".to_string();
         let test_subscription = &Outline {
             text: sub_name.to_string(),
-            xml_url: Some(sub_link.to_string()),
+            xml_url: Some(sub_feed.to_string()),
             ..Outline::default()
         };
 
@@ -511,7 +504,7 @@ mod add_subscription {
             Event::AddNewSubscription(
                 Some(folder_name.clone()),
                 sub_name.clone(),
-                sub_link.clone(),
+                sub_feed.clone(),
             ),
             &mut model,
         );
@@ -519,7 +512,7 @@ mod add_subscription {
             Event::AddNewSubscription(
                 Some(folder_name.clone()),
                 sub_name.clone(),
-                sub_link.clone(),
+                sub_feed.clone(),
             ),
             &mut model,
         );
@@ -545,7 +538,7 @@ mod delete_subscription {
         let mut model: Model = Model::default();
         let deleted_sub = &Outline {
             text: "Deleted Sub Root".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
 
@@ -574,7 +567,7 @@ mod delete_subscription {
         let folder_name = "Deleted Sub Folder".to_string();
         let deleted_sub = &Outline {
             text: "Sub Name".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
 
@@ -612,7 +605,7 @@ mod delete_subscription {
         let folder_name = "Deleted Multi Subs".to_string();
         let delete_sub = &Outline {
             text: "Deleted Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
         let expected_sub = &Outline {
@@ -682,12 +675,12 @@ mod rename_subscription {
         let mut model: Model = Model::default();
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
         let expected_sub = &Outline {
             text: "Renamed Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
 
@@ -715,18 +708,51 @@ mod rename_subscription {
     }
 
     #[test]
+    fn fail_rename_subscription_in_root() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let rename_sub = &Outline {
+            text: "Old Sub".to_string(),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(
+            Event::AddNewSubscription(
+                None,
+                rename_sub.text.clone(),
+                rename_sub.xml_url.clone().unwrap().clone(),
+            ),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::RenameSubscription(None, rename_sub.text.clone(), rename_sub.text.clone()),
+            &mut model,
+        );
+
+        let actual_error = model.outline_error.message;
+        let expected_error = format!(
+            "Cannot rename subscription {} to \"{}\". It already exists.",
+            rename_sub.text.to_string(),
+            rename_sub.text.to_string(),
+        );
+
+        assert_eq!(actual_error, expected_error);
+    }
+
+    #[test]
     fn rename_subscription_in_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
         let folder_name = "Renamed Sub Folder".to_string();
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
         let expected_sub = &Outline {
             text: "Renamed Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
 
@@ -762,23 +788,62 @@ mod rename_subscription {
     }
 
     #[test]
+    fn fail_rename_subscription_in_folder() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_name = "Renamed Sub Folder".to_string();
+        let rename_sub = &Outline {
+            text: "Old Sub".to_string(),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(
+                Some(folder_name.clone()),
+                rename_sub.text.clone(),
+                rename_sub.xml_url.clone().unwrap().clone(),
+            ),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::RenameSubscription(
+                Some(folder_name.clone()),
+                rename_sub.text.clone(),
+                rename_sub.text.clone(),
+            ),
+            &mut model,
+        );
+
+        let actual_error = model.outline_error.message;
+        let expected_error = format!(
+            "Cannot rename subscription {} to \"{}\". It already exists.",
+            rename_sub.text.to_string(),
+            rename_sub.text.to_string(),
+        );
+
+        assert_eq!(actual_error, expected_error);
+    }
+
+    #[test]
     fn rename_subscription_in_folder_with_multi_subs() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
         let folder_name = "Renamed Multi Sub Folder".to_string();
         let untouched_sub = &Outline {
             text: "Untouched Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
         let expected_sub = &Outline {
             text: "Renamed Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
 
@@ -833,6 +898,58 @@ mod rename_subscription {
             true
         );
     }
+
+    #[test]
+    fn fail_rename_subscription_in_folder_with_multi_subs() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model: Model = Model::default();
+        let folder_name = "Renamed Multi Sub Folder".to_string();
+        let untouched_sub = &Outline {
+            text: "Untouched Sub".to_string(),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
+            ..Outline::default()
+        };
+        let rename_sub = &Outline {
+            text: "Old Sub".to_string(),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
+            ..Outline::default()
+        };
+
+        let _ = app.update(Event::AddNewFolder(folder_name.clone()), &mut model);
+        let _ = app.update(
+            Event::AddNewSubscription(
+                Some(folder_name.clone()),
+                untouched_sub.text.clone(),
+                untouched_sub.xml_url.clone().unwrap().clone(),
+            ),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::AddNewSubscription(
+                Some(folder_name.clone()),
+                rename_sub.text.clone(),
+                rename_sub.xml_url.clone().unwrap().clone(),
+            ),
+            &mut model,
+        );
+        let _ = app.update(
+            Event::RenameSubscription(
+                Some(folder_name.clone()),
+                rename_sub.text.clone(),
+                rename_sub.text.clone(),
+            ),
+            &mut model,
+        );
+
+        let actual_error = model.outline_error.message;
+        let expected_error = format!(
+            "Cannot rename subscription {} to \"{}\". It already exists.",
+            rename_sub.text.to_string(),
+            rename_sub.text.to_string(),
+        );
+
+        assert_eq!(actual_error, expected_error);
+    }
 }
 
 #[cfg(test)]
@@ -840,6 +957,7 @@ mod move_subscription {
     use super::*;
     use crux_core::testing::AppTester;
     use opml::Outline;
+
     #[test]
     fn move_subscription_from_root_to_folder() {
         let app = AppTester::<CrabNews, _>::default();
@@ -847,7 +965,7 @@ mod move_subscription {
         let folder_name = "Move Sub To Folder".to_string();
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
 
@@ -892,7 +1010,7 @@ mod move_subscription {
         let folder_name = "Move Sub To Root".to_string();
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
 
@@ -938,7 +1056,7 @@ mod move_subscription {
         let folder_two = "Folder Two".to_string();
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
-            xml_url: Some("https://example.com/".to_string()),
+            xml_url: Some("https://example.com/atom.xml".to_string()),
             ..Outline::default()
         };
 
