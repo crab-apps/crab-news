@@ -189,14 +189,13 @@ impl App for CrabNews {
 // ANCHOR_END: impl_app
 // ANCHOR_END: app
 
-// ANCHOR: test
-// TODO add all checks outline_error: model.outline_error.clone(),
+// ANCHOR: tests
 #[cfg(test)]
-mod test {
+mod import_export {
     use super::*;
     use chrono::prelude::Local;
     use crux_core::testing::AppTester;
-    use opml::{Outline, OPML};
+    use opml::OPML;
 
     #[test]
     fn import_subscriptions() {
@@ -266,6 +265,13 @@ mod test {
 
         assert_eq!(exported_content, imported_content);
     }
+}
+
+#[cfg(test)]
+mod folder {
+    use super::*;
+    use crux_core::testing::AppTester;
+    use opml::Outline;
 
     #[test]
     fn add_new_folder() {
@@ -385,6 +391,13 @@ mod test {
 
         assert_eq!(actual_error, expected_error);
     }
+}
+
+#[cfg(test)]
+mod add_subscription {
+    use super::*;
+    use crux_core::testing::AppTester;
+    use opml::Outline;
 
     #[test]
     fn add_new_subscription_to_root() {
@@ -518,6 +531,13 @@ mod test {
 
         assert_eq!(actual_error, expected_error);
     }
+}
+
+#[cfg(test)]
+mod delete_subscription {
+    use super::*;
+    use crux_core::testing::AppTester;
+    use opml::Outline;
 
     #[test]
     fn delete_subscription_from_root() {
@@ -648,6 +668,13 @@ mod test {
             true
         );
     }
+}
+
+#[cfg(test)]
+mod rename_subscription {
+    use super::*;
+    use crux_core::testing::AppTester;
+    use opml::Outline;
 
     #[test]
     fn rename_subscription_in_root() {
@@ -806,7 +833,13 @@ mod test {
             true
         );
     }
+}
 
+#[cfg(test)]
+mod move_subscription {
+    use super::*;
+    use crux_core::testing::AppTester;
+    use opml::Outline;
     #[test]
     fn move_subscription_from_root_to_folder() {
         let app = AppTester::<CrabNews, _>::default();
@@ -954,4 +987,4 @@ mod test {
         );
     }
 }
-// ANCHOR_END: test
+// ANCHOR_END: tests
