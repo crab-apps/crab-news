@@ -1,17 +1,22 @@
 // ANCHOR: app
 use crux_core::{render::Render, App};
-use feed_rs::model::Feed;
+use crux_http::Http;
 use serde::{Deserialize, Serialize};
-// use crux_http::Http;
 // use url::Url;
 
 // NOTE - crate: https://crates.io/crates/opml
-// - to deal with subscriptions and outlines:
+// to deal with subscriptions and outlines:
 mod subscriptions;
 pub use subscriptions::{
     FolderName, NewFolder, NewName, OldFolder, OldLink, OldName, OpmlFile, OpmlName, Subscription,
     SubscriptionLink, SubscriptionTitle, Subscriptions,
 };
+
+// NOTE - crate: https://crates.io/crates/feed-rs
+// to deal with feeds data *after* subscribtions.
+// to deal with shell data to display "news" in entry and content columns.
+mod feeds;
+pub use feeds::Feeds;
 
 // ANCHOR: events
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -26,22 +31,25 @@ pub enum Event {
     DeleteSubscription(Option<FolderName>, SubscriptionTitle),
     RenameSubscription(Option<FolderName>, OldName, OldLink, NewName),
     MoveSubscriptionToFolder(Subscription, OldFolder, NewFolder),
-
+    // Get,
     // EVENTS LOCAL TO THE CORE
-    #[serde(skip)]
-    Fetch(crux_http::Result<crux_http::Response<Feed>>),
+    // #[serde(skip)]
+    // Set(crux_http::Result<crux_http::Response<Feed>>),
 }
 // ANCHOR_END: events
 
 // ANCHOR: model
+// NOTE feed-rs has NO Serialize Deserialize
 #[derive(Default, Serialize)]
 pub struct Model {
     notification: Notification,
     subscriptions: Subscriptions,
     // TODO populate these at some poing. With feed-rs?
-    subscription_folder: FolderName,
-    subscription_title: SubscriptionTitle,
-    subscription_link: SubscriptionLink,
+    // subscription_folder: FolderName,
+    // subscription_title: SubscriptionTitle,
+    // subscription_link: SubscriptionLink,
+    #[serde(skip)]
+    feeds: Feeds,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
@@ -51,14 +59,17 @@ pub struct Notification {
 }
 
 // ANCHOR: view model
+// NOTE feed-rs has NO Serialize Deserialize
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 pub struct ViewModel {
     pub notification: Notification,
     pub subscriptions: Subscriptions,
     // TODO populate these at some poing. With feed-rs?
-    pub subscription_folder: FolderName,
-    pub subscription_title: SubscriptionTitle,
-    pub subscription_link: SubscriptionLink,
+    // pub subscription_folder: FolderName,
+    // pub subscription_title: SubscriptionTitle,
+    // pub subscription_link: SubscriptionLink,
+    #[serde(skip)]
+    pub feeds: Feeds,
 }
 // ANCHOR_END: view model
 // ANCHOR_END: model
@@ -66,7 +77,8 @@ pub struct ViewModel {
 #[cfg_attr(feature = "typegen", derive(crux_core::macros::Export))]
 #[derive(crux_core::macros::Effect)]
 pub struct Capabilities {
-    render: Render<Event>,
+    pub render: Render<Event>,
+    pub http: Http<Event>,
 }
 
 #[derive(Default)]
@@ -201,8 +213,16 @@ impl App for CrabNews {
                     }
                 };
                 ()
-            }
-            Event::Fetch(_) => todo!(),
+            } // Event::Get => {
+              //     caps.http.get(TEST_FEED_URL).send(Event::Set);
+              // }
+              // Event::Set(Ok(mut response)) => {
+              //     let count = response.take_body().unwrap();
+              //     // self.update(Event::Update(count), model, caps);
+              // }
+              // Event::Set(Err(e)) => {
+              //     panic!("Oh no something went wrong: {e:?}");
+              // }
         };
 
         caps.render.render();
@@ -212,10 +232,10 @@ impl App for CrabNews {
         ViewModel {
             notification: model.notification.clone(),
             subscriptions: model.subscriptions.clone(),
-            subscription_folder: model.subscription_folder.to_string(),
-            subscription_title: model.subscription_title.to_string(),
-            subscription_link: model.subscription_link.to_string(),
-            // feeds: model.feeds.clone(),
+            // subscription_folder: model.subscription_folder.to_string(),
+            // subscription_title: model.subscription_title.to_string(),
+            // subscription_link: model.subscription_link.to_string(),
+            feeds: model.feeds.clone(),
         }
     }
 }
