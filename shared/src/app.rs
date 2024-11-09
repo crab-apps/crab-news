@@ -48,7 +48,6 @@ pub struct Model {
     // subscription_folder: FolderName,
     // subscription_title: SubscriptionTitle,
     // subscription_link: SubscriptionLink,
-    #[serde(skip)]
     feeds: Feeds,
 }
 
@@ -68,7 +67,6 @@ pub struct ViewModel {
     // pub subscription_folder: FolderName,
     // pub subscription_title: SubscriptionTitle,
     // pub subscription_link: SubscriptionLink,
-    #[serde(skip)]
     pub feeds: Feeds,
 }
 // ANCHOR_END: view model

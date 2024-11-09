@@ -1,6 +1,6 @@
+use chrono::{DateTime, Utc};
 use feed_rs::model::Feed;
-// use feed_rs::parser;
-// use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 // TODO upon a successful subscription, populate Feed from model.subscriptions and generate a Feed ID
 // https://docs.rs/feed-rs/latest/feed_rs/model/struct.Feed.html
@@ -10,9 +10,8 @@ use feed_rs::model::Feed;
 // NOTE beware not computing existing ones
 
 // FIXME feed-rs has NO Serialize Deserialize Eq
-// https://github.com/feed-rs/feed-rs/issues/164
-// #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-#[derive(Default, Debug, PartialEq, Clone)]
+// https://github.com/feed-rs/feed-rs/issues/246
+#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Feeds {
     pub feeds: Vec<Feed>,
 }
@@ -22,11 +21,3 @@ impl Feeds {
     pub fn refresh() {}
     pub fn parse() {}
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn test_name() {}
-// }
