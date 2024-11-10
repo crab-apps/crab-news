@@ -168,7 +168,12 @@ impl Subscriptions {
         );
 
         if let Some(folder_text) = &folder_name {
-            let mut already_subscribed = false;
+            enum SubStatus {
+                AlreadySubscribed,
+                AddedNewSub,
+            }
+
+            let mut sub_status = SubStatus::AddedNewSub;
             subs.opml
                 .body
                 .outlines
@@ -176,17 +181,16 @@ impl Subscriptions {
                 .filter(|outline| outline.text == *folder_text)
                 .for_each(|folder| {
                     if folder.outlines.contains(&test_subscription) {
-                        already_subscribed = true;
+                        sub_status = SubStatus::AlreadySubscribed;
                     } else {
                         folder.add_feed(sub_title.as_str(), sub_link.as_str());
                     }
                 });
 
             // NOTE I'd rather do this in for_each but closure has no return
-            if already_subscribed {
-                return Err(duplicate_err);
-            } else {
-                return Ok(subs);
+            match sub_status {
+                SubStatus::AlreadySubscribed => return Err(duplicate_err),
+                SubStatus::AddedNewSub => return Ok(subs),
             }
         }
 
@@ -237,7 +241,12 @@ impl Subscriptions {
         );
 
         if let Some(folder_text) = &folder_name {
-            let mut destination_subscription_already_exists = false;
+            enum SubStatus {
+                AlreadyExists,
+                Renamed,
+            }
+
+            let mut sub_status = SubStatus::Renamed;
             subs.opml
                 .body
                 .outlines
@@ -245,7 +254,7 @@ impl Subscriptions {
                 .filter(|outline| outline.text == *folder_text)
                 .for_each(|folder| {
                     if folder.outlines.contains(&test_subscription) {
-                        destination_subscription_already_exists = true;
+                        sub_status = SubStatus::AlreadyExists;
                     } else {
                         folder
                             .outlines
@@ -258,10 +267,9 @@ impl Subscriptions {
                 });
 
             // NOTE I'd rather do this in for_each but closure has no return
-            if destination_subscription_already_exists {
-                return Err(duplicate_err);
-            } else {
-                return Ok(subs);
+            match sub_status {
+                SubStatus::AlreadyExists => return Err(duplicate_err),
+                SubStatus::Renamed => return Ok(subs),
             }
         }
 
