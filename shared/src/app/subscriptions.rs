@@ -30,7 +30,7 @@ pub enum Error {
     },
 }
 
-#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Subscriptions {
     pub opml: OPML,
 }

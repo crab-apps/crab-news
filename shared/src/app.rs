@@ -15,8 +15,8 @@ pub use subscriptions::{
 // NOTE - crate: https://crates.io/crates/feed-rs
 // to deal with feeds data *after* subscribtions.
 // to deal with shell data to display "news" in entry and content columns.
-mod feeds;
-pub use feeds::Feeds;
+// mod feeds;
+// pub use feeds::Feeds;
 
 // ANCHOR: events
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -44,14 +44,14 @@ pub enum Event {
 pub struct Model {
     notification: Notification,
     subscriptions: Subscriptions,
-    // TODO populate these at some poing. With feed-rs?
-    // subscription_folder: FolderName,
-    // subscription_title: SubscriptionTitle,
-    // subscription_link: SubscriptionLink,
-    feeds: Feeds,
+    // TODO populate these at some point.
+    subscription_folder: FolderName,
+    subscription_title: SubscriptionTitle,
+    subscription_link: SubscriptionLink,
+    // feeds: Feeds,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Notification {
     pub title: String,
     pub message: String,
@@ -59,15 +59,15 @@ pub struct Notification {
 
 // ANCHOR: view model
 // NOTE feed-rs has NO Serialize Deserialize
-#[derive(Serialize, Deserialize, Clone, Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct ViewModel {
     pub notification: Notification,
     pub subscriptions: Subscriptions,
-    // TODO populate these at some poing. With feed-rs?
-    // pub subscription_folder: FolderName,
-    // pub subscription_title: SubscriptionTitle,
-    // pub subscription_link: SubscriptionLink,
-    pub feeds: Feeds,
+    // TODO populate these at some point.
+    pub subscription_folder: FolderName,
+    pub subscription_title: SubscriptionTitle,
+    pub subscription_link: SubscriptionLink,
+    // pub feeds: Feeds,
 }
 // ANCHOR_END: view model
 // ANCHOR_END: model
@@ -230,10 +230,10 @@ impl App for CrabNews {
         ViewModel {
             notification: model.notification.clone(),
             subscriptions: model.subscriptions.clone(),
-            // subscription_folder: model.subscription_folder.to_string(),
-            // subscription_title: model.subscription_title.to_string(),
-            // subscription_link: model.subscription_link.to_string(),
-            feeds: model.feeds.clone(),
+            subscription_folder: model.subscription_folder.to_string(),
+            subscription_title: model.subscription_title.to_string(),
+            subscription_link: model.subscription_link.to_string(),
+            // feeds: model.feeds.clone(),
         }
     }
 }
