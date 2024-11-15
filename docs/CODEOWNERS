@@ -2,7 +2,7 @@
 # https://github.blog/open-source/maintainers/keeping-repository-maintainer-information-accurate/
 
 ##################### NOTE #####################
-# A CODEOWNERS file uses a pattern that follows most of the same rules used in gitignore files. 
+# A CODEOWNERS file uses a pattern that follows most of the same rules used in gitignore files.
 # Each line is a file pattern followed by one or more owners.
 # Order is important; the last matching pattern takes the most precedence.
 ################################################
@@ -13,7 +13,7 @@
 
 ################################################
 
-# To protect a repository fully against unauthorized changes, 
+# To protect a repository fully against unauthorized changes,
 # define a CODEOWNERS file in the .github or docs directory
 # and define the repository owner as the owner of the whole directory
 /.github/ @andreacfromtheapp
@@ -21,15 +21,12 @@
 
 ################################################
 
-# This is to "prepare" for Crux -- WIP/daydreaming for now...
-/Android/ @andreacfromtheapp
-/iOS/ @andreacfromtheapp
-/iPadOS/ @andreacfromtheapp
-/macOS/ @andreacfromtheapp
+/android/ @andreacfromtheapp
+/ios/ @andreacfromtheapp
+/catalyst/ @andreacfromtheapp
 /ratatui/ @andreacfromtheapp
 /shared/ @andreacfromtheapp
 /shared_types/ @andreacfromtheapp
 /web-iced/ @andreacfromtheapp
 
 ################################################
-
