@@ -1,8 +1,13 @@
 // ANCHOR: app
+// ANCHOR: imports
 use crux_core::{render::Render, App};
 use crux_http::Http;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 // use url::Url;
+
+mod account;
+pub use account::{AccountCloud, AccountLocal, AccountNative, AccountType};
 
 // NOTE - crate: https://crates.io/crates/opml
 // to deal with subscriptions and outlines:
@@ -12,11 +17,13 @@ pub use subscriptions::{
     SubscriptionLink, SubscriptionTitle, Subscriptions,
 };
 
-// NOTE - crate: https://crates.io/crates/feed-rs
-// to deal with feeds data *after* subscribtions.
-// to deal with shell data to display "news" in entry and content columns.
-// mod feeds;
-// pub use feeds::Feeds;
+// NOTE - crate: https://crates.io/crates/rss
+// to deal with RSS
+// NOTE - crate: https://crates.io/crates/atom_syndication
+// to deal with Atom
+mod feeds;
+pub use feeds::Feeds;
+// ANCHOR_END: imports
 
 // ANCHOR: events
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -43,12 +50,19 @@ pub enum Event {
 #[derive(Default, Serialize)]
 pub struct Model {
     notification: Notification,
+    accounts: HashSet<Account>,
     subscriptions: Subscriptions,
     // TODO populate these at some point.
     subscription_folder: FolderName,
     subscription_title: SubscriptionTitle,
     subscription_link: SubscriptionLink,
     // feeds: Feeds,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct Account {
+    acct: AccountType,
+    subs: Subscriptions,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -72,12 +86,14 @@ pub struct ViewModel {
 // ANCHOR_END: view model
 // ANCHOR_END: model
 
+// ANCHOR: capabilities
 #[cfg_attr(feature = "typegen", derive(crux_core::macros::Export))]
 #[derive(crux_core::macros::Effect)]
 pub struct Capabilities {
     pub render: Render<Event>,
     pub http: Http<Event>,
 }
+// ANCHOR_END: capabilities
 
 #[derive(Default)]
 pub struct CrabNews;
