@@ -358,13 +358,6 @@ MoveSubscriptionToFolder(Subscription, OldFolder, NewFolder),
 This crate is to deal with feeds data *after* subscribtions. The main UI would
 deal with all data to display "news" in the entry and content columns.
 
-1. In app.rs
-   a. get SubscriptionLink from Subscriptions
-   b. define FeedType {Rss, Atom, }; based on a
-   c. if Rss { mod rss } else if Atom { mod atom }
-   d. each mod w/ respective crate parsers
-   e. try to compose and DRY generalize
-
 *** Related to Feeds
 :PROPERTIES:
 :CUSTOM_ID: related-to-feeds

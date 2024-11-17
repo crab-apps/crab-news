@@ -22,8 +22,7 @@ lazy_static = "1.5.0"
 uniffi = "0.28.3"
 wasm-bindgen = "0.2.95"
 opml = "1.1"
-atom_syndication = { version = "0.12", features = ["with-serde"] }
-rss = { version = "2.0", features = ["atom", "validation", "with-serde"] }
+feed-rs = "2.2"
 chrono = { version = "0.4", features = ["unstable-locales"] }
 thiserror = "2.0"
 

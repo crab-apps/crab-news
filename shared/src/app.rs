@@ -17,10 +17,9 @@ pub use subscriptions::{
     SubscriptionLink, SubscriptionTitle, Subscriptions,
 };
 
-// NOTE - crate: https://crates.io/crates/rss
-// to deal with RSS
-// NOTE - crate: https://crates.io/crates/atom_syndication
-// to deal with Atom
+// NOTE - crate: https://crates.io/crates/feed-rs
+// to deal with feeds data *after* subscribtions.
+// to deal with shell data to display "news" in entry and content columns.
 mod feeds;
 pub use feeds::Feeds;
 // ANCHOR_END: imports
