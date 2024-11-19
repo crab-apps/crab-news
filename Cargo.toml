@@ -19,6 +19,7 @@ crux_core = "0.10"
 crux_http = "0.10"
 crux_kv = "0.5"
 crux_time = "0.6"
+crux_platform = "0.2.2"
 serde = "1.0"
 
 [workspace.metadata.bin]

@@ -1,90 +1,93 @@
 use super::subscriptions::Subscriptions;
+use opml::OPML;
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 use uuid::Uuid;
 
-pub type AccountName = String;
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("{action} \"{account}\". {reason}")]
+    AccountAlreadyExists {
+        action: String,
+        account: String,
+        reason: String,
+    },
+}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Account {
-    id: Uuid,
-    _type: AccountType,
-    subs: Subscriptions,
+    pub id: Uuid,
+    pub name: String,
+    pub subs: Subscriptions,
 }
 
+// TODO use crux_platform instead
 #[derive(Debug, Hash, Serialize, Deserialize, PartialEq, Clone)]
 pub enum AccountType {
-    Local(AccountLocal),
-    Native(AccountNative),
-    Cloud(AccountCloud),
+    Local,
+    Apple,
+    Google,
+    Microsoft,
+    Canonical,
+    // TODO add cloud accounts
 }
 
-#[derive(Default, Debug, Hash, Serialize, Deserialize, PartialEq, Clone)]
-pub enum AuthStatus {
-    Authehticated,
-    #[default]
-    LoggedOff,
-}
-
-#[derive(Debug, Hash, Serialize, Deserialize, PartialEq, Clone)]
-pub enum AccountLocal {
-    Local { name: String, auth: AuthStatus },
-}
-
-#[derive(Debug, Hash, Serialize, Deserialize, PartialEq, Clone)]
-pub enum AccountNative {
-    // how do I check for Auth? impl? Capabilities?
-    Apple { name: String, auth: AuthStatus },
-    Google { name: String, auth: AuthStatus },
-    Microsoft { name: String, auth: AuthStatus },
-    Canonical { name: String, auth: AuthStatus },
-    // more?
-}
-
-#[derive(Debug, Hash, Serialize, Deserialize, PartialEq, Clone)]
-pub enum AccountCloud {
-    // https://rclone.org
-    Dropbox { name: String, auth: AuthStatus },
-    // more
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{CrabNews, Event, Model};
-    use crux_core::testing::AppTester;
-
-    #[test]
-    fn add_new_local_account() {
-        let app = AppTester::<CrabNews, _>::default();
-        let mut model: Model = Model::default();
+impl Account {
+    // TODO use crux_platform instead
+    fn set_account_name(account_type: &AccountType) -> String {
+        match account_type {
+            AccountType::Local => "On Device".to_string(),
+            AccountType::Apple => "iCloud".to_string(),
+            AccountType::Google => "Google Sync".to_string(),
+            AccountType::Microsoft => "Live 365".to_string(),
+            AccountType::Canonical => "Ubuntu One".to_string(),
+        }
     }
 
-    #[test]
-    fn fail_local_account_exists() {}
+    fn set_duplicate_err(action: &str, account: &str, reason: &str) -> self::Error {
+        self::Error::AccountAlreadyExists {
+            action: action.to_string(),
+            account: account.to_string(),
+            reason: reason.to_string(),
+        }
+    }
 
-    #[test]
-    fn add_new_native_account() {}
+    pub fn new(account_type: &AccountType) -> Self {
+        Account {
+            id: Uuid::new_v4(),
+            name: Self::set_account_name(&account_type),
+            subs: Subscriptions {
+                opml: OPML::default(),
+            },
+        }
+    }
 
-    #[test]
-    fn fail_native_account_exists() {}
+    pub fn add_account(
+        accounts: &Vec<Account>,
+        account_type: AccountType,
+    ) -> Result<Vec<Account>, self::Error> {
+        let mut accounts = accounts.clone();
+        let account_to_add = Self::new(&account_type);
+        let account_name = Self::set_account_name(&account_type);
+        let duplicate_err = Self::set_duplicate_err(
+            "Cannot add account",
+            account_name.as_str(),
+            "It already exists.",
+        );
 
-    // NOTE can't add other platforns native accts
-    // i.e: Apple:iCloud | Android:Google | Microsoft:Live | Canonical:One only
-    #[test]
-    fn fail_native_account_type() {}
+        if accounts.contains(&account_to_add) {
+            Err(duplicate_err)
+        } else {
+            accounts.push(account_to_add);
+            Ok(accounts)
+        }
+    }
 
-    #[test]
-    fn add_new_cloud_account() {}
+    pub fn delete(accounts: &Vec<Account>, account_type: AccountType) -> Vec<Account> {
+        let mut accounts = accounts.clone();
+        let account_to_delete = Self::set_account_name(&account_type);
 
-    #[test]
-    fn fail_cloud_account_exists() {}
-
-    #[test]
-    fn delete_local_account() {}
-
-    #[test]
-    fn delete_native_account() {}
-
-    #[test]
-    fn delete_cloud_account() {}
+        accounts.retain(|account| account.name != account_to_delete);
+        accounts
+    }
 }
