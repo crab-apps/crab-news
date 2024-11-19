@@ -3,11 +3,10 @@
 use crux_core::{render::Render, App};
 use crux_http::Http;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 // use url::Url;
 
 mod account;
-pub use account::{AccountCloud, AccountLocal, AccountNative, AccountType};
+pub use account::{Account, AccountName, AccountType};
 
 // NOTE - crate: https://crates.io/crates/opml
 // to deal with subscriptions and outlines:
@@ -28,6 +27,8 @@ pub use feeds::Feeds;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
     // EVENTS FROM THE SHELL
+    AddAccount(AccountType),
+    DeleteAccount(AccountName),
     ImportSubscriptions(OpmlFile),
     ExportSubscriptions(OpmlName),
     AddNewFolder(FolderName),
@@ -49,19 +50,14 @@ pub enum Event {
 #[derive(Default, Serialize)]
 pub struct Model {
     notification: Notification,
-    accounts: HashSet<Account>,
+    // TODO account to contain subscriptions and their feeds
+    accounts: Vec<Account>,
     subscriptions: Subscriptions,
     // TODO populate these at some point.
     subscription_folder: FolderName,
     subscription_title: SubscriptionTitle,
     subscription_link: SubscriptionLink,
     // feeds: Feeds,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-pub struct Account {
-    acct: AccountType,
-    subs: Subscriptions,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -109,6 +105,8 @@ impl App for CrabNews {
 
     fn update(&self, event: Self::Event, model: &mut Self::Model, caps: &Self::Capabilities) {
         match event {
+            Event::AddAccount(account_type) => todo!(),
+            Event::DeleteAccount(account_name) => todo!(),
             Event::ImportSubscriptions(subs_opml_file) => {
                 match Subscriptions::import(&model.subscriptions, subs_opml_file) {
                     // TODO on duplicates, prompt user for merge or replace
