@@ -1,4 +1,5 @@
 use feed_rs::model::Feed;
+use feed_rs::parser::{parse, ParseErrorKind, ParseFeedError};
 use serde::{Deserialize, Serialize};
 
 // TODO upon a successful subscription, populate Feed from model.subscriptions and generate a Feed ID
@@ -13,7 +14,20 @@ pub struct Feeds {
 }
 
 impl Feeds {
-    pub fn get() {}
-    pub fn refresh() {}
-    pub fn parse() {}
+    // pub fn get_feed(&self, xml_url: String) -> Result<Feed, ParseFeedError> {
+    // match parse(xml_url) {
+    // Ok(f) => f,
+    // Err(e) => return Err(e),
+    // }
+    // }
 }
+
+// #[cfg(test)]
+// mod tests {
+// use super::*;
+// use crate::{CrabNews, Event, Model};
+// use crux_core::testing::AppTester;
+
+// #[test]
+// fn get_feed() {}
+// }
