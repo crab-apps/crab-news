@@ -1,4 +1,5 @@
 use crux_core::typegen::TypeGen;
+use shared::AccountType;
 use shared::CrabNews;
 use std::path::PathBuf;
 
@@ -8,6 +9,8 @@ fn main() -> anyhow::Result<()> {
     let mut gen = TypeGen::new();
 
     gen.register_app::<CrabNews>()?;
+
+    gen.register_type::<AccountType>()?;
 
     let output_root = PathBuf::from("./generated");
 
