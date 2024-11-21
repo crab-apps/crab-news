@@ -3,7 +3,6 @@
 use crux_core::{render::Render, App};
 use crux_http::Http;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 // use url::Url;
 
 mod accounts;
@@ -47,23 +46,11 @@ pub enum Event {
 // ANCHOR_END: events
 
 // ANCHOR: model
-// NOTE feed-rs has NO Serialize Deserialize
 #[derive(Default, Serialize)]
 pub struct Model {
     notification: Notification,
     accounts: Accounts, // TODO move subscriptions into accounts and write new tests
     subscriptions: Subscriptions, // FIXME this is temporary to make old tests pass
-}
-
-// NOTE this is used in modules. here to keep it DRY
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("{action} \"{item}\". {reason}")]
-    AlreadyExists {
-        action: String,
-        item: String,
-        reason: String,
-    },
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]

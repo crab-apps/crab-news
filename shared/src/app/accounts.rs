@@ -1,8 +1,7 @@
 use super::subscriptions::Subscriptions;
-use super::Error;
 use opml::OPML;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use thiserror::Error;
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Accounts {
@@ -12,7 +11,6 @@ pub struct Accounts {
 // TODO add more fields?
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Account {
-    pub id: Uuid,
     pub name: String,
     pub subs: Subscriptions,
 }
@@ -26,6 +24,16 @@ pub enum AccountType {
     Microsoft,
     Canonical,
     // TODO add cloud accounts
+}
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("{action} \"{item}\". {reason}")]
+    AlreadyExists {
+        action: String,
+        item: String,
+        reason: String,
+    },
 }
 
 impl Account {
@@ -46,7 +54,6 @@ impl Account {
 
     fn new(account_type: &AccountType) -> Self {
         Account {
-            id: Uuid::new_v4(),
             name: Self::set_account_name(&account_type),
             subs: Subscriptions {
                 opml: OPML::default(),
@@ -69,10 +76,9 @@ impl Accounts {
     pub fn add_account(&self, account_type: &AccountType) -> Result<Self, self::Error> {
         let mut accounts = self.clone();
         let account_to_add = Account::new(&account_type);
-        let account_name = Account::set_account_name(&account_type);
         let duplicate_err = Self::set_duplicate_err(
             "Cannot add account",
-            account_name.as_str(),
+            account_to_add.name.as_str(),
             "It already exists.",
         );
 
@@ -86,11 +92,11 @@ impl Accounts {
 
     pub fn delete_account(&self, account_type: &AccountType) -> Self {
         let mut accounts = self.clone();
-        let account_to_delete = Account::set_account_name(&account_type);
+        let delete_account_name = Account::set_account_name(&account_type);
 
         accounts
             .accts
-            .retain(|account| account.name != account_to_delete);
+            .retain(|account| account.name != delete_account_name);
         accounts
     }
 }
@@ -105,16 +111,10 @@ mod accounts {
     fn add_new_local_account() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model = Model::default();
-        let added_account = Account {
-            id: Uuid::new_v4(),
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account_to_add = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::AddAccount(AccountType::Local), &mut model);
-        let does_contain_account = model.accounts.accts.contains(&added_account);
+        let does_contain_account = model.accounts.accts.contains(&account_to_add);
 
         assert_eq!(does_contain_account, true);
     }
@@ -123,7 +123,7 @@ mod accounts {
     fn fail_new_local_account() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model = Model::default();
-        let account_name = "On Device".to_string();
+        let account_to_add = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::AddAccount(AccountType::Local), &mut model);
         let _ = app.update(Event::AddAccount(AccountType::Local), &mut model);
@@ -131,7 +131,7 @@ mod accounts {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot add account \"{}\". It already exists.",
-            account_name
+            account_to_add.name
         );
 
         assert_eq!(actual_error, expected_error);
@@ -141,75 +141,57 @@ mod accounts {
     fn delete_local_account() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model = Model::default();
-        let deleted_account = Account {
-            id: Uuid::new_v4(),
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account_to_delete = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::AddAccount(AccountType::Local), &mut model);
         let _ = app.update(Event::DeleteAccount(AccountType::Local), &mut model);
 
-        let does_contain_account = model.accounts.accts.contains(&deleted_account);
+        let does_contain_account = model.accounts.accts.contains(&account_to_delete);
 
         assert_eq!(does_contain_account, false);
     }
 
-    //     #[test]
-    //     fn add_new_native_account() {
-    //         let app = AppTester::<CrabNews, _>::default();
-    //         let mut model = Model::default();
-    //         let added_account = Account {
-    //             id: Uuid::new_v4(),
-    //             name: "iCloud".to_string(),
-    //             subs: Subscriptions {
-    //                 opml: OPML::default(),
-    //             },
-    //         };
+    #[test]
+    fn add_new_platform_account() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model = Model::default();
+        let account_to_add = Account::new(&AccountType::Apple);
 
-    //         let _ = app.update(Event::AddAccount(AccountType::Apple), &mut model);
-    //         let does_contain_account = model.accounts.contains(&added_account);
+        let _ = app.update(Event::AddAccount(AccountType::Apple), &mut model);
+        let does_contain_account = model.accounts.accts.contains(&account_to_add);
 
-    //         assert_eq!(does_contain_account, true);
-    //     }
+        assert_eq!(does_contain_account, true);
+    }
 
-    //     #[test]
-    //     fn fail_new_native_account() {
-    //         let app = AppTester::<CrabNews, _>::default();
-    //         let mut model = Model::default();
-    //         let account_name = "iCloud".to_string();
+    #[test]
+    fn fail_new_platform_account() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model = Model::default();
+        let account_to_add = Account::new(&AccountType::Apple);
 
-    //         let _ = app.update(Event::AddAccount(AccountType::Apple), &mut model);
-    //         let _ = app.update(Event::AddAccount(AccountType::Apple), &mut model);
+        let _ = app.update(Event::AddAccount(AccountType::Apple), &mut model);
+        let _ = app.update(Event::AddAccount(AccountType::Apple), &mut model);
 
-    //         let actual_error = model.notification.message;
-    //         let expected_error = format!(
-    //             "Cannot add account \"{}\". It already exists.",
-    //             account_name
-    //         );
+        let actual_error = model.notification.message;
+        let expected_error = format!(
+            "Cannot add account \"{}\". It already exists.",
+            account_to_add.name
+        );
 
-    //         assert_eq!(actual_error, expected_error);
-    //     }
+        assert_eq!(actual_error, expected_error);
+    }
 
-    //     #[test]
-    //     fn delete_native_account() {
-    //         let app = AppTester::<CrabNews, _>::default();
-    //         let mut model = Model::default();
-    //         let deleted_account = Account {
-    //             id: Uuid::new_v4(),
-    //             name: "iCloud".to_string(),
-    //             subs: Subscriptions {
-    //                 opml: OPML::default(),
-    //             },
-    //         };
+    #[test]
+    fn delete_platform_account() {
+        let app = AppTester::<CrabNews, _>::default();
+        let mut model = Model::default();
+        let account_to_delete = Account::new(&AccountType::Apple);
 
-    //         let _ = app.update(Event::AddAccount(AccountType::Apple), &mut model);
-    //         let _ = app.update(Event::DeleteAccount(AccountType::Apple), &mut model);
+        let _ = app.update(Event::AddAccount(AccountType::Apple), &mut model);
+        let _ = app.update(Event::DeleteAccount(AccountType::Apple), &mut model);
 
-    //         let does_contain_account = model.accounts.contains(&deleted_account);
+        let does_contain_account = model.accounts.accts.contains(&account_to_delete);
 
-    //         assert_eq!(does_contain_account, false);
-    //     }
+        assert_eq!(does_contain_account, false);
+    }
 }

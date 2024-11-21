@@ -1,9 +1,9 @@
-use super::Error;
 use chrono::Local;
 use opml::{self, Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 use std::fs::{write, File};
 use std::io;
+use thiserror::Error;
 
 // ANCHOR: type aliases
 pub type OpmlFile = String;
@@ -18,6 +18,16 @@ pub type Subscription = Outline;
 pub type SubscriptionTitle = String;
 pub type SubscriptionLink = String;
 // ANCHOR_END: types aliases
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("{action} \"{item}\". {reason}")]
+    AlreadyExists {
+        action: String,
+        item: String,
+        reason: String,
+    },
+}
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Subscriptions {

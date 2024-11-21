@@ -26,10 +26,6 @@ feed-rs = "2.2"
 chrono = { version = "0.4", features = ["unstable-locales"] }
 thiserror = "2.0"
 
-[dependencies.uuid]
-version = "1.11.0"
-features = ["v4", "v7", "js", "macro-diagnostics", "serde", "arbitrary"]
-
 [target.uniffi-bindgen.dependencies]
 uniffi = { version = "0.28.3", features = ["cli"] }
 
