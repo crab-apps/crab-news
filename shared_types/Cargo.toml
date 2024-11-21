@@ -13,6 +13,5 @@ keywords.workspace = true
 anyhow.workspace = true
 crux_core = { workspace = true, features = ["typegen"] }
 crux_http = { workspace = true, features = ["typegen"] }
-crux_kv = { workspace = true, features = ["typegen"] }
-crux_time = { workspace = true, features = ["typegen"] }
+crux_platform = { workspace = true }
 shared = { path = "../shared", features = ["typegen"] }
