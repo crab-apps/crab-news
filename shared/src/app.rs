@@ -2,8 +2,8 @@
 // ANCHOR: imports
 use crux_core::{render::Render, App};
 use crux_http::Http;
+use feed_rs::model::Feed;
 use serde::{Deserialize, Serialize};
-// use url::Url;
 
 mod accounts;
 pub use accounts::{Account, AccountType, Accounts};
@@ -43,10 +43,11 @@ pub enum Event {
     DeleteSubscription(Account, Option<FolderName>, SubscriptionTitle),
     RenameSubscription(Account, Option<FolderName>, OldName, OldLink, NewName),
     MoveSubscriptionToFolder(Account, Subscription, OldFolder, NewFolder),
-    // Get,
+    GetFeed(String),
+
     // EVENTS LOCAL TO THE CORE
-    // #[serde(skip)]
-    // Set(crux_http::Result<crux_http::Response<Feed>>),
+    #[serde(skip)]
+    SetFeed(crux_http::Result<crux_http::Response<Vec<u8>>>),
 }
 // ANCHOR_END: events
 
@@ -55,6 +56,7 @@ pub enum Event {
 pub struct Model {
     notification: Notification,
     accounts: Accounts,
+    feeds: Vec<Feed>,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
@@ -234,16 +236,21 @@ impl App for CrabNews {
                         };
                     }
                 }
-            } // Event::Get => {
-              //     caps.http.get(TEST_FEED_URL).send(Event::Set);
-              // }
-              // Event::Set(Ok(mut response)) => {
-              //     let count = response.take_body().unwrap();
-              //     // self.update(Event::Update(count), model, caps);
-              // }
-              // Event::Set(Err(e)) => {
-              //     panic!("Oh no something went wrong: {e:?}");
-              // }
+            }
+            Event::GetFeed(sub_link) => {
+                caps.http.get(sub_link).send(Event::SetFeed);
+            }
+            Event::SetFeed(Ok(mut response)) => {
+                let body = response.take_body().unwrap();
+                let feed = feed_rs::parser::parse(&*body).unwrap();
+                model.feeds.push(feed);
+            }
+            Event::SetFeed(Err(err)) => {
+                return model.notification = Notification {
+                    title: "Feed Error".to_string(),
+                    message: err.to_string(),
+                };
+            }
         };
 
         caps.render.render();

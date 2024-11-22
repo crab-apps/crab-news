@@ -28,6 +28,12 @@ your favorite client.
 listed. I would love to contribute one that I'd use every day. Also,
 sounds like a great project to both make and learn a lot from.
 
+** Alternatives
+:PROPERTIES:
+:CUSTOM_ID: alternatives
+:END:
+- If you use GNOME: [[https://apps.gnome.org/NewsFlash/]]
+
 ** Made With
 :PROPERTIES:
 :CUSTOM_ID: made-with

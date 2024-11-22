@@ -2,9 +2,8 @@ use feed_rs::model::Feed;
 use feed_rs::parser::{parse, ParseErrorKind, ParseFeedError};
 use serde::{Deserialize, Serialize};
 
-// TODO upon a successful subscription, populate Feed from model.subscriptions and generate a Feed ID
+// TODO upon a successful subscription, populate Feed from model.subscriptions
 // https://docs.rs/feed-rs/latest/feed_rs/model/struct.Feed.html
-// https://docs.rs/feed-rs/latest/feed_rs/parser/fn.generate_id_from_link_and_title.html
 
 // TODO to populate Feed use Get xml_url and callback -> https://docs.rs/feed-rs/latest/feed_rs/parser/struct.Parser.html#method.parse
 // NOTE beware not computing existing ones

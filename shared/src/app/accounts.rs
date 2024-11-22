@@ -73,7 +73,6 @@ impl Accounts {
             .position(|a| a.name == account.name)
             .unwrap()
     }
-
     // ANCHOR_END: helper functions
 
     pub fn add_account(&self, account_type: &AccountType) -> Result<Self, self::Error> {

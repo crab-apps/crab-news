@@ -15,6 +15,7 @@ name = "shared"
 typegen = ["crux_core/typegen"]
 
 [dependencies]
+anyhow.workspace = true
 crux_core.workspace = true
 crux_http.workspace = true
 serde = { workspace = true, features = ["derive"] }
@@ -31,3 +32,8 @@ uniffi = { version = "0.28.3", features = ["cli"] }
 
 [build-dependencies]
 uniffi = { version = "0.28.3", features = ["build"] }
+
+[dev-dependencies]
+assert_fs = "1.1"
+futures-test = "0.3"
+assert_matches = "1.5"
