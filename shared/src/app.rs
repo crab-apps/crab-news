@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 // use url::Url;
 
 mod accounts;
-pub use accounts::{AccountType, Accounts};
+pub use accounts::{Account, AccountType, Accounts};
 
 // NOTE - crate: https://crates.io/crates/opml
 // to deal with subscriptions and outlines:
@@ -24,20 +24,25 @@ pub use subscriptions::{
 // ANCHOR_END: imports
 
 // ANCHOR: events
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize)]
 pub enum Event {
     // EVENTS FROM THE SHELL
     CreateAccount(AccountType),
-    DeleteAccount(AccountType),
-    ImportSubscriptions(OpmlFile),
-    ExportSubscriptions(OpmlName),
-    AddNewFolder(FolderName),
-    DeleteFolder(FolderName),
-    RenameFolder(OldName, NewName),
-    AddNewSubscription(Option<FolderName>, SubscriptionTitle, SubscriptionLink),
-    DeleteSubscription(Option<FolderName>, SubscriptionTitle),
-    RenameSubscription(Option<FolderName>, OldName, OldLink, NewName),
-    MoveSubscriptionToFolder(Subscription, OldFolder, NewFolder),
+    DeleteAccount(Account),
+    ImportSubscriptions(Account, OpmlFile),
+    ExportSubscriptions(Account, OpmlName),
+    AddNewFolder(Account, FolderName),
+    DeleteFolder(Account, FolderName),
+    RenameFolder(Account, OldName, NewName),
+    AddNewSubscription(
+        Account,
+        Option<FolderName>,
+        SubscriptionTitle,
+        SubscriptionLink,
+    ),
+    DeleteSubscription(Account, Option<FolderName>, SubscriptionTitle),
+    RenameSubscription(Account, Option<FolderName>, OldName, OldLink, NewName),
+    MoveSubscriptionToFolder(Account, Subscription, OldFolder, NewFolder),
     // Get,
     // EVENTS LOCAL TO THE CORE
     // #[serde(skip)]
@@ -49,11 +54,10 @@ pub enum Event {
 #[derive(Default, Serialize)]
 pub struct Model {
     notification: Notification,
-    accounts: Accounts, // TODO move subscriptions into accounts and write new tests
-    subscriptions: Subscriptions, // FIXME this is temporary to make old tests pass
+    accounts: Accounts,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Notification {
     pub title: String,
     pub message: String,
@@ -79,9 +83,6 @@ pub struct Capabilities {
 #[derive(Default)]
 pub struct CrabNews;
 
-// ANCHOR: traits
-// ANCHOR_END: traits
-
 // ANCHOR: impl_app
 impl App for CrabNews {
     type Event = Event;
@@ -102,13 +103,15 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::DeleteAccount(account_type) => {
-                model.accounts = Accounts::delete_account(&model.accounts, &account_type);
+            Event::DeleteAccount(account) => {
+                model.accounts = Accounts::delete_account(&model.accounts, &account);
             }
-            Event::ImportSubscriptions(subs_opml_file) => {
-                match Subscriptions::import(&model.subscriptions, subs_opml_file) {
+            Event::ImportSubscriptions(account, subs_opml_file) => {
+                let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                match Subscriptions::import(&model.accounts.accts[acct_index].subs, subs_opml_file)
+                {
                     // TODO on duplicates, prompt user for merge or replace
-                    Ok(subs) => model.subscriptions = subs,
+                    Ok(subs) => model.accounts.accts[acct_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Import Error".to_string(),
@@ -117,8 +120,10 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::ExportSubscriptions(subs_opml_name) => {
-                match Subscriptions::export(&model.subscriptions, subs_opml_name) {
+            Event::ExportSubscriptions(account, subs_opml_name) => {
+                let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                match Subscriptions::export(&model.accounts.accts[acct_index].subs, subs_opml_name)
+                {
                     Ok(success) => {
                         return model.notification = Notification {
                             title: "Subscriptions Exported".to_string(),
@@ -134,9 +139,11 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::AddNewFolder(folder_name) => {
-                match Subscriptions::add_folder(&model.subscriptions, folder_name) {
-                    Ok(subs) => model.subscriptions = subs,
+            Event::AddNewFolder(account, folder_name) => {
+                let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                match Subscriptions::add_folder(&model.accounts.accts[acct_index].subs, folder_name)
+                {
+                    Ok(subs) => model.accounts.accts[acct_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "New Folder Error".to_string(),
@@ -145,17 +152,21 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::DeleteFolder(folder_name) => {
-                model.subscriptions =
-                    Subscriptions::delete_folder(&model.subscriptions, folder_name);
+            Event::DeleteFolder(account, folder_name) => {
+                let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                model.accounts.accts[acct_index].subs = Subscriptions::delete_folder(
+                    &model.accounts.accts[acct_index].subs,
+                    folder_name,
+                );
             }
-            Event::RenameFolder(old_folder_name, new_folder_name) => {
+            Event::RenameFolder(account, old_folder_name, new_folder_name) => {
+                let acct_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::rename_folder(
-                    &model.subscriptions,
+                    &model.accounts.accts[acct_index].subs,
                     old_folder_name,
                     new_folder_name,
                 ) {
-                    Ok(subs) => model.subscriptions = subs,
+                    Ok(subs) => model.accounts.accts[acct_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Rename Folder Error".to_string(),
@@ -164,14 +175,15 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::AddNewSubscription(folder_name, sub_title, sub_link) => {
+            Event::AddNewSubscription(account, folder_name, sub_title, sub_link) => {
+                let acct_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::add_subscription(
-                    &model.subscriptions,
+                    &model.accounts.accts[acct_index].subs,
                     folder_name,
                     sub_title,
                     sub_link,
                 ) {
-                    Ok(subs) => model.subscriptions = subs,
+                    Ok(subs) => model.accounts.accts[acct_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Subscription Error".to_string(),
@@ -180,19 +192,24 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::DeleteSubscription(folder_name, sub_name) => {
-                model.subscriptions =
-                    Subscriptions::delete_subscription(&model.subscriptions, folder_name, sub_name);
+            Event::DeleteSubscription(account, folder_name, sub_name) => {
+                let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                model.accounts.accts[acct_index].subs = Subscriptions::delete_subscription(
+                    &model.accounts.accts[acct_index].subs,
+                    folder_name,
+                    sub_name,
+                );
             }
-            Event::RenameSubscription(folder_name, old_title, old_link, new_name) => {
+            Event::RenameSubscription(account, folder_name, old_title, old_link, new_name) => {
+                let acct_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::rename_subscription(
-                    &model.subscriptions,
+                    &model.accounts.accts[acct_index].subs,
                     folder_name,
                     old_title,
                     old_link,
                     new_name,
                 ) {
-                    Ok(subs) => model.subscriptions = subs,
+                    Ok(subs) => model.accounts.accts[acct_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Subscription Error".to_string(),
@@ -201,14 +218,15 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::MoveSubscriptionToFolder(subscription, old_folder, new_folder) => {
+            Event::MoveSubscriptionToFolder(account, subscription, old_folder, new_folder) => {
+                let acct_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::move_subscription(
-                    &model.subscriptions,
+                    &model.accounts.accts[acct_index].subs,
                     subscription,
                     old_folder,
                     new_folder,
                 ) {
-                    Ok(subs) => model.subscriptions = subs,
+                    Ok(subs) => model.accounts.accts[acct_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Subscription Error".to_string(),

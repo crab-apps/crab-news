@@ -66,6 +66,14 @@ impl Accounts {
             reason: reason.to_string(),
         }
     }
+
+    pub fn find_account_index(&self, account: &Account) -> usize {
+        self.accts
+            .iter()
+            .position(|a| a.name == account.name)
+            .unwrap()
+    }
+
     // ANCHOR_END: helper functions
 
     pub fn add_account(&self, account_type: &AccountType) -> Result<Self, self::Error> {
@@ -85,13 +93,10 @@ impl Accounts {
         }
     }
 
-    pub fn delete_account(&self, account_type: &AccountType) -> Self {
+    pub fn delete_account(&self, account: &Account) -> Self {
         let mut accounts = self.clone();
-        let delete_account_name = Account::set_account_name(&account_type);
 
-        accounts
-            .accts
-            .retain(|account| account.name != delete_account_name);
+        accounts.accts.retain(|a| a.name != account.name);
         accounts
     }
 }
@@ -139,7 +144,7 @@ mod accounts {
         let account_to_delete = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
-        let _ = app.update(Event::DeleteAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::DeleteAccount(account_to_delete.clone()), &mut model);
 
         let does_contain_account = model.accounts.accts.contains(&account_to_delete);
 
@@ -183,7 +188,7 @@ mod accounts {
         let account_to_delete = Account::new(&AccountType::Apple);
 
         let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model);
-        let _ = app.update(Event::DeleteAccount(AccountType::Apple), &mut model);
+        let _ = app.update(Event::DeleteAccount(account_to_delete.clone()), &mut model);
 
         let does_contain_account = model.accounts.accts.contains(&account_to_delete);
 
