@@ -2,7 +2,6 @@
 // ANCHOR: imports
 use crux_core::{render::Render, App};
 use crux_http::Http;
-// use crux_platform::{Platform, PlatformResponse};
 use serde::{Deserialize, Serialize};
 // use url::Url;
 
@@ -28,7 +27,7 @@ pub use subscriptions::{
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
     // EVENTS FROM THE SHELL
-    AddAccount(AccountType),
+    CreateAccount(AccountType),
     DeleteAccount(AccountType),
     ImportSubscriptions(OpmlFile),
     ExportSubscriptions(OpmlName),
@@ -92,7 +91,7 @@ impl App for CrabNews {
 
     fn update(&self, event: Self::Event, model: &mut Self::Model, caps: &Self::Capabilities) {
         match event {
-            Event::AddAccount(account_type) => {
+            Event::CreateAccount(account_type) => {
                 match Accounts::add_account(&model.accounts, &account_type) {
                     Ok(accts) => model.accounts = accts,
                     Err(err) => {
