@@ -362,12 +362,8 @@ mod import_export {
     fn import_subscriptions() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let subs_opml_file = "example_import.opml".to_string();
@@ -389,12 +385,8 @@ mod import_export {
     fn fail_import_for_invalid_xml() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let subs_opml_file = "invalid_xml.opml".to_string();
 
@@ -412,12 +404,8 @@ mod import_export {
     fn fail_import_for_invalid_opml_version() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let subs_opml_file = "invalid_opml_version.opml".to_string();
 
@@ -435,12 +423,8 @@ mod import_export {
     fn export_subscriptions() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
@@ -470,12 +454,8 @@ mod import_export {
     fn export_subscriptions_notification() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
@@ -537,12 +517,8 @@ mod folder {
     fn add_new_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Added Folder".to_string();
@@ -570,12 +546,8 @@ mod folder {
     fn add_two_new_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name_one = "Added Folder Ome".to_string();
@@ -619,12 +591,8 @@ mod folder {
     fn fail_add_new_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let folder_name = "Added Folder".to_string();
 
@@ -649,12 +617,8 @@ mod folder {
     fn delete_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let deleted_folder = &Outline {
@@ -686,12 +650,8 @@ mod folder {
     fn rename_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let rename_folder = &Outline {
@@ -733,12 +693,8 @@ mod folder {
     fn fail_rename_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let test_folder = &Outline {
             text: "Expected Folder".to_string(),
@@ -781,12 +737,8 @@ mod add_subscription {
     fn add_new_subscription_to_root() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let sub_title = "New Sub Root".to_string();
@@ -821,12 +773,8 @@ mod add_subscription {
     fn add_new_subscription_to_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "New Sub Folder".to_string();
@@ -869,12 +817,8 @@ mod add_subscription {
     fn fail_add_new_subscription_to_root() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let sub_title = "New Sub Root".to_string();
         let sub_link = "https://example.com/atom.xml".to_string();
@@ -915,12 +859,8 @@ mod add_subscription {
     fn fail_add_new_subscription_to_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let folder_name = "New Sub Folder".to_string();
         let sub_title = "New Sub Folder".to_string();
@@ -975,12 +915,8 @@ mod delete_subscription {
     fn delete_subscription_from_root() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let deleted_sub = &Outline {
@@ -1017,12 +953,8 @@ mod delete_subscription {
     fn delete_subscription_from_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Deleted Sub Folder".to_string();
@@ -1071,12 +1003,8 @@ mod delete_subscription {
     fn delete_subscription_from_folder_with_multi_subs() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Deleted Multi Subs".to_string();
@@ -1161,12 +1089,8 @@ mod rename_subscription {
     fn rename_subscription_in_root() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let rename_sub = &Outline {
@@ -1214,12 +1138,8 @@ mod rename_subscription {
     fn fail_rename_subscription_in_root() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
@@ -1260,12 +1180,8 @@ mod rename_subscription {
     fn rename_subscription_in_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Renamed Sub Folder".to_string();
@@ -1321,12 +1237,8 @@ mod rename_subscription {
     fn fail_rename_subscription_in_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let folder_name = "Renamed Sub Folder".to_string();
         let rename_sub = &Outline {
@@ -1372,12 +1284,8 @@ mod rename_subscription {
     fn rename_subscription_in_folder_with_multi_subs() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Renamed Multi Sub Folder".to_string();
@@ -1460,12 +1368,8 @@ mod rename_subscription {
     fn fail_rename_subscription_in_folder_with_multi_subs() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let folder_name = "Renamed Multi Sub Folder".to_string();
         let untouched_sub = &Outline {
@@ -1534,12 +1438,8 @@ mod move_subscription {
     fn move_subscription_from_root_to_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Move Sub To Folder".to_string();
@@ -1596,12 +1496,8 @@ mod move_subscription {
     fn fail_move_subscription_from_root_to_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let folder_name = "Move Sub To Folder".to_string();
         let expected_sub = &Outline {
@@ -1655,12 +1551,8 @@ mod move_subscription {
     fn move_subscription_from_folder_to_root() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Move Sub To Root".to_string();
@@ -1717,12 +1609,8 @@ mod move_subscription {
     fn fail_move_subscription_from_folder_to_root() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let folder_name = "Move Sub To Root".to_string();
         let expected_sub = &Outline {
@@ -1776,12 +1664,8 @@ mod move_subscription {
     fn move_subscription_from_folder_to_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_one = "Folder One".to_string();
@@ -1849,12 +1733,8 @@ mod move_subscription {
     fn fail_move_subscription_from_folder_to_folder() {
         let app = AppTester::<CrabNews, _>::default();
         let mut model: Model = Model::default();
-        let account = Account {
-            name: "On Device".to_string(),
-            subs: Subscriptions {
-                opml: OPML::default(),
-            },
-        };
+        let account = Account::new(&AccountType::Local);
+
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let folder_one = "Folder One".to_string();
         let folder_two = "Folder Two".to_string();

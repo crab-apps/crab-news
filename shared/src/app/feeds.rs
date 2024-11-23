@@ -1,5 +1,6 @@
+use super::SubscriptionTitle;
 use feed_rs::model::Feed;
-use feed_rs::parser::{parse, ParseErrorKind, ParseFeedError};
+// use feed_rs::parser::{parse, ParseErrorKind, ParseFeedError};
 use serde::{Deserialize, Serialize};
 
 // TODO upon a successful subscription, populate Feed from model.subscriptions
@@ -13,6 +14,15 @@ pub struct Feeds {
 }
 
 impl Feeds {
+    // ANCHOR: helper functions
+    pub fn find_feed_index(&self, sub_title: &SubscriptionTitle) -> usize {
+        self.feeds
+            .iter()
+            .position(|f| f.title.clone().unwrap().content == *sub_title)
+            .unwrap()
+    }
+    // ANCHOR_END: helper functions
+
     // pub fn get_feed(&self, xml_url: String) -> Result<Feed, ParseFeedError> {
     // match parse(xml_url) {
     // Ok(f) => f,

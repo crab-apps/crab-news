@@ -1,3 +1,4 @@
+use super::feeds::Feeds;
 use super::subscriptions::Subscriptions;
 use opml::OPML;
 use serde::{Deserialize, Serialize};
@@ -13,6 +14,7 @@ pub struct Accounts {
 pub struct Account {
     pub name: String,
     pub subs: Subscriptions,
+    pub feeds: Feeds,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -47,12 +49,13 @@ impl Account {
         }
     }
 
-    fn new(account_type: &AccountType) -> Self {
+    pub fn new(account_type: &AccountType) -> Self {
         Account {
             name: Self::set_account_name(&account_type),
             subs: Subscriptions {
                 opml: OPML::default(),
             },
+            feeds: Feeds { feeds: vec![] },
         }
     }
 }

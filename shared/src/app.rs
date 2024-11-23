@@ -2,7 +2,6 @@
 // ANCHOR: imports
 use crux_core::{render::Render, App};
 use crux_http::Http;
-use feed_rs::model::Feed;
 use serde::{Deserialize, Serialize};
 
 mod accounts;
@@ -19,8 +18,8 @@ pub use subscriptions::{
 // NOTE - crate: https://crates.io/crates/feed-rs
 // to deal with feeds data *after* subscribtions.
 // to deal with shell data to display "news" in entry and content columns.
-// mod feeds;
-// pub use feeds::Feeds;
+mod feeds;
+pub use feeds::Feeds;
 // ANCHOR_END: imports
 
 // ANCHOR: events
@@ -43,7 +42,7 @@ pub enum Event {
     DeleteSubscription(Account, Option<FolderName>, SubscriptionTitle),
     RenameSubscription(Account, Option<FolderName>, OldName, OldLink, NewName),
     MoveSubscriptionToFolder(Account, Subscription, OldFolder, NewFolder),
-    GetFeed(String),
+    GetFeed(Account, SubscriptionTitle, SubscriptionLink),
 
     // EVENTS LOCAL TO THE CORE
     #[serde(skip)]
@@ -54,9 +53,9 @@ pub enum Event {
 // ANCHOR: model
 #[derive(Default, Serialize)]
 pub struct Model {
-    notification: Notification,
-    accounts: Accounts,
-    feeds: Vec<Feed>,
+    pub notification: Notification,
+    // NOTE Accounts contains Subscriptions and Feeds
+    pub accounts: Accounts,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
@@ -240,13 +239,18 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::GetFeed(sub_link) => {
+            Event::GetFeed(_account, _sub_title, sub_link) => {
                 caps.http.get(sub_link).send(Event::SetFeed);
             }
             Event::SetFeed(Ok(mut response)) => {
+                // let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                // let feed_index = Feeds::find_feed_index(
+                //     &model.accounts.accts[acct_index].feeds.feeds,
+                //     &sub_title,
+                // );
                 let body = response.take_body().unwrap();
-                let feed = feed_rs::parser::parse(&*body).unwrap();
-                model.feeds.push(feed);
+                let _feed = feed_rs::parser::parse(&*body).unwrap();
+                // model.accounts.accts[0].feeds.feeds[feed_index].push(feed);
             }
             Event::SetFeed(Err(err)) => {
                 return model.notification = Notification {
