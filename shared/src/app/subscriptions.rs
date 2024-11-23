@@ -62,7 +62,7 @@ impl Subscriptions {
     // ANCHOR_END: helper functions
 
     // TODO on duplicates, prompt user for merge or replace
-    pub fn import(&self, subs_opml_file: OpmlFile) -> Result<Self, opml::Error> {
+    pub fn import(&self, subs_opml_file: &OpmlFile) -> Result<Self, opml::Error> {
         // TODO use proper Shell/WASM functionality to pass on File operations
         let mut file = File::open(subs_opml_file).unwrap();
         Ok(Self {
@@ -71,7 +71,7 @@ impl Subscriptions {
     }
 
     // TODO once shell is implemented, check failures
-    pub fn export(&self, subs_opml_name: OpmlName) -> Result<String, io::Error> {
+    pub fn export(&self, subs_opml_name: &OpmlName) -> Result<String, io::Error> {
         let xml_tag = r#"<?xml version="1.0" encoding="UTF-8"?>"#.to_string();
         let custom_head = Head {
             title: Some(subs_opml_name.to_string()),
@@ -94,7 +94,7 @@ impl Subscriptions {
     }
 
     // NOTE folders are only allowed at root level. no nesting.
-    pub fn add_folder(&self, folder_name: FolderName) -> Result<Self, self::Error> {
+    pub fn add_folder(&self, folder_name: &FolderName) -> Result<Self, self::Error> {
         let mut subs = self.clone();
         let test_folder = Self::set_test_folder(&folder_name);
         let duplicate_err = Self::set_duplicate_err(
@@ -112,20 +112,20 @@ impl Subscriptions {
     }
 
     // NOTE folders are only allowed at root level. no nesting.
-    pub fn delete_folder(&self, folder_name: FolderName) -> Self {
+    pub fn delete_folder(&self, folder_name: &FolderName) -> Self {
         let mut subs = self.clone();
         subs.opml
             .body
             .outlines
-            .retain(|name| name.text != folder_name);
+            .retain(|name| name.text != *folder_name);
         subs
     }
 
     // NOTE folders are only allowed at root level. no nesting.
     pub fn rename_folder(
         &self,
-        old_folder_name: OldName,
-        new_folder_name: NewName,
+        old_folder_name: &OldName,
+        new_folder_name: &NewName,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
         let test_folder = Self::set_test_folder(&new_folder_name);
@@ -142,7 +142,7 @@ impl Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == old_folder_name)
+                .filter(|outline| outline.text == *old_folder_name)
                 .for_each(|folder| {
                     folder.text = new_folder_name.to_string();
                     folder.title = Some(new_folder_name.to_string());
@@ -154,9 +154,9 @@ impl Subscriptions {
     // NOTE adding a duplicate sub should always fail no matter where it exists
     pub fn add_subscription(
         &self,
-        folder_name: Option<FolderName>,
-        sub_title: SubscriptionTitle,
-        sub_link: SubscriptionLink,
+        folder_name: &Option<FolderName>,
+        sub_title: &SubscriptionTitle,
+        sub_link: &SubscriptionLink,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
         let test_subscription = Self::set_test_sub(&sub_title, &sub_link);
@@ -203,8 +203,8 @@ impl Subscriptions {
 
     pub fn delete_subscription(
         &self,
-        folder_name: Option<FolderName>,
-        sub_title: SubscriptionTitle,
+        folder_name: &Option<FolderName>,
+        sub_title: &SubscriptionTitle,
     ) -> Self {
         let mut subs = self.clone();
         if let Some(folder_text) = folder_name {
@@ -212,13 +212,13 @@ impl Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == folder_text)
-                .for_each(|folder| folder.outlines.retain(|name| name.text != sub_title));
+                .filter(|outline| outline.text == *folder_text)
+                .for_each(|folder| folder.outlines.retain(|name| name.text != *sub_title));
         } else {
             subs.opml
                 .body
                 .outlines
-                .retain(|name| name.text != sub_title);
+                .retain(|name| name.text != *sub_title);
         }
         subs
     }
@@ -226,10 +226,10 @@ impl Subscriptions {
     // NOTE rename to an existing sub should always fail no matter where it exists
     pub fn rename_subscription(
         &self,
-        folder_name: Option<FolderName>,
-        old_name: OldName,
-        old_link: OldLink,
-        new_name: NewName,
+        folder_name: &Option<FolderName>,
+        old_name: &OldName,
+        old_link: &OldLink,
+        new_name: &NewName,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
         let test_subscription = Self::set_test_sub(&new_name, &old_link);
@@ -258,7 +258,7 @@ impl Subscriptions {
                         folder
                             .outlines
                             .iter_mut()
-                            .filter(|sub| sub.text == old_name)
+                            .filter(|sub| sub.text == *old_name)
                             .for_each(|sub| {
                                 sub.text = new_name.to_string();
                             });
@@ -279,7 +279,7 @@ impl Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == old_name)
+                .filter(|outline| outline.text == *old_name)
                 .for_each(|sub| sub.text = new_name.to_string());
             Ok(subs)
         }
@@ -287,9 +287,9 @@ impl Subscriptions {
 
     pub fn move_subscription(
         &self,
-        subscription: Subscription,
-        old_folder: OldFolder,
-        new_folder: NewFolder,
+        subscription: &Subscription,
+        old_folder: &OldFolder,
+        new_folder: &NewFolder,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
         let duplicate_err = Self::set_duplicate_err(
@@ -299,12 +299,12 @@ impl Subscriptions {
         );
         match (old_folder, new_folder) {
             (None, Some(folder_new)) => {
-                subs = Self::delete_subscription(&subs, None, subscription.text.to_string());
+                subs = Self::delete_subscription(&subs, &None, &subscription.text.to_string());
                 match Self::add_subscription(
                     &subs,
-                    Some(folder_new),
-                    subscription.text.to_string(),
-                    subscription.xml_url.unwrap(),
+                    &Some(folder_new.to_string()),
+                    &subscription.text.to_string(),
+                    &subscription.xml_url.clone().unwrap(),
                 ) {
                     Ok(s) => Ok(s),
                     Err(_) => return Err(duplicate_err),
@@ -313,14 +313,14 @@ impl Subscriptions {
             (Some(folder_old), None) => {
                 subs = Self::delete_subscription(
                     &subs,
-                    Some(folder_old),
-                    subscription.text.to_string(),
+                    &Some(folder_old.to_string()),
+                    &subscription.text.to_string(),
                 );
                 match Self::add_subscription(
                     &subs,
-                    None,
-                    subscription.text.to_string(),
-                    subscription.xml_url.unwrap(),
+                    &None,
+                    &subscription.text.to_string(),
+                    &subscription.xml_url.clone().unwrap(),
                 ) {
                     Ok(s) => Ok(s),
                     Err(_) => return Err(duplicate_err),
@@ -329,14 +329,14 @@ impl Subscriptions {
             (Some(folder_old), Some(folder_new)) => {
                 subs = Self::delete_subscription(
                     &subs,
-                    Some(folder_old),
-                    subscription.text.to_string(),
+                    &Some(folder_old.to_string()),
+                    &subscription.text.to_string(),
                 );
                 match Self::add_subscription(
                     &subs,
-                    Some(folder_new),
-                    subscription.text.to_string(),
-                    subscription.xml_url.unwrap(),
+                    &Some(folder_new.to_string()),
+                    &subscription.text.to_string(),
+                    &subscription.xml_url.clone().unwrap(),
                 ) {
                     Ok(s) => Ok(s),
                     Err(_) => return Err(duplicate_err),
