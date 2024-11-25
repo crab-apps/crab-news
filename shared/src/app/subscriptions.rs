@@ -1,4 +1,6 @@
 use chrono::Local;
+use feed_rs::model::Feed;
+// use feed_rs::parser::{parse, ParseErrorKind, ParseFeedError};
 use opml::{self, Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 use std::fs::{write, File};
@@ -17,6 +19,7 @@ pub type NewFolder = Option<FolderName>;
 pub type Subscription = Outline;
 pub type SubscriptionTitle = String;
 pub type SubscriptionLink = String;
+type Feeds = Vec<Feed>;
 // ANCHOR_END: types aliases
 
 #[derive(Debug, Error)]
@@ -29,9 +32,26 @@ pub enum Error {
     },
 }
 
+// TODO upon a successful subscription, populate Feeds
+// TODO to populate Feeds use Get xml_url and callback -> https://docs.rs/feed-rs/latest/feed_rs/parser/struct.Parser.html#method.parse
+// NOTE beware not computing existing ones
+//     fn find_feed_index(&self, sub_title: &SubscriptionTitle) -> usize {
+//         self.feeds
+//             .iter()
+//             .position(|f| f.title.clone().unwrap().content == *sub_title)
+//             .unwrap()
+//     }
+//
+//     fn get_feed(&self, xml_url: Vec<u8>) -> Result<Feed, ParseFeedError> {
+//         Ok(parse(&*xml_url).unwrap())
+//     }
+
+// NOTE - crate: https://crates.io/crates/opml to deal with subscriptions and outlines:
+// NOTE - crate: https://crates.io/crates/feed-rs to deal with feeds data *after* subscribtions.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Subscriptions {
     pub opml: OPML,
+    pub feeds: Feeds,
 }
 
 impl Subscriptions {
@@ -67,6 +87,7 @@ impl Subscriptions {
         let mut file = File::open(subs_opml_file).unwrap();
         Ok(Self {
             opml: OPML::from_reader(&mut file)?,
+            feeds: vec![],
         })
     }
 
@@ -352,7 +373,7 @@ impl Subscriptions {
 #[cfg(test)]
 mod import_export {
     use super::*;
-    use crate::{Account, AccountType, Accounts};
+    use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
     use chrono::prelude::Local;
     use crux_core::testing::AppTester;
@@ -373,9 +394,10 @@ mod import_export {
             Event::ImportSubscriptions(account.clone(), subs_opml_file),
             &mut model,
         );
-        let added_subs = model.accounts.accts[acct_index].subs.clone();
+        let added_subs = model.accounts[acct_index].subs.clone();
         let expected_subs = Subscriptions {
             opml: OPML::from_str(example_subs).unwrap(),
+            feeds: vec![],
         };
 
         assert_eq!(added_subs, expected_subs);
@@ -431,10 +453,11 @@ mod import_export {
         let subs_opml_name = "Subscriptions.opml".to_string();
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
 
-        model.accounts.accts[acct_index].subs = Subscriptions {
+        model.accounts[acct_index].subs = Subscriptions {
             opml: OPML::from_str(&example_subs).unwrap(),
+            feeds: vec![],
         };
-        let imported_content = model.accounts.accts[acct_index].subs.clone();
+        let imported_content = model.accounts[acct_index].subs.clone();
 
         let _ = app.update(
             Event::ExportSubscriptions(account, subs_opml_name.to_string()),
@@ -445,6 +468,7 @@ mod import_export {
         let mut exported_file = std::fs::File::open(subs_opml_name.to_string()).unwrap();
         let exported_content = Subscriptions {
             opml: OPML::from_reader(&mut exported_file).unwrap(),
+            feeds: vec![],
         };
 
         assert_eq!(exported_content, imported_content);
@@ -462,8 +486,9 @@ mod import_export {
         let subs_opml_name = "Subscriptions.opml".to_string();
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
 
-        model.accounts.accts[acct_index].subs = Subscriptions {
+        model.accounts[acct_index].subs = Subscriptions {
             opml: OPML::from_str(&example_subs).unwrap(),
+            feeds: vec![],
         };
 
         let _ = app.update(
@@ -508,7 +533,7 @@ mod import_export {
 #[cfg(test)]
 mod folder {
     use super::*;
-    use crate::{Account, AccountType, Accounts};
+    use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
     use crux_core::testing::AppTester;
     use opml::Outline;
@@ -532,7 +557,7 @@ mod folder {
             Event::AddNewFolder(account, folder_name.to_string()),
             &mut model,
         );
-        let does_contain_folder = model.accounts.accts[acct_index]
+        let does_contain_folder = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -571,13 +596,13 @@ mod folder {
             Event::AddNewFolder(account, folder_name_two.to_string()),
             &mut model,
         );
-        let does_contain_folder_one = model.accounts.accts[acct_index]
+        let does_contain_folder_one = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
             .contains(added_folder_one);
-        let does_contain_folder_two = model.accounts.accts[acct_index]
+        let does_contain_folder_two = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -636,7 +661,7 @@ mod folder {
             &mut model,
         );
 
-        let does_contain_folder = model.accounts.accts[acct_index]
+        let does_contain_folder = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -679,7 +704,7 @@ mod folder {
             &mut model,
         );
 
-        let does_contain_folder = model.accounts.accts[acct_index]
+        let does_contain_folder = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -728,7 +753,7 @@ mod folder {
 #[cfg(test)]
 mod add_subscription {
     use super::*;
-    use crate::{Account, AccountType, Accounts};
+    use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
     use crux_core::testing::AppTester;
     use opml::Outline;
@@ -759,7 +784,7 @@ mod add_subscription {
             &mut model,
         );
 
-        let does_contain_sub = model.accounts.accts[acct_index]
+        let does_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -800,7 +825,7 @@ mod add_subscription {
             &mut model,
         );
 
-        let does_contain_sub = model.accounts.accts[acct_index]
+        let does_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -906,7 +931,7 @@ mod add_subscription {
 #[cfg(test)]
 mod delete_subscription {
     use super::*;
-    use crate::{Account, AccountType, Accounts};
+    use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
     use crux_core::testing::AppTester;
     use opml::Outline;
@@ -939,7 +964,7 @@ mod delete_subscription {
             &mut model,
         );
 
-        let does_contain_sub = model.accounts.accts[acct_index]
+        let does_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -986,7 +1011,7 @@ mod delete_subscription {
             &mut model,
         );
 
-        let does_contain_sub = model.accounts.accts[acct_index]
+        let does_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -1050,7 +1075,7 @@ mod delete_subscription {
             &mut model,
         );
 
-        let does_contain_deleted_sub = model.accounts.accts[acct_index]
+        let does_contain_deleted_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -1060,7 +1085,7 @@ mod delete_subscription {
             .find_map(|folder| Some(folder.outlines.contains(delete_sub)))
             .unwrap();
 
-        let does_contain_expected_sub = model.accounts.accts[acct_index]
+        let does_contain_expected_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -1080,7 +1105,7 @@ mod delete_subscription {
 #[cfg(test)]
 mod rename_subscription {
     use super::*;
-    use crate::{Account, AccountType, Accounts};
+    use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
     use crux_core::testing::AppTester;
     use opml::Outline;
@@ -1124,7 +1149,7 @@ mod rename_subscription {
             &mut model,
         );
 
-        let does_contain_sub = model.accounts.accts[acct_index]
+        let does_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -1220,7 +1245,7 @@ mod rename_subscription {
             &mut model,
         );
 
-        let does_contain_sub = model.accounts.accts[acct_index]
+        let does_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -1338,7 +1363,7 @@ mod rename_subscription {
             &mut model,
         );
 
-        let does_contain_untouched_sub = model.accounts.accts[acct_index]
+        let does_contain_untouched_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -1348,7 +1373,7 @@ mod rename_subscription {
             .find_map(|folder| Some(folder.outlines.contains(untouched_sub)))
             .unwrap();
 
-        let does_contain_expected_sub = model.accounts.accts[acct_index]
+        let does_contain_expected_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -1429,7 +1454,7 @@ mod rename_subscription {
 #[cfg(test)]
 mod move_subscription {
     use super::*;
-    use crate::{Account, AccountType, Accounts};
+    use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
     use crux_core::testing::AppTester;
     use opml::Outline;
@@ -1472,14 +1497,14 @@ mod move_subscription {
             &mut model,
         );
 
-        let does_root_contain_sub = model.accounts.accts[acct_index]
+        let does_root_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
             .contains(expected_sub);
 
-        let does_folder_contain_sub = model.accounts.accts[acct_index]
+        let does_folder_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -1585,14 +1610,14 @@ mod move_subscription {
             &mut model,
         );
 
-        let does_root_contain_sub = model.accounts.accts[acct_index]
+        let does_root_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
             .contains(expected_sub);
 
-        let does_folder_contain_sub = model.accounts.accts[acct_index]
+        let does_folder_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -1703,7 +1728,7 @@ mod move_subscription {
             &mut model,
         );
 
-        let does_folder_one_contain_sub = model.accounts.accts[acct_index]
+        let does_folder_one_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
@@ -1713,7 +1738,7 @@ mod move_subscription {
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
-        let does_folder_two_contain_sub = model.accounts.accts[acct_index]
+        let does_folder_two_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
