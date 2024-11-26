@@ -23,10 +23,10 @@
 
 /android/ @andreacfromtheapp
 /ios/ @andreacfromtheapp
-/catalyst/ @andreacfromtheapp
+/macos/ @andreacfromtheapp
 /ratatui/ @andreacfromtheapp
 /shared/ @andreacfromtheapp
 /shared_types/ @andreacfromtheapp
-/web-iced/ @andreacfromtheapp
+/tauri/ @andreacfromtheapp
 
 ################################################

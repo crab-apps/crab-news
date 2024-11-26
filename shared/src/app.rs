@@ -9,8 +9,8 @@ pub use accounts::{Account, AccountType, Accounts, AccountsExt};
 
 mod subscriptions;
 pub use subscriptions::{
-    FolderName, NewFolder, NewName, OldFolder, OldLink, OldName, OpmlFile, OpmlName, Subscription,
-    SubscriptionLink, SubscriptionTitle, Subscriptions,
+    Feeds, FolderName, NewFolder, NewName, OldFolder, OldLink, OldName, OpmlFile, OpmlName,
+    Subscription, SubscriptionLink, SubscriptionTitle, Subscriptions,
 };
 // ANCHOR_END: imports
 
@@ -34,11 +34,11 @@ pub enum Event {
     DeleteSubscription(Account, Option<FolderName>, SubscriptionTitle),
     RenameSubscription(Account, Option<FolderName>, OldName, OldLink, NewName),
     MoveSubscriptionToFolder(Account, Subscription, OldFolder, NewFolder),
-    GetFeed(Account, SubscriptionTitle, SubscriptionLink),
+    GetFeed(Account, SubscriptionLink),
 
     // EVENTS LOCAL TO THE CORE
     #[serde(skip)]
-    SetFeed(crux_http::Result<crux_http::Response<Vec<u8>>>),
+    SetFeed(Account, crux_http::Result<crux_http::Response<Vec<u8>>>),
 }
 // ANCHOR_END: events
 
@@ -47,8 +47,9 @@ pub enum Event {
 pub struct Model {
     pub notification: Notification,
     // NOTE Accounts contains Subscriptions
-    // NOTE Subscriptions contains Feeds
+    // NOTE Subscriptions contains Feeds and OPML
     pub accounts: Accounts,
+    // pub feeds: Feeds,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
@@ -61,6 +62,8 @@ pub struct Notification {
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct ViewModel {
     pub notification: Notification,
+    pub accounts: Accounts,
+    // pub feeds: Feeds,
 }
 // ANCHOR_END: view model
 // ANCHOR_END: model
@@ -180,7 +183,9 @@ impl App for CrabNews {
                         };
                     }
                 }
-                // caps.http.get(sub_link).send(Event::SetFeed);
+                // caps.http
+                //     .get(sub_link)
+                //     .send(move |result| Event::SetFeed(account, result));
             }
             Event::DeleteSubscription(account, folder_name, sub_name) => {
                 let acct_index = Accounts::find_account_index(&model.accounts, &account);
@@ -225,20 +230,24 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::GetFeed(_account, _sub_title, sub_link) => {
-                caps.http.get(sub_link).send(Event::SetFeed);
-            }
-            Event::SetFeed(Ok(mut response)) => {
-                // let acct_index = Accounts::find_account_index(&model.accounts, &account);
-                // let feed_index = Feeds::find_feed_index(
-                //     &model.accounts[acct_index].subs.feeds,
-                //     &sub_title,
-                // );
+            Event::GetFeed(account, sub_link) => caps
+                .http
+                .get(sub_link)
+                .send(move |result| Event::SetFeed(account, result)),
+            Event::SetFeed(account, Ok(mut response)) => {
+                let acct_index = Accounts::find_account_index(&model.accounts, &account);
                 let body = response.take_body().unwrap();
-                let _feed = feed_rs::parser::parse(&*body).unwrap();
-                // model.accounts[acct_index].subs.feeds[feed_index].push(feed);
+                match Subscriptions::add_feed(&model.accounts[acct_index].subs, body) {
+                    Ok(subs) => model.accounts[acct_index].subs = subs,
+                    Err(err) => {
+                        return model.notification = Notification {
+                            title: "Feed Error".to_string(),
+                            message: err.to_string(),
+                        };
+                    }
+                }
             }
-            Event::SetFeed(Err(err)) => {
+            Event::SetFeed(_, Err(err)) => {
                 return model.notification = Notification {
                     title: "Feed Error".to_string(),
                     message: err.to_string(),
@@ -252,11 +261,12 @@ impl App for CrabNews {
     fn view(&self, model: &Self::Model) -> Self::ViewModel {
         ViewModel {
             notification: model.notification.clone(),
+            accounts: model.accounts.clone(),
+            // feeds: model.accounts.
             // subscriptions: model.subscriptions.clone(),
             // subscription_folder: model.subscription_folder.to_string(),
             // subscription_title: model.subscription_title.to_string(),
             // subscription_link: model.subscription_link.to_string(),
-            // feeds: model.feeds.clone(),
         }
     }
 }

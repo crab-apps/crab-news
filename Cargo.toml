@@ -1,8 +1,5 @@
 [workspace]
-members = [
-  "shared",
-  "shared_types",
-]
+members = ["shared", "shared_types"]
 resolver = "1"
 
 [workspace.package]
@@ -11,7 +8,7 @@ edition = "2021"
 repository = "https://github.com/crabapps/crab-news"
 license = "Apache-2.0"
 keywords = ["atom", "rss", "feed-reader", "rss-reader", "news-client"]
-rust-version = "1.82"
+rust-version = "1.83"
 
 [workspace.dependencies]
 anyhow = "1.0"
