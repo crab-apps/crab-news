@@ -15,7 +15,7 @@ pub use subscriptions::{
 // ANCHOR_END: imports
 
 // ANCHOR: events
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Event {
     // EVENTS FROM THE SHELL
     CreateAccount(AccountType),
@@ -104,10 +104,10 @@ impl App for CrabNews {
                 model.accounts = Accounts::delete_account(&model.accounts, &account);
             }
             Event::ImportSubscriptions(account, subs_opml_file) => {
-                let acct_index = Accounts::find_account_index(&model.accounts, &account);
-                match Subscriptions::import(&model.accounts[acct_index].subs, &subs_opml_file) {
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                match Subscriptions::import(&model.accounts[account_index].subs, &subs_opml_file) {
                     // TODO on duplicates, prompt user for merge or replace
-                    Ok(subs) => model.accounts[acct_index].subs = subs,
+                    Ok(subs) => model.accounts[account_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Import Error".to_string(),
@@ -117,8 +117,8 @@ impl App for CrabNews {
                 }
             }
             Event::ExportSubscriptions(account, subs_opml_name) => {
-                let acct_index = Accounts::find_account_index(&model.accounts, &account);
-                match Subscriptions::export(&model.accounts[acct_index].subs, &subs_opml_name) {
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                match Subscriptions::export(&model.accounts[account_index].subs, &subs_opml_name) {
                     Ok(success) => {
                         return model.notification = Notification {
                             title: "Subscriptions Exported".to_string(),
@@ -135,9 +135,9 @@ impl App for CrabNews {
                 }
             }
             Event::AddNewFolder(account, folder_name) => {
-                let acct_index = Accounts::find_account_index(&model.accounts, &account);
-                match Subscriptions::add_folder(&model.accounts[acct_index].subs, &folder_name) {
-                    Ok(subs) => model.accounts[acct_index].subs = subs,
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                match Subscriptions::add_folder(&model.accounts[account_index].subs, &folder_name) {
+                    Ok(subs) => model.accounts[account_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "New Folder Error".to_string(),
@@ -147,18 +147,18 @@ impl App for CrabNews {
                 }
             }
             Event::DeleteFolder(account, folder_name) => {
-                let acct_index = Accounts::find_account_index(&model.accounts, &account);
-                model.accounts[acct_index].subs =
-                    Subscriptions::delete_folder(&model.accounts[acct_index].subs, &folder_name);
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                model.accounts[account_index].subs =
+                    Subscriptions::delete_folder(&model.accounts[account_index].subs, &folder_name);
             }
             Event::RenameFolder(account, old_folder_name, new_folder_name) => {
-                let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::rename_folder(
-                    &model.accounts[acct_index].subs,
+                    &model.accounts[account_index].subs,
                     &old_folder_name,
                     &new_folder_name,
                 ) {
-                    Ok(subs) => model.accounts[acct_index].subs = subs,
+                    Ok(subs) => model.accounts[account_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Rename Folder Error".to_string(),
@@ -168,14 +168,14 @@ impl App for CrabNews {
                 }
             }
             Event::AddNewSubscription(account, folder_name, sub_title, sub_link) => {
-                let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::add_subscription(
-                    &model.accounts[acct_index].subs,
+                    &model.accounts[account_index].subs,
                     &folder_name,
                     &sub_title,
                     &sub_link,
                 ) {
-                    Ok(subs) => model.accounts[acct_index].subs = subs,
+                    Ok(subs) => model.accounts[account_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Subscription Error".to_string(),
@@ -188,23 +188,23 @@ impl App for CrabNews {
                 //     .send(move |result| Event::SetFeed(account, result));
             }
             Event::DeleteSubscription(account, folder_name, sub_name) => {
-                let acct_index = Accounts::find_account_index(&model.accounts, &account);
-                model.accounts[acct_index].subs = Subscriptions::delete_subscription(
-                    &model.accounts[acct_index].subs,
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                model.accounts[account_index].subs = Subscriptions::delete_subscription(
+                    &model.accounts[account_index].subs,
                     &folder_name,
                     &sub_name,
                 );
             }
             Event::RenameSubscription(account, folder_name, old_title, old_link, new_name) => {
-                let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::rename_subscription(
-                    &model.accounts[acct_index].subs,
+                    &model.accounts[account_index].subs,
                     &folder_name,
                     &old_title,
                     &old_link,
                     &new_name,
                 ) {
-                    Ok(subs) => model.accounts[acct_index].subs = subs,
+                    Ok(subs) => model.accounts[account_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Subscription Error".to_string(),
@@ -214,14 +214,14 @@ impl App for CrabNews {
                 }
             }
             Event::MoveSubscriptionToFolder(account, subscription, old_folder, new_folder) => {
-                let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::move_subscription(
-                    &model.accounts[acct_index].subs,
+                    &model.accounts[account_index].subs,
                     &subscription,
                     &old_folder,
                     &new_folder,
                 ) {
-                    Ok(subs) => model.accounts[acct_index].subs = subs,
+                    Ok(subs) => model.accounts[account_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Subscription Error".to_string(),
@@ -235,10 +235,10 @@ impl App for CrabNews {
                 .get(sub_link)
                 .send(move |result| Event::SetFeed(account, result)),
             Event::SetFeed(account, Ok(mut response)) => {
-                let acct_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
                 let body = response.take_body().unwrap();
-                match Subscriptions::add_feed(&model.accounts[acct_index].subs, body) {
-                    Ok(subs) => model.accounts[acct_index].subs = subs,
+                match Subscriptions::add_feed(&model.accounts[account_index].subs, body) {
+                    Ok(subs) => model.accounts[account_index].subs = subs,
                     Err(err) => {
                         return model.notification = Notification {
                             title: "Feed Error".to_string(),

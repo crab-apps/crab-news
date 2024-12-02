@@ -23,19 +23,19 @@ pub enum AccountType {
 
 // FIXME make this do proper stuff such as platform checks and authehtication
 impl Account {
-    fn set_account_name(account_type: &AccountType) -> String {
+    fn set_account_name(account_type: &AccountType) -> &str {
         match account_type {
-            AccountType::Local => "On Device".to_string(),
-            AccountType::Apple => "iCloud".to_string(),
-            AccountType::Google => "Google Sync".to_string(),
-            AccountType::Microsoft => "Live 365".to_string(),
-            AccountType::Canonical => "Ubuntu One".to_string(),
+            AccountType::Local => "On Device",
+            AccountType::Apple => "iCloud",
+            AccountType::Google => "Google Sync",
+            AccountType::Microsoft => "Live 365",
+            AccountType::Canonical => "Ubuntu One",
         }
     }
 
     pub fn new(account_type: &AccountType) -> Self {
         Account {
-            name: Self::set_account_name(&account_type),
+            name: Self::set_account_name(account_type).to_string(),
             subs: Subscriptions::default(),
         }
     }
@@ -82,32 +82,31 @@ impl AccountsExt for Accounts {
     }
 
     fn add_account(&self, account_type: &AccountType) -> Result<Self, self::Error> {
-        let mut accounts = self.clone();
-        let account_to_add = Account::new(&account_type);
+        let mut subs = self.clone();
+        let account_to_add = Account::new(account_type);
         let duplicate_err = Self::set_duplicate_err(
             "Cannot add account",
             account_to_add.name.as_str(),
             "It already exists.",
         );
 
-        if accounts.contains(&account_to_add) {
+        if subs.contains(&account_to_add) {
             Err(duplicate_err)
         } else {
-            accounts.push(account_to_add);
-            Ok(accounts)
+            subs.push(account_to_add);
+            Ok(subs)
         }
     }
 
     fn delete_account(&self, account: &Account) -> Self {
-        let mut accounts = self.clone();
-
-        accounts.retain(|a| a.name != account.name);
-        accounts
+        let mut subs = self.clone();
+        subs.retain(|a| a.name != account.name);
+        subs
     }
 }
 
 #[cfg(test)]
-mod accounts {
+mod accts {
     use super::*;
     use crate::{CrabNews, Event, Model};
     use crux_core::testing::AppTester;
@@ -121,7 +120,7 @@ mod accounts {
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
         let does_contain_account = model.accounts.contains(&account_to_add);
 
-        assert_eq!(does_contain_account, true);
+        assert!(does_contain_account);
     }
 
     #[test]
@@ -153,7 +152,7 @@ mod accounts {
 
         let does_contain_account = model.accounts.contains(&account_to_delete);
 
-        assert_eq!(does_contain_account, false);
+        assert!(!does_contain_account);
     }
 
     #[test]
@@ -165,7 +164,7 @@ mod accounts {
         let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model);
         let does_contain_account = model.accounts.contains(&account_to_add);
 
-        assert_eq!(does_contain_account, true);
+        assert!(does_contain_account);
     }
 
     #[test]
@@ -197,6 +196,6 @@ mod accounts {
 
         let does_contain_account = model.accounts.contains(&account_to_delete);
 
-        assert_eq!(does_contain_account, false);
+        assert!(!does_contain_account);
     }
 }

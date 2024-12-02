@@ -96,14 +96,14 @@ impl Subscriptions {
         // TODO use proper Shell/WASM functionality to pass on File operations
         match write(subs_opml_name, &export_content) {
             Ok(_) => Ok("Subscriptions successfully exported".to_string()),
-            Err(e) => return Err(e),
+            Err(e) => Err(e),
         }
     }
 
     // NOTE folders are only allowed at root level. no nesting.
     pub fn add_folder(&self, folder_name: &FolderName) -> Result<Self, self::Error> {
         let mut subs = self.clone();
-        let test_folder = Self::set_test_folder(&folder_name);
+        let test_folder = Self::set_test_folder(folder_name);
         let duplicate_err = Self::set_duplicate_err(
             "Cannot add new folder",
             folder_name.as_str(),
@@ -135,7 +135,7 @@ impl Subscriptions {
         new_folder_name: &NewName,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
-        let test_folder = Self::set_test_folder(&new_folder_name);
+        let test_folder = Self::set_test_folder(new_folder_name);
         let duplicate_err = Self::set_duplicate_err(
             "Cannot rename folder to",
             new_folder_name.as_str(),
@@ -166,7 +166,7 @@ impl Subscriptions {
         sub_link: &SubscriptionLink,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
-        let test_subscription = Self::set_test_sub(&sub_title, &sub_link);
+        let test_subscription = Self::set_test_sub(sub_title, sub_link);
         let duplicate_err = Self::set_duplicate_err(
             "Cannot add new subscription",
             sub_title.as_str(),
@@ -239,7 +239,7 @@ impl Subscriptions {
         new_name: &NewName,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
-        let test_subscription = Self::set_test_sub(&new_name, &old_link);
+        let test_subscription = Self::set_test_sub(new_name, old_link);
         let duplicate_err = Self::set_duplicate_err(
             "Cannot rename subscription to",
             new_name.as_str(),
@@ -314,7 +314,7 @@ impl Subscriptions {
                     &subscription.xml_url.clone().unwrap(),
                 ) {
                     Ok(s) => Ok(s),
-                    Err(_) => return Err(duplicate_err),
+                    Err(_) => Err(duplicate_err),
                 }
             }
             (Some(folder_old), None) => {
@@ -330,7 +330,7 @@ impl Subscriptions {
                     &subscription.xml_url.clone().unwrap(),
                 ) {
                     Ok(s) => Ok(s),
-                    Err(_) => return Err(duplicate_err),
+                    Err(_) => Err(duplicate_err),
                 }
             }
             (Some(folder_old), Some(folder_new)) => {
@@ -346,12 +346,10 @@ impl Subscriptions {
                     &subscription.xml_url.clone().unwrap(),
                 ) {
                     Ok(s) => Ok(s),
-                    Err(_) => return Err(duplicate_err),
+                    Err(_) => Err(duplicate_err),
                 }
             }
-            (None, None) => {
-                return Err(duplicate_err);
-            }
+            (None, None) => Err(duplicate_err),
         }
     }
 
@@ -565,7 +563,7 @@ mod folder {
             .outlines
             .contains(added_folder);
 
-        assert_eq!(does_contain_folder, true);
+        assert!(does_contain_folder);
     }
 
     #[test]
@@ -610,7 +608,7 @@ mod folder {
             .outlines
             .contains(added_folder_two);
 
-        assert_eq!((does_contain_folder_one && does_contain_folder_two), true);
+        assert!((does_contain_folder_one && does_contain_folder_two));
     }
 
     #[test]
@@ -669,7 +667,7 @@ mod folder {
             .outlines
             .contains(deleted_folder);
 
-        assert_eq!(does_contain_folder, false);
+        assert!(!does_contain_folder);
     }
 
     #[test]
@@ -712,7 +710,7 @@ mod folder {
             .outlines
             .contains(expected_folder);
 
-        assert_eq!(does_contain_folder, true);
+        assert!(does_contain_folder);
     }
 
     #[test]
@@ -743,7 +741,7 @@ mod folder {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot rename folder to \"{}\". It already exists.",
-            test_folder.text.to_string()
+            test_folder.text
         );
 
         assert_eq!(actual_error, expected_error);
@@ -792,7 +790,7 @@ mod add_subscription {
             .outlines
             .contains(expected_sub);
 
-        assert_eq!(does_contain_sub, true);
+        assert!(does_contain_sub);
     }
 
     #[test]
@@ -831,12 +829,12 @@ mod add_subscription {
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
-        assert_eq!(does_contain_sub, true);
+        assert!(does_contain_sub);
     }
 
     #[test]
@@ -875,7 +873,7 @@ mod add_subscription {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot add new subscription \"{}\". You are already subscribed.",
-            test_subscription.text.to_string()
+            test_subscription.text
         );
 
         assert_eq!(actual_error, expected_error);
@@ -922,7 +920,7 @@ mod add_subscription {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot add new subscription \"{}\". You are already subscribed.",
-            test_subscription.text.to_string()
+            test_subscription.text
         );
 
         assert_eq!(actual_error, expected_error);
@@ -972,7 +970,7 @@ mod delete_subscription {
             .outlines
             .contains(deleted_sub);
 
-        assert_eq!(does_contain_sub, false);
+        assert!(!does_contain_sub);
     }
 
     #[test]
@@ -1022,7 +1020,7 @@ mod delete_subscription {
             .find_map(|folder| Some(folder.outlines.contains(deleted_sub)))
             .unwrap();
 
-        assert_eq!(does_contain_sub, false);
+        assert!(!does_contain_sub);
     }
 
     #[test]
@@ -1096,10 +1094,7 @@ mod delete_subscription {
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
-        assert_eq!(
-            (!does_contain_deleted_sub && does_contain_expected_sub),
-            true
-        );
+        assert!((!does_contain_deleted_sub && does_contain_expected_sub));
     }
 }
 
@@ -1157,7 +1152,7 @@ mod rename_subscription {
             .outlines
             .contains(expected_sub);
 
-        assert_eq!(does_contain_sub, true);
+        assert!(does_contain_sub);
     }
 
     #[test]
@@ -1196,7 +1191,7 @@ mod rename_subscription {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot rename subscription to \"{}\". It already exists.",
-            rename_sub.text.to_string(),
+            rename_sub.text
         );
 
         assert_eq!(actual_error, expected_error);
@@ -1256,7 +1251,7 @@ mod rename_subscription {
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
-        assert_eq!(does_contain_sub, true);
+        assert!(does_contain_sub);
     }
 
     #[test]
@@ -1300,7 +1295,7 @@ mod rename_subscription {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot rename subscription to \"{}\". It already exists.",
-            rename_sub.text.to_string(),
+            rename_sub.text
         );
 
         assert_eq!(actual_error, expected_error);
@@ -1384,10 +1379,7 @@ mod rename_subscription {
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
-        assert_eq!(
-            (does_contain_untouched_sub && does_contain_expected_sub),
-            true
-        );
+        assert!((does_contain_untouched_sub && does_contain_expected_sub));
     }
 
     #[test]
@@ -1445,7 +1437,7 @@ mod rename_subscription {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot rename subscription to \"{}\". It already exists.",
-            rename_sub.text.to_string(),
+            rename_sub.text
         );
 
         assert_eq!(actual_error, expected_error);
@@ -1515,7 +1507,7 @@ mod move_subscription {
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
-        assert_eq!((!does_root_contain_sub && does_folder_contain_sub), true);
+        assert!((!does_root_contain_sub && does_folder_contain_sub));
     }
 
     #[test]
@@ -1567,7 +1559,7 @@ mod move_subscription {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot move subscription to \"{}\". It already exists.",
-            expected_sub.text.to_string(),
+            expected_sub.text
         );
 
         assert_eq!(actual_error, expected_error);
@@ -1628,7 +1620,7 @@ mod move_subscription {
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
-        assert_eq!((does_root_contain_sub && !does_folder_contain_sub), true);
+        assert!((does_root_contain_sub && !does_folder_contain_sub));
     }
 
     #[test]
@@ -1680,7 +1672,7 @@ mod move_subscription {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot move subscription to \"{}\". It already exists.",
-            expected_sub.text.to_string(),
+            expected_sub.text
         );
 
         assert_eq!(actual_error, expected_error);
@@ -1749,10 +1741,7 @@ mod move_subscription {
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
-        assert_eq!(
-            (!does_folder_one_contain_sub && does_folder_two_contain_sub),
-            true
-        );
+        assert!((!does_folder_one_contain_sub && does_folder_two_contain_sub));
     }
 
     #[test]
@@ -1809,7 +1798,7 @@ mod move_subscription {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot move subscription to \"{}\". It already exists.",
-            expected_sub.text.to_string(),
+            expected_sub.text
         );
 
         assert_eq!(actual_error, expected_error);
