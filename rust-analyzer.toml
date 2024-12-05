@@ -1,0 +1,3 @@
+[rustfmt]
+overrideCommand = ["leptosfmt", "--stdin", "--rustfmt"]
+# (optional) other config...

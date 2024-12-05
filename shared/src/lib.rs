@@ -1,11 +1,10 @@
 pub mod app;
-
+pub use app::*;
+pub use crux_core::bridge::{Bridge, Request};
+pub use crux_core::Core;
+pub use crux_http as http;
 use lazy_static::lazy_static;
 use wasm_bindgen::prelude::wasm_bindgen;
-
-pub use crux_core::{bridge::Bridge, Core, Request};
-
-pub use app::*;
 
 // TODO hide this plumbing
 
