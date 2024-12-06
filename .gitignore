@@ -136,3 +136,6 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# add vale ini
+!.vale.ini
