@@ -12,33 +12,32 @@ mod http;
 fn RootComponent() -> impl IntoView {
     let core = core::new();
     let (view, render) = signal(core.view());
-    let (event, set_event) = signal(Event::StartWatch);
+    let (account, set_account) = signal(Event::CreateAccount(shared::AccountType::Local));
 
     Effect::new(move |_| {
-        core::update(&core, event.get(), render);
+        core::update(&core, account.get(), render);
     });
 
     view! {
         <section class="section has-text-centered">
-            <p class="title">{"Crux Counter Example"}</p>
-            <p class="is-size-5">{"Rust Core, Rust Shell (Leptos)"}</p>
+            <p class="title">{"Crab News"}</p>
         </section>
         <section class="container has-text-centered">
-            <p class="is-size-5">{move || view.get().text}</p>
+            // <p class="is-size-5">{move || view.get().accounts}</p>
             <div class="buttons section is-centered">
                 <button
                     class="button is-primary is-warning"
-                    on:click=move |_| set_event.update(|value| *value = Event::Decrement)
+                    // on:click=move |_| set_event.update(|value| *value = Event::Decrement)
                 >
                     {"Decrement"}
                 </button>
                 <button
                     class="button is-primary is-danger"
-                    on:click=move |_| set_event.update(|value| *value = Event::Increment)
+                    // on:click=move |_| set_event.update(|value| *value = Event::Increment)
                 >
                     {"Increment"}
                 </button>
-                <ProgressBar progress=count/>
+                // <ProgressBar progress=count/>
             </div>
         </section>
     }

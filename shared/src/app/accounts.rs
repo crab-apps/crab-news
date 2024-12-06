@@ -11,7 +11,7 @@ pub struct Account {
     pub subs: Subscriptions,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum AccountType {
     Local,
     Apple,

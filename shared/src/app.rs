@@ -15,7 +15,8 @@ pub use subscriptions::{
 // ANCHOR_END: imports
 
 // ANCHOR: events
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum Event {
     // EVENTS FROM THE SHELL
     CreateAccount(AccountType),
@@ -59,7 +60,7 @@ pub struct Notification {
 }
 
 // ANCHOR: view model
-#[derive(Default, Debug, Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ViewModel {
     pub notification: Notification,
     pub accounts: Accounts,

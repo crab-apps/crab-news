@@ -450,6 +450,8 @@ mod import_export {
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
         let subs_opml_name = "Subscriptions.opml".to_string();
+
+        #[allow(clippy::unnecessary_literal_unwrap)]
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
 
         model.accounts[acct_index].subs = Subscriptions {
@@ -464,7 +466,7 @@ mod import_export {
         );
 
         // TODO use proper Shell/WASM/crate functionality to File operations
-        let mut exported_file = std::fs::File::open(subs_opml_name.to_string()).unwrap();
+        let mut exported_file = std::fs::File::open(subs_opml_name).unwrap();
         let exported_content = Subscriptions {
             opml: OPML::from_reader(&mut exported_file).unwrap(),
             feeds: vec![],
@@ -483,6 +485,8 @@ mod import_export {
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
         let subs_opml_name = "Subscriptions.opml".to_string();
+
+        #[allow(clippy::unnecessary_literal_unwrap)]
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
 
         model.accounts[acct_index].subs = Subscriptions {
@@ -824,6 +828,7 @@ mod add_subscription {
             &mut model,
         );
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_contain_sub = model.accounts[acct_index]
             .subs
             .opml
@@ -1010,12 +1015,13 @@ mod delete_subscription {
             &mut model,
         );
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(deleted_sub)))
             .unwrap();
@@ -1074,22 +1080,24 @@ mod delete_subscription {
             &mut model,
         );
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_contain_deleted_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(delete_sub)))
             .unwrap();
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_contain_expected_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -1241,12 +1249,13 @@ mod rename_subscription {
             &mut model,
         );
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -1359,22 +1368,24 @@ mod rename_subscription {
             &mut model,
         );
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_contain_untouched_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(untouched_sub)))
             .unwrap();
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_contain_expected_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -1497,12 +1508,13 @@ mod move_subscription {
             .outlines
             .contains(expected_sub);
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_folder_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -1610,12 +1622,13 @@ mod move_subscription {
             .outlines
             .contains(expected_sub);
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_folder_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_name)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
@@ -1721,22 +1734,24 @@ mod move_subscription {
             &mut model,
         );
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_folder_one_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_one)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
+        #[allow(clippy::unnecessary_find_map)]
         let does_folder_two_contain_sub = model.accounts[acct_index]
             .subs
             .opml
             .body
             .outlines
-            .iter_mut()
+            .iter()
             .filter(|outline| outline.text == folder_two)
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
