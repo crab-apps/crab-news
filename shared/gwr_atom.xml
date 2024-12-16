@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+	<title>Gentle Wash Records</title>
+	<subtitle
+    >Independent record label Estd. 2014 by Andrea Callea to release his solo music projects.</subtitle>
+	<link
+        rel="self"
+        type="application/atom+xml"
+        href="https://gentlewashrecords.com/atom.xml"
+    />
+	<link rel="alternate" type="text/html" href="https://gentlewashrecords.com/" />
+	<generator uri="https://www.getzola.org/">Zola</generator>
+	<updated>2024-09-21T00:00:00+00:00</updated>
+	<id>https://gentlewashrecords.com/atom.xml</id>
+	<entry xml:lang="en">
+		<title>Embroidering on Silence, Vol. II</title>
+		<published>2024-09-21T00:00:00+00:00</published>
+		<updated>2024-09-21T00:00:00+00:00</updated>
+		<author>
+			<name>
+
+              Unknown
+
+          </name>
+		</author>
+		<link
+            rel="alternate"
+            type="text/html"
+            href="https://gentlewashrecords.com/catalog/aner/eos2/"
+        />
+		<id>https://gentlewashrecords.com/catalog/aner/eos2/</id>
+		<content
+            type="html"
+            xml:base="https://gentlewashrecords.com/catalog/aner/eos2/"
+        >&lt;hr &#x2F;&gt;
+&lt;p&gt;Embroidering on Silence, Vol. II is the second instalment of &lt;a href=&quot;&#x2F;posts&#x2F;eos-series&quot;&gt;a series entitled
+Embroidering on Silence&lt;&#x2F;a&gt;. Initially composed as a bespoke
+live show for &lt;em&gt;Cronosfera III&lt;&#x2F;em&gt;. Subsequently, one that I also played at the
+following events, with different iterations and refinements, between 2012 and
+2016:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;&#x2F;posts&#x2F;cronosfera-iii&quot;&gt;Cronosfera III&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;&#x2F;posts&#x2F;spazio-luce&quot;&gt;Elektroshow con Aner Andros&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;&#x2F;posts&#x2F;terra-incognita&quot;&gt;Terra Incognita&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;&#x2F;posts&#x2F;a-night-of&quot;&gt;A Night Of…&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;To find the creative motivation, necessary to work on releasing something so
+dated, this release comprises of an entirely new mix that only partially
+reflects the afore-mentioned original composition and previous revisions. Live
+recordings of &lt;em&gt;Cronosfera III&lt;&#x2F;em&gt; and &lt;em&gt;Terra Incognita&lt;&#x2F;em&gt; shows are available solely
+on Bandcamp, as bonus tracks.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;credits&quot;&gt;Credits&lt;&#x2F;h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;&#x2F;posts&#x2F;credits&#x2F;aner&#x2F;embroidering-on-silence-vol-ii-credits&quot;&gt;&lt;em&gt;Embroidering on Silence Vol. II&lt;&#x2F;em&gt;&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+	</entry>
+</feed>
