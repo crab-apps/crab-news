@@ -23,9 +23,9 @@ lazy_static = "1.5.0"
 uniffi = "0.28.3"
 wasm-bindgen = "0.2.99"
 opml = "1.1"
-feed-rs = "2.3"
+feed-rs = "2.3.0"
 chrono = { version = "0.4.39", features = ["unstable-locales"] }
-thiserror = "2.0"
+thiserror = "2.0.8"
 
 [target.uniffi-bindgen.dependencies]
 uniffi = { version = "0.28.3", features = ["cli"] }

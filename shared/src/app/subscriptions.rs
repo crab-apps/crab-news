@@ -1832,7 +1832,7 @@ mod move_subscription {
 //     };
 
 //     #[test]
-//     fn add_feed() {
+//     fn get_feed() {
 //         let app = AppTester::<CrabNews, _>::default();
 //         let mut model: Model = Model::default();
 //         let account = Account::new(&AccountType::Local);
@@ -1840,7 +1840,7 @@ mod move_subscription {
 //         let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
 
 //         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
-//         let acct_index = Accounts::find_account_index(&model.accounts, &account);
+//         // let acct_index = Accounts::find_account_index(&model.accounts, &account);
 //         let _ = app.update(
 //             Event::AddNewSubscription(
 //                 account.clone(),
@@ -1852,7 +1852,11 @@ mod move_subscription {
 //         );
 
 //         // https://github.com/redbadger/crux/blob/master/examples/counter/shared/src/app.rs#L142-L178
-//         let update = app.update(Event::GetFeed(account, sub_link.clone()), &mut model);
+//         // send a `GetFeed` event to the app
+//         let update = app.update(
+//             Event::GetFeed(account.clone(), sub_link.clone()),
+//             &mut model,
+//         );
 
 //         // check that the app emitted an HTTP request,
 //         // capturing the request in the process
@@ -1864,64 +1868,84 @@ mod move_subscription {
 //         assert_eq!(actual, expected);
 
 //         // resolve the request with a simulated response from the web API
-//         let response = HttpResponse::ok()
-//             .body(r#"{ "value": 1, "updated_at": 1672531200000 }"#)
-//             .build();
+//         let response = HttpResponse::ok().body(r#""#).build();
 //         let update = app
 //             .resolve(request, HttpResult::Ok(response))
 //             .expect("an update");
 
-//         // // check that the app emitted an (internal) event to update the model
+//         // check that the app emitted an (internal) event to update the model
 //         let actual = update.events;
 //         let expected = vec![Event::SetFeed(
 //             account,
-//             Ok(ResponseBuilder::ok()
-//                 .body(Count {
-//                     value: 1,
-//                     updated_at: Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap()),
-//                 })
-//                 .build()),
+//             Ok(ResponseBuilder::ok().body(vec![]).build()),
 //         )];
 //         assert_eq!(actual, expected);
-
-//         let _ = app.update(Event::SetFeed(account, response), &mut model);
-//         let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
-//         let added_feed_title = added_feed.title.clone().unwrap().content;
-//         assert_eq!(added_feed_title, sub_title);
 //     }
 
-//     #[test]
-//     fn fail_add_feed_already_exists() {
-//         let app = AppTester::<CrabNews, _>::default();
-//         let mut model: Model = Model::default();
-//         let account = Account::new(&AccountType::Local);
-//         let acct_index = Accounts::find_account_index(&model.accounts, &account);
-//         let sub_title = "Gentle Wash Records".to_string();
-//         let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
+// #[test]
+// fn add_new_feed() {
+//     use feed_rs::parser;
+//     use std::fs::File;
+//     use std::io::BufReader;
 
-//         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
-//         let _ = app.update(
-//             Event::AddNewSubscription(
-//                 account.clone(),
-//                 None,
-//                 sub_title.to_string(),
-//                 sub_link.to_string(),
-//             ),
-//             &mut model,
-//         );
-//         let _response = app
-//             .update(Event::GetFeed(account.clone(), sub_link), &mut model)
-//             .expect_one_event();
-//         // let _ = app.update(Event::SetFeed(account.clone(), response), &mut model);
+//     let file = File::open("gwr_atom.xml").unwrap();
+//     let feed = parser::parse(BufReader::new(file)).unwrap();
 
-//         let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
-//         let added_feed_title = added_feed.title.clone().unwrap().content;
-//         let actual_error = model.notification.message;
-//         let expected_error = format!(
-//             "Cannot add new subscription \"{}\". You are already subscribed.",
-//             added_feed_title
-//         );
+//     let app = AppTester::<CrabNews, _>::default();
+//     let mut model: Model = Model::default();
+//     let account = Account::new(&AccountType::Local);
+//     let acct_index = Accounts::find_account_index(&model.accounts, &account);
+//     let sub_title = "Gentle Wash Records".to_string();
+//     let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
 
-//         assert_eq!(actual_error, expected_error);
-//     }
+//     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+//     let _ = app.update(
+//         Event::AddNewSubscription(
+//             account.clone(),
+//             None,
+//             sub_title.to_string(),
+//             sub_link.to_string(),
+//         ),
+//         &mut model,
+//     );
+
+//     let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
+
+//     assert_eq!(actual_error, expected_error);
+// }
+
+// #[test]
+// fn fail_add_feed_already_exists() {
+//     let app = AppTester::<CrabNews, _>::default();
+//     let mut model: Model = Model::default();
+//     let account = Account::new(&AccountType::Local);
+//     let acct_index = Accounts::find_account_index(&model.accounts, &account);
+//     let sub_title = "Gentle Wash Records".to_string();
+//     let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
+
+//     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+//     let _ = app.update(
+//         Event::AddNewSubscription(
+//             account.clone(),
+//             None,
+//             sub_title.to_string(),
+//             sub_link.to_string(),
+//         ),
+//         &mut model,
+//     );
+//     let _response = app
+//         .update(Event::GetFeed(account.clone(), sub_link), &mut model)
+//         .expect_one_event();
+//     // let _ = app.update(Event::SetFeed(account.clone(), response), &mut model);
+
+//     let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
+//     let added_feed_title = added_feed.title.clone().unwrap().content;
+//     let actual_error = model.notification.message;
+//     let expected_error = format!(
+//         "Cannot add new subscription \"{}\". You are already subscribed.",
+//         added_feed_title
+//     );
+
+//     assert_eq!(actual_error, expected_error);
+// }
 // }
