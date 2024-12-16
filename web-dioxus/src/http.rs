@@ -1,4 +1,5 @@
 use gloo_net::http;
+
 use shared::http::{
     protocol::{HttpRequest, HttpResponse},
     HttpError, Result,

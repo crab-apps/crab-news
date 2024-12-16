@@ -1,0 +1,27 @@
+[package]
+name = "web-dioxus"
+version = "0.1.0"
+authors = ["andreacfromtheapp <3269984+andreacfromtheapp@users.noreply.github.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dioxus = { version = "0.6.0", features = [] }
+shared = { path = "../shared" }
+console_error_panic_hook = "0.1.7"
+dioxus-logger = "0.6.0"
+futures-util = "0.3.31"
+tracing = "0.1.41"
+anyhow.workspace = true
+gloo-net = "0.6.0"
+js-sys = "0.3.76"
+wasm-bindgen = "0.2.99"
+wasm-bindgen-futures = "0.4.49"
+wasm-streams = "0.4.2"
+
+[features]
+default = ["web"]
+web = ["dioxus/web"]
+desktop = ["dioxus/desktop"]
+mobile = ["dioxus/mobile"]
