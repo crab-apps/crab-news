@@ -23,10 +23,10 @@ fn App() -> Element {
             href: asset!("./public/css/bulma.min.css")
         }
         main {
-            // section { class: "section has-text-centered",
-            //     h1 { class: "title", "Crux Counter Example" }
-            //     p { class: "is-size-5", "Rust Core, Rust Shell (Dioxus)" }
-            // }
+            section { class: "section has-text-centered",
+                h1 { class: "title", "Crux Counter Example" }
+                p { class: "is-size-5", "Rust Core, Rust Shell (Dioxus)" }
+            }
             // section { class: "section has-text-centered",
             //     p { class: "is-size-5", "{view().text}" }
             //     div { class: "buttons section is-centered",

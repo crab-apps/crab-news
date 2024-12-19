@@ -7,10 +7,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dioxus = { version = "0.6.0", features = [] }
+dioxus = { version = "0.6.1", features = [] }
 shared = { path = "../shared" }
 console_error_panic_hook = "0.1.7"
-dioxus-logger = "0.6.0"
+dioxus-logger = "0.6.1"
 futures-util = "0.3.31"
 tracing = "0.1.41"
 anyhow.workspace = true
