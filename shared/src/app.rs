@@ -34,7 +34,7 @@ pub enum Event {
     ),
     DeleteSubscription(Account, Option<FolderName>, SubscriptionTitle),
     RenameSubscription(Account, Option<FolderName>, OldName, OldLink, NewName),
-    MoveSubscriptionToFolder(Account, Subscription, OldFolder, NewFolder),
+    MoveSubscription(Account, Subscription, OldFolder, NewFolder),
     GetFeed(Account, SubscriptionLink),
 
     // EVENTS LOCAL TO THE CORE
@@ -214,7 +214,7 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::MoveSubscriptionToFolder(account, subscription, old_folder, new_folder) => {
+            Event::MoveSubscription(account, subscription, old_folder, new_folder) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::move_subscription(
                     &model.accounts[account_index].subs,
@@ -250,7 +250,7 @@ impl App for CrabNews {
             }
             Event::SetFeed(_, Err(err)) => {
                 return model.notification = Notification {
-                    title: "Feed Error".to_string(),
+                    title: "Http Error".to_string(),
                     message: err.to_string(),
                 };
             }

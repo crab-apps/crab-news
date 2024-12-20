@@ -363,7 +363,7 @@ impl Subscriptions {
     pub fn find_feed(&self, sub_title: &SubscriptionTitle) -> Feed {
         self.feeds
             .iter()
-            .find(|f| f.title.clone().unwrap().content == *sub_title)
+            .find(|feed| feed.title.clone().unwrap().content == *sub_title)
             .unwrap()
             .clone()
     }
@@ -1492,7 +1492,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::MoveSubscriptionToFolder(
+            Event::MoveSubscription(
                 account.clone(),
                 expected_sub.clone(),
                 None,
@@ -1559,7 +1559,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::MoveSubscriptionToFolder(
+            Event::MoveSubscription(
                 account.clone(),
                 expected_sub.clone(),
                 None,
@@ -1606,7 +1606,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::MoveSubscriptionToFolder(
+            Event::MoveSubscription(
                 account.clone(),
                 expected_sub.clone(),
                 Some(folder_name.to_string()),
@@ -1673,7 +1673,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::MoveSubscriptionToFolder(
+            Event::MoveSubscription(
                 account.clone(),
                 expected_sub.clone(),
                 Some(folder_name.to_string()),
@@ -1725,7 +1725,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::MoveSubscriptionToFolder(
+            Event::MoveSubscription(
                 account.clone(),
                 expected_sub.clone(),
                 Some(folder_one.to_string()),
@@ -1801,7 +1801,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::MoveSubscriptionToFolder(
+            Event::MoveSubscription(
                 account.clone(),
                 expected_sub.clone(),
                 Some(folder_one.to_string()),
