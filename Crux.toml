@@ -3,32 +3,32 @@ authors = ["Andrea Callea"]
 repository = "https://github.com/crabapps/crab-news"
 description = "A multi-platform RSS client for desktop and mobile"
 
-[cores.shared]
-source = "shared"
-type_gen = "shared_types"
-crux_version = "0.6.3"
+[shells.android]
+template = "android"
+source = "android"
+cores = ["shared"]
+
+[shells.dioxus]
+template = "dioxus"
+source = "dioxus"
+cores = ["shared"]
+
+[shells.ios]
+template = "ios"
+source = "ios"
+cores = ["shared"]
+
+[shells.macos]
+template = "macos"
+source = "macos"
+cores = ["shared"]
 
 [shells.tui]
 template = "tui"
 source = "ratatui"
 cores = ["shared"]
 
-[shells.iOS]
-template = "iOS"
-source = "iOS"
-cores = ["shared"]
-
-[shells.catalyst]
-template = "catalyst"
-source = "catalyst"
-cores = ["shared"]
-
-[shells.web_iced]
-template = "web-iced"
-source = "web-iced"
-cores = ["shared"]
-
-[shells.android]
-template = "Android"
-source = "Android"
-cores = ["shared"]
+[cores.shared]
+source = "shared"
+type_gen = "shared_types"
+crux_version = "0.6.3"
