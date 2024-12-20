@@ -363,7 +363,7 @@ impl Subscriptions {
     pub fn find_feed(&self, sub_title: &SubscriptionTitle) -> Feed {
         self.feeds
             .iter()
-            .find(|f| f.title.clone().unwrap().content == *sub_title)
+            .find(|feed| feed.title.clone().unwrap().content == *sub_title)
             .unwrap()
             .clone()
     }
