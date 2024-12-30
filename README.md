@@ -29,5 +29,6 @@ to both make and learn a lot from.
 - [Crux](https://redbadger.github.io/crux/)
 - [SwiftUI](https://developer.apple.com/xcode/swiftui/)
 - [Jetpack Compose](https://developer.android.com/compose)
-- [Dioxus](https://dioxuslabs.com/)
+- [Tauri](https://tauri.app/)
+- [Leptos](https://www.leptos.dev/)
 - [Ratatui](https://ratatui.rs)
