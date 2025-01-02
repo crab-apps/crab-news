@@ -778,7 +778,7 @@ mod add_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 None,
                 sub_title.to_string(),
@@ -819,7 +819,7 @@ mod add_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 sub_title.to_string(),
@@ -858,7 +858,7 @@ mod add_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 None,
                 sub_title.to_string(),
@@ -867,7 +867,7 @@ mod add_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 None,
                 sub_title.to_string(),
@@ -905,7 +905,7 @@ mod add_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 sub_title.to_string(),
@@ -914,7 +914,7 @@ mod add_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 sub_title.to_string(),
@@ -955,7 +955,7 @@ mod delete_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 None,
                 deleted_sub.text.to_string(),
@@ -998,7 +998,7 @@ mod delete_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 deleted_sub.text.to_string(),
@@ -1054,7 +1054,7 @@ mod delete_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 delete_sub.text.to_string(),
@@ -1063,7 +1063,7 @@ mod delete_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 expected_sub.text.to_string(),
@@ -1134,7 +1134,7 @@ mod rename_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 None,
                 rename_sub.text.to_string(),
@@ -1177,7 +1177,7 @@ mod rename_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 None,
                 rename_sub.text.to_string(),
@@ -1230,7 +1230,7 @@ mod rename_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 rename_sub.text.to_string(),
@@ -1282,7 +1282,7 @@ mod rename_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 rename_sub.text.to_string(),
@@ -1340,7 +1340,7 @@ mod rename_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 untouched_sub.text.to_string(),
@@ -1349,7 +1349,7 @@ mod rename_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 expected_sub.text.to_string(),
@@ -1417,7 +1417,7 @@ mod rename_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 untouched_sub.text.to_string(),
@@ -1426,7 +1426,7 @@ mod rename_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 rename_sub.text.to_string(),
@@ -1483,7 +1483,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 None,
                 expected_sub.text.to_string(),
@@ -1541,7 +1541,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 None,
                 expected_sub.text.to_string(),
@@ -1550,7 +1550,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 expected_sub.text.to_string(),
@@ -1597,7 +1597,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 expected_sub.text.to_string(),
@@ -1655,7 +1655,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_name.to_string()),
                 expected_sub.text.to_string(),
@@ -1664,7 +1664,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 None,
                 expected_sub.text.to_string(),
@@ -1716,7 +1716,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_one.to_string()),
                 expected_sub.text.to_string(),
@@ -1783,7 +1783,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_one.to_string()),
                 expected_sub.text.to_string(),
@@ -1792,7 +1792,7 @@ mod move_subscription {
             &mut model,
         );
         let _ = app.update(
-            Event::AddNewSubscription(
+            Event::AddSubscription(
                 account.clone(),
                 Some(folder_two.to_string()),
                 expected_sub.text.to_string(),

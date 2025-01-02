@@ -26,7 +26,7 @@ pub enum Event {
     AddNewFolder(Account, FolderName),
     DeleteFolder(Account, FolderName),
     RenameFolder(Account, OldName, NewName),
-    AddNewSubscription(
+    AddSubscription(
         Account,
         Option<FolderName>,
         SubscriptionTitle,
@@ -168,7 +168,7 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::AddNewSubscription(account, folder_name, sub_title, sub_link) => {
+            Event::AddSubscription(account, folder_name, sub_title, sub_link) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::add_subscription(
                     &model.accounts[account_index].subs,
