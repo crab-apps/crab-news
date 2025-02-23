@@ -2,68 +2,78 @@
 
 sketchpad for this project. notes, they come and go.
 
--   [When Should You Use Which
-    Collection?](https://doc.rust-lang.org/std/collections/index.html)
+- [When Should You Use Which Collection?](https://doc.rust-lang.org/std/collections/index.html)
 
-    > To get this out of the way: you should probably just use Vec or
-    > HashMap. These two collections cover most use cases for generic
-    > data storage and processing. They are exceptionally good at doing
-    > what they do. All the other collections in the standard library
-    > have specific use cases where they are the optimal choice, but
-    > these cases are borderline niche in comparison. Even when Vec and
-    > HashMap are technically suboptimal, they\'re probably a good
-    > enough choice to get started.
+  > To get this out of the way: you should probably just use Vec or HashMap.
+  > These two collections cover most use cases for generic data storage and
+  > processing. They are exceptionally good at doing what they do. All the other
+  > collections in the standard library have specific use cases where they are
+  > the optimal choice, but these cases are borderline niche in comparison. Even
+  > when Vec and HashMap are technically suboptimal, they\'re probably a good
+  > enough choice to get started.
 
--   The `pub struct ViewModel {`{.verbatim}} exposes its data via
-    `pub`{.verbatim}. Is this an Adapter?
+- The `pub struct ViewModel {`{.verbatim}} exposes its data via
+  `pub`{.verbatim}. Is this an Adapter?
 
--   All else have `pub struct {`{.verbatim}} only. Is this a Port?
+- All else have `pub struct {`{.verbatim}} only. Is this a Port?
 
 ## Elm vs Crux
 
 To help wrap my head around it, hereby collected their similarities and
 differences.
 
--   <https://redbadger.github.io/crux/guide/elm_architecture.html>
+- <https://redbadger.github.io/crux/guide/elm_architecture.html>
 
-  Elm            Crux                              Notes
-  -------------- --------------------------------- -------------------------------------------------------------------------------------------------------------------------------------------
-  Model          Model                             the Model holds all the possible states the app can be in
-  a\) View       ViewModel                         the ViewModel contains data relevant to the currently displayed UI/view
-  b\) View       fn view() in App                  the fn view() function populates ViewModel\'s data fron the Model
-  c\) View       see \"Cmd Msg\" in Capabilities   the Shells will send/receive the data to/from ViewModel via Capabilities
-  d\) View       no Model -\> Html Msg here        unlike Elm, Crux doesn\'t render a View but sends data to Shells (see \"c\")
-  Update         fn update() in App                takes Model, Events, Capabilities and changes Model by invoking Events
-  a\) Msg        Events                            are all the possible things the user can do
-  b\) Cmd Msg    Events                            invoke Capabilities and may also callback more Events
-  (Model, Msg)   fn update() implicit return of?   self.update(Event::Update(count), model, caps);
-  main           crux~core~::App entry point       is an implementation of the App trait, exposed via the Core or Bridge
-  a\) init       ​#\[derive(Default)\]              set Model initial state with [Default](https://doc.rust-lang.org/std/default/trait.Default.html) Trait; impl Default for any custom Types
-  b\) init       works like Elm\'s sandbox         no request effects during init. You can always add Event::Init if needed
+Elm Crux Notes
 
--   <https://redbadger.github.io/crux/guide/capabilities.html>
+---
 
-  Side Effects       Capabilities/FFI   Notes
-  ------------------ ------------------ -----------------------------------------------------------------------------------------
-  a\) Side Effects   Capabilities       Crux has three types of effects: notifications, requests, and subscriptions
-  b\) Side Effects   Capabilities       Crux side effects differ by the number of expected responses from the Shell
-  c\) Side Effects   Capabilities       Crux fn update() in App is the only Capabilities consumer, via Events
-  Cmd Msg            Capabilities       from the perspective of the Shell, they are data oriented messages sent back and forth
-  Cmd.none?          Capabilities       the Crux app will send the data to the Shell every time you call caps.render.render();
-  subscriptions      Capabilities       subscriptions is a type of an effect in Crux, requested via capabilities
-  ports              Capabilities       contrary to Elm Ports, Crux requests all side-effects, internally, through Capabilities
-  flags              Event::Configure   favor something like Event::Configure to take the configuration options
+Model Model the Model holds all the possible states the app can be in a\) View
+ViewModel the ViewModel contains data relevant to the currently displayed
+UI/view b\) View fn view() in App the fn view() function populates ViewModel\'s
+data fron the Model c\) View see \"Cmd Msg\" in Capabilities the Shells will
+send/receive the data to/from ViewModel via Capabilities d\) View no Model -\>
+Html Msg here unlike Elm, Crux doesn\'t render a View but sends data to Shells
+(see \"c\") Update fn update() in App takes Model, Events, Capabilities and
+changes Model by invoking Events a\) Msg Events are all the possible things the
+user can do b\) Cmd Msg Events invoke Capabilities and may also callback more
+Events (Model, Msg) fn update() implicit return of?
+self.update(Event::Update(count), model, caps); main crux~core~::App entry point
+is an implementation of the App trait, exposed via the Core or Bridge a\) init
+​#\[derive(Default)\] set Model initial state with
+[Default](https://doc.rust-lang.org/std/default/trait.Default.html) Trait; impl
+Default for any custom Types b\) init works like Elm\'s sandbox no request
+effects during init. You can always add Event::Init if needed
+
+- <https://redbadger.github.io/crux/guide/capabilities.html>
+
+Side Effects Capabilities/FFI Notes
+
+---
+
+a\) Side Effects Capabilities Crux has three types of effects: notifications,
+requests, and subscriptions b\) Side Effects Capabilities Crux side effects
+differ by the number of expected responses from the Shell c\) Side Effects
+Capabilities Crux fn update() in App is the only Capabilities consumer, via
+Events Cmd Msg Capabilities from the perspective of the Shell, they are data
+oriented messages sent back and forth Cmd.none? Capabilities the Crux app will
+send the data to the Shell every time you call caps.render.render();
+subscriptions Capabilities subscriptions is a type of an effect in Crux,
+requested via capabilities ports Capabilities contrary to Elm Ports, Crux
+requests all side-effects, internally, through Capabilities flags
+Event::Configure favor something like Event::Configure to take the configuration
+options
 
 ## Model
 
 The Model is an overall state (and the only place for state) of your
-application, it will hold all the loaded data, and any other kind of
-in-memory cached things. Everything that needs to live for longer than
-single run of \`update()\` goes in the Model.
+application, it will hold all the loaded data, and any other kind of in-memory
+cached things. Everything that needs to live for longer than single run of
+\`update()\` goes in the Model.
 
--   This needs some more love and thinking. It\'s a start though
+- This needs some more love and thinking. It\'s a start though
 
-``` rust
+```rust
 #[derive(Default, Serialize)]
 pub struct Model {
     ////////////////////////////
@@ -111,12 +121,12 @@ pub struct Model {
 
 ## ViewModel
 
-the ViewModel is a straight \"projection\" of the Model -- it\'s
-calculated from it (with the view function)
+the ViewModel is a straight \"projection\" of the Model -- it\'s calculated from
+it (with the view function)
 
--   This needs some more love and thinking. It\'s a start though
+- This needs some more love and thinking. It\'s a start though
 
-``` rust
+```rust
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ViewModel {
     ////////////////////////////
@@ -175,7 +185,7 @@ pub struct ViewModel {
 
 ## Preferences
 
-``` rust
+```rust
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub struct Preferences {
     theme: Theme,
@@ -236,22 +246,22 @@ pub enum RefreshInterval {
 
 ## Account
 
--   Do I need a crate here? Does Crux provide native integration?
-    -   <https://rclone.org> is interesting
--   Likely needing to code my own Capability for this one?
-    -   <https://github.com/rust-lang/rust/issues/109381>
-    -   <https://developer.apple.com/documentation/uikit/documents_data_and_pasteboard/synchronizing_documents_in_the_icloud_environment>
--   Probably best left for a future version?
+- Do I need a crate here? Does Crux provide native integration?
+  - <https://rclone.org> is interesting
+- Likely needing to code my own Capability for this one?
+  - <https://github.com/rust-lang/rust/issues/109381>
+  - <https://developer.apple.com/documentation/uikit/documents_data_and_pasteboard/synchronizing_documents_in_the_icloud_environment>
+- Probably best left for a future version?
 
 > I don\'t think you need a crate here nor create a Capability. You can
-> implement all inside the crux app and probably the only use crux~http~
-> and crux~kv~ (key value store) capabilities. You will use crux~http~
-> to communicate to the account clouds and probably the crux~kv~ to
-> store the tokens locally. There are already examples on how to
-> implement the crux~http~ on Android, iOS and the Web, but, I don\'t
-> remember seeing any of the crux~kv~ shell implementations.
+> implement all inside the crux app and probably the only use crux~http~ and
+> crux~kv~ (key value store) capabilities. You will use crux~http~ to
+> communicate to the account clouds and probably the crux~kv~ to store the
+> tokens locally. There are already examples on how to implement the crux~http~
+> on Android, iOS and the Web, but, I don\'t remember seeing any of the crux~kv~
+> shell implementations.
 
-``` rust
+```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Account {
     acct: AccountType,
@@ -291,24 +301,22 @@ pub enum AccountCloud {
 
 ## Subscriptions
 
--   crate: <https://crates.io/crates/opml>
+- crate: <https://crates.io/crates/opml>
 
--   <http://opml.org/spec2.opml>
+- <http://opml.org/spec2.opml>
 
--   <http://outlinerhowto.opml.org>
+- <http://outlinerhowto.opml.org>
 
--   OPML crate to deal with subscriptions and outlines:
+- OPML crate to deal with subscriptions and outlines:
 
 > ImportSubscriptions(OpmlFile), ExportSubscriptions(OpmlName),
-> AddNewFolder(FolderName), DeleteFolder(FolderName),
-> RenameFolder(OldName, NewName),
-> AddNewSubscription(Option\<FolderName\>, SubscriptionName,
-> SubscriptionURL), DeleteSubscription(Option\<FolderName\>,
-> SubscriptionName), RenameSubscription(Option\<FolderName\>, OldName,
-> NewName), MoveSubscriptionToFolder(Subscription, OldFolder,
-> NewFolder),
+> AddNewFolder(FolderName), DeleteFolder(FolderName), RenameFolder(OldName,
+> NewName), AddNewSubscription(Option\<FolderName\>, SubscriptionName,
+> SubscriptionURL), DeleteSubscription(Option\<FolderName\>, SubscriptionName),
+> RenameSubscription(Option\<FolderName\>, OldName, NewName),
+> MoveSubscriptionToFolder(Subscription, OldFolder, NewFolder),
 
-``` xml
+```xml
 <!-- Example OPML -->
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- OPML generated by Crab News -->
@@ -331,19 +339,18 @@ pub enum AccountCloud {
 
 ## Feeds
 
--   crate: <https://crates.io/crates/rss> to deal with RSS crate:
-    <https://crates.io/crates/atom_syndication> to deal with Atom
--   <https://datatracker.ietf.org/doc/html/rfc4287>
--   <https://validator.w3.org/feed/docs/atom.html>
--   <https://www.rssboard.org/rss-specification>
+- crate: <https://crates.io/crates/rss> to deal with RSS crate:
+  <https://crates.io/crates/atom_syndication> to deal with Atom
+- <https://datatracker.ietf.org/doc/html/rfc4287>
+- <https://validator.w3.org/feed/docs/atom.html>
+- <https://www.rssboard.org/rss-specification>
 
-This crate is to deal with feeds data **after** subscribtions. The main
-UI would deal with all data to display \"news\" in the entry and content
-columns.
+This crate is to deal with feeds data **after** subscribtions. The main UI would
+deal with all data to display \"news\" in the entry and content columns.
 
 ### Related to Feeds
 
-``` rust
+```rust
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub enum ReadStatus {
     Read,
@@ -371,9 +378,9 @@ pub enum FeedView {
 
 ## Events
 
--   all the events to start coding, more later?
+- all the events to start coding, more later?
 
-``` rust
+```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Event {
     // EVENTS FROM THE SHELL
@@ -455,6 +462,6 @@ pub enum Event {
 
 ## Database
 
--   Almost all data eventually goes into the db. adding as I go.
--   crate: <https://crates.io/crates/surrealdb>
--   embed: <https://surrealdb.com/docs/surrealdb/embedding/rust>
+- Almost all data eventually goes into the db. adding as I go.
+- crate: <https://crates.io/crates/surrealdb>
+- embed: <https://surrealdb.com/docs/surrealdb/embedding/rust>

@@ -5,8 +5,8 @@ written in Rust.
 
 ## State of the Art
 
-This is my first attempt at a real [Rust](https://rust-lang.org/) application.
-I love to code to internalize a programming language concepts with practice.
+This is my first attempt at a real [Rust](https://rust-lang.org/) application. I
+love to code to internalize a programming language concepts with practice.
 
 ## Is it stable?
 
@@ -20,9 +20,9 @@ favorite client.
 
 ## Why an RSS reader?
 
-[Awesome Rust](https://awesome-rust.com) doesn't have a RSS reader listed. I would
-love to contribute one that I'd use every day. Also, sounds like a great project
-to both make and learn a lot from.
+[Awesome Rust](https://awesome-rust.com) doesn't have a RSS reader listed. I
+would love to contribute one that I'd use every day. Also, sounds like a great
+project to both make and learn a lot from.
 
 ## Made With
 
