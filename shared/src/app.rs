@@ -4,7 +4,7 @@ use crux_core::{
     render::{self, Render},
     App, Command,
 };
-use crux_http::Http;
+use crux_http::command::Http;
 use serde::{Deserialize, Serialize};
 
 mod accounts;
@@ -77,7 +77,7 @@ pub struct ViewModel {
 #[derive(crux_core::macros::Effect)]
 pub struct Capabilities {
     pub render: Render<Event>,
-    pub http: Http<Event>,
+    pub http: crux_http::Http<Event>,
 }
 // ANCHOR_END: capabilities
 
@@ -98,6 +98,7 @@ impl App for CrabNews {
         model: &mut Self::Model,
         _caps: &Self::Capabilities,
     ) -> Command<Effect, Event> {
+        // NOTE:
         // we no longer use the capabilities directly, but they are passed in
         // until the migration to managed effects with `Command` is complete
         // (at which point the capabilities will be removed from the `update`
@@ -121,7 +122,8 @@ impl App for CrabNews {
 }
 
 impl CrabNews {
-    // note: this function can be moved into the `App` trait implementation, above,
+    // NOTE:
+    // this function can be moved into the `App` trait implementation, above,
     // once the `App` trait has been updated (as the final part of the migration
     // to managed effects with `Command`).
     fn update(&self, event: Event, model: &mut Model) -> Command<Effect, Event> {
@@ -301,15 +303,9 @@ impl CrabNews {
                     }
                 }
             }
-            Event::GetFeed(_account, _sub_link) => todo!(),
-            // Event::GetFeed(account, sub_link) => caps
-            //     .http
-            //     .get(sub_link)
-            //     .send(move |result| Event::SetFeed(account, result)),
-            // Event::GetFeed(account, sub_link) => Command::all([
-            //     render::render(),
-            //     Http::get(sub_link).then_send(move |result| Event::SetFeed(account, result)),
-            // ]),
+            Event::GetFeed(account, sub_link) => Http::get(sub_link)
+                .build()
+                .then_send(move |result| Event::SetFeed(account, result)),
             Event::SetFeed(account, Ok(mut response)) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 let body = response.take_body().unwrap();
