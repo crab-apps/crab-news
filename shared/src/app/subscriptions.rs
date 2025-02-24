@@ -3,7 +3,6 @@ use feed_rs::model::Feed;
 use feed_rs::parser::{self, ParseFeedError};
 use opml::{self, Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
-use std::fs::{write, File};
 use std::io;
 use thiserror::Error;
 
@@ -30,6 +29,10 @@ pub enum Error {
         item: String,
         reason: String,
     },
+    #[error("{0}")]
+    Io(#[from] io::Error),
+    #[error("{0}")]
+    Opml(#[from] opml::Error),
 }
 
 // NOTE - crate: https://crates.io/crates/opml to deal with subscriptions and outlines:
@@ -68,9 +71,9 @@ impl Subscriptions {
     // ANCHOR_END: helper functions
 
     // TODO on duplicates, prompt user for merge or replace
-    pub fn import(&self, subs_opml_file: &OpmlFile) -> Result<Self, opml::Error> {
+    pub fn import(&self, subs_opml_file: &OpmlFile) -> Result<Self, self::Error> {
         // TODO use proper Shell/WASM functionality to pass on File operations
-        let mut file = File::open(subs_opml_file).unwrap();
+        let mut file = std::fs::File::open(subs_opml_file)?;
         Ok(Self {
             opml: OPML::from_reader(&mut file)?,
             feeds: vec![],
@@ -78,7 +81,7 @@ impl Subscriptions {
     }
 
     // TODO once shell is implemented, check failures
-    pub fn export(&self, subs_opml_name: &OpmlName) -> Result<String, io::Error> {
+    pub fn export(&self, subs_opml_name: &OpmlName) -> Result<String, self::Error> {
         let xml_tag = r#"<?xml version="1.0" encoding="UTF-8"?>"#.to_string();
         let custom_head = Head {
             title: Some(subs_opml_name.to_string()),
@@ -94,9 +97,9 @@ impl Subscriptions {
         };
         let export_content = xml_tag + &custom_opml.to_string().unwrap();
         // TODO use proper Shell/WASM functionality to pass on File operations
-        match write(subs_opml_name, &export_content) {
+        match std::fs::write(subs_opml_name, &export_content) {
             Ok(_) => Ok("Subscriptions successfully exported".to_string()),
-            Err(e) => Err(e),
+            Err(e) => Err(Error::Io(e)),
         }
     }
 
