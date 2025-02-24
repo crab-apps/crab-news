@@ -38,11 +38,11 @@ pub enum Event {
     DeleteSubscription(Account, Option<FolderName>, SubscriptionTitle),
     RenameSubscription(Account, Option<FolderName>, OldName, OldLink, NewName),
     MoveSubscription(Account, Subscription, OldFolder, NewFolder),
-    // GetFeed(Account, SubscriptionLink),
+    GetFeed(Account, SubscriptionLink),
 
     // EVENTS LOCAL TO THE CORE
-    // #[serde(skip)]
-    // SetFeed(Account, crux_http::Result<crux_http::Response<Vec<u8>>>),
+    #[serde(skip)]
+    SetFeed(Account, crux_http::Result<crux_http::Response<Vec<u8>>>),
 }
 // ANCHOR_END: events
 
@@ -300,30 +300,40 @@ impl CrabNews {
                         render::render()
                     }
                 }
-            } // Event::GetFeed(account, sub_link) => Command::all([
-              //     render::render(),
-              //     Http::get(sub_link).then_send(move |result| Event::SetFeed(account, result)),
-              // ]),
-              // Event::SetFeed(account, Ok(mut response)) => {
-              //     let account_index = Accounts::find_account_index(&model.accounts, &account);
-              //     let body = response.take_body().unwrap();
-              //     match Subscriptions::add_feed(&model.accounts[account_index].subs, body) {
-              //         Ok(subs) => model.accounts[account_index].subs = subs,
-              //         Err(err) => {
-              //             model.notification = Notification {
-              //                 title: "Feed Error".to_string(),
-              //                 message: err.to_string(),
-              //             };
-              //         }
-              //     }
-              // }
-              // Event::SetFeed(_, Err(err)) => {
-              //     model.notification = Notification {
-              //         title: "Http Error".to_string(),
-              //         message: err.to_string(),
-              //     };
-              //     render::render()
-              // }
+            }
+            Event::GetFeed(_account, _sub_link) => todo!(),
+            // Event::GetFeed(account, sub_link) => caps
+            //     .http
+            //     .get(sub_link)
+            //     .send(move |result| Event::SetFeed(account, result)),
+            // Event::GetFeed(account, sub_link) => Command::all([
+            //     render::render(),
+            //     Http::get(sub_link).then_send(move |result| Event::SetFeed(account, result)),
+            // ]),
+            Event::SetFeed(account, Ok(mut response)) => {
+                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let body = response.take_body().unwrap();
+                match Subscriptions::add_feed(&model.accounts[account_index].subs, body) {
+                    Ok(subs) => {
+                        model.accounts[account_index].subs = subs;
+                        render::render()
+                    }
+                    Err(err) => {
+                        model.notification = Notification {
+                            title: "Feed Error".to_string(),
+                            message: err.to_string(),
+                        };
+                        render::render()
+                    }
+                }
+            }
+            Event::SetFeed(_, Err(err)) => {
+                model.notification = Notification {
+                    title: "Http Error".to_string(),
+                    message: err.to_string(),
+                };
+                render::render()
+            }
         }
     }
 }
