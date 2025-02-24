@@ -8,11 +8,6 @@ template = "android"
 source = "android"
 cores = ["shared"]
 
-[shells.dioxus]
-template = "dioxus"
-source = "dioxus"
-cores = ["shared"]
-
 [shells.ios]
 template = "ios"
 source = "ios"
@@ -32,3 +27,8 @@ cores = ["shared"]
 source = "shared"
 type_gen = "shared_types"
 crux_version = "0.6.3"
+
+[shells.tauri]
+template = "tauri"
+source = "tauri"
+cores = ["shared"]
