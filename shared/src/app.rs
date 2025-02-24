@@ -1,7 +1,7 @@
 // ANCHOR: app
 // ANCHOR: imports
 use crux_core::{
-    render::{render, Render},
+    render::{self, Render},
     App, Command,
 };
 use crux_http::Http;
@@ -128,28 +128,37 @@ impl CrabNews {
         match event {
             Event::CreateAccount(account_type) => {
                 match Accounts::add_account(&model.accounts, &account_type) {
-                    Ok(accts) => model.accounts = accts,
+                    Ok(accts) => {
+                        model.accounts = accts;
+                        render::render()
+                    }
                     Err(err) => {
-                        return model.notification = Notification {
+                        model.notification = Notification {
                             title: "Account Error".to_string(),
                             message: err.to_string(),
                         };
+                        render::render()
                     }
                 }
             }
             Event::DeleteAccount(account) => {
                 model.accounts = Accounts::delete_account(&model.accounts, &account);
+                render::render()
             }
             Event::ImportSubscriptions(account, subs_opml_file) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::import(&model.accounts[account_index].subs, &subs_opml_file) {
                     // TODO on duplicates, prompt user for merge or replace
-                    Ok(subs) => model.accounts[account_index].subs = subs,
+                    Ok(subs) => {
+                        model.accounts[account_index].subs = subs;
+                        render::render()
+                    }
                     Err(err) => {
-                        return model.notification = Notification {
+                        model.notification = Notification {
                             title: "Import Error".to_string(),
                             message: err.to_string(),
                         };
+                        render::render()
                     }
                 }
             }
@@ -157,36 +166,44 @@ impl CrabNews {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::export(&model.accounts[account_index].subs, &subs_opml_name) {
                     Ok(success) => {
-                        return model.notification = Notification {
+                        model.notification = Notification {
                             title: "Subscriptions Exported".to_string(),
                             message: success.to_string(),
                         };
+                        render::render()
                     }
                     Err(err) => {
                         // TODO once shell is implemented, check failures
-                        return model.notification = Notification {
+                        model.notification = Notification {
                             title: "Export Error".to_string(),
                             message: err.to_string(),
                         };
+                        render::render()
                     }
                 }
             }
             Event::AddNewFolder(account, folder_name) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::add_folder(&model.accounts[account_index].subs, &folder_name) {
-                    Ok(subs) => model.accounts[account_index].subs = subs,
+                    Ok(subs) => {
+                        model.accounts[account_index].subs = subs;
+                        render::render()
+                    }
                     Err(err) => {
-                        return model.notification = Notification {
+                        model.notification = Notification {
                             title: "New Folder Error".to_string(),
                             message: err.to_string(),
                         };
+                        render::render()
                     }
                 }
             }
             Event::DeleteFolder(account, folder_name) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
-                model.accounts[account_index].subs =
-                    Subscriptions::delete_folder(&model.accounts[account_index].subs, &folder_name);
+                model.accounts[account_index].subs = {
+                    Subscriptions::delete_folder(&model.accounts[account_index].subs, &folder_name)
+                };
+                render::render()
             }
             Event::RenameFolder(account, old_folder_name, new_folder_name) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
@@ -195,12 +212,16 @@ impl CrabNews {
                     &old_folder_name,
                     &new_folder_name,
                 ) {
-                    Ok(subs) => model.accounts[account_index].subs = subs,
+                    Ok(subs) => {
+                        model.accounts[account_index].subs = subs;
+                        render::render()
+                    }
                     Err(err) => {
-                        return model.notification = Notification {
+                        model.notification = Notification {
                             title: "Rename Folder Error".to_string(),
                             message: err.to_string(),
                         };
+                        render::render()
                     }
                 }
             }
@@ -212,12 +233,16 @@ impl CrabNews {
                     &sub_title,
                     &sub_link,
                 ) {
-                    Ok(subs) => model.accounts[account_index].subs = subs,
+                    Ok(subs) => {
+                        model.accounts[account_index].subs = subs;
+                        render::render()
+                    }
                     Err(err) => {
-                        return model.notification = Notification {
+                        model.notification = Notification {
                             title: "Subscription Error".to_string(),
                             message: err.to_string(),
                         };
+                        render::render()
                     }
                 }
                 // caps.http
@@ -231,6 +256,7 @@ impl CrabNews {
                     &folder_name,
                     &sub_name,
                 );
+                render::render()
             }
             Event::RenameSubscription(account, folder_name, old_title, old_link, new_name) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
@@ -241,12 +267,16 @@ impl CrabNews {
                     &old_link,
                     &new_name,
                 ) {
-                    Ok(subs) => model.accounts[account_index].subs = subs,
+                    Ok(subs) => {
+                        model.accounts[account_index].subs = subs;
+                        render::render()
+                    }
                     Err(err) => {
-                        return model.notification = Notification {
+                        model.notification = Notification {
                             title: "Subscription Error".to_string(),
                             message: err.to_string(),
                         };
+                        render::render()
                     }
                 }
             }
@@ -258,40 +288,43 @@ impl CrabNews {
                     &old_folder,
                     &new_folder,
                 ) {
-                    Ok(subs) => model.accounts[account_index].subs = subs,
+                    Ok(subs) => {
+                        model.accounts[account_index].subs = subs;
+                        render::render()
+                    }
                     Err(err) => {
-                        return model.notification = Notification {
+                        model.notification = Notification {
                             title: "Subscription Error".to_string(),
                             message: err.to_string(),
                         };
+                        render::render()
                     }
                 }
-            } //     Event::GetFeed(account, sub_link) => caps
-              //         .http
-              //         .get(sub_link)
-              //         .send(move |result| Event::SetFeed(account, result)),
-              //     Event::SetFeed(account, Ok(mut response)) => {
-              //         let account_index = Accounts::find_account_index(&model.accounts, &account);
-              //         let body = response.take_body().unwrap();
-              //         match Subscriptions::add_feed(&model.accounts[account_index].subs, body) {
-              //             Ok(subs) => model.accounts[account_index].subs = subs,
-              //             Err(err) => {
-              //                 return model.notification = Notification {
-              //                     title: "Feed Error".to_string(),
-              //                     message: err.to_string(),
-              //                 };
-              //             }
+            } // Event::GetFeed(account, sub_link) => Command::all([
+              //     render::render(),
+              //     Http::get(sub_link).then_send(move |result| Event::SetFeed(account, result)),
+              // ]),
+              // Event::SetFeed(account, Ok(mut response)) => {
+              //     let account_index = Accounts::find_account_index(&model.accounts, &account);
+              //     let body = response.take_body().unwrap();
+              //     match Subscriptions::add_feed(&model.accounts[account_index].subs, body) {
+              //         Ok(subs) => model.accounts[account_index].subs = subs,
+              //         Err(err) => {
+              //             model.notification = Notification {
+              //                 title: "Feed Error".to_string(),
+              //                 message: err.to_string(),
+              //             };
               //         }
               //     }
-              //     Event::SetFeed(_, Err(err)) => {
-              //         return model.notification = Notification {
-              //             title: "Http Error".to_string(),
-              //             message: err.to_string(),
-              //         };
-              //     }
-        };
-
-        render()
+              // }
+              // Event::SetFeed(_, Err(err)) => {
+              //     model.notification = Notification {
+              //         title: "Http Error".to_string(),
+              //         message: err.to_string(),
+              //     };
+              //     render::render()
+              // }
+        }
     }
 }
 

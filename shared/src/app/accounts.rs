@@ -109,11 +109,10 @@ impl AccountsExt for Accounts {
 mod accts {
     use super::*;
     use crate::{CrabNews, Event, Model};
-    use crux_core::testing::AppTester;
 
     #[test]
     fn add_new_local_account() {
-        let app = AppTester::<CrabNews, _>::default();
+        let app = CrabNews;
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Local);
 
@@ -125,7 +124,7 @@ mod accts {
 
     #[test]
     fn fail_new_local_account() {
-        let app = AppTester::<CrabNews, _>::default();
+        let app = CrabNews;
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Local);
 
@@ -143,7 +142,7 @@ mod accts {
 
     #[test]
     fn delete_local_account() {
-        let app = AppTester::<CrabNews, _>::default();
+        let app = CrabNews;
         let mut model = Model::default();
         let account_to_delete = Account::new(&AccountType::Local);
 
@@ -157,7 +156,7 @@ mod accts {
 
     #[test]
     fn add_new_platform_account() {
-        let app = AppTester::<CrabNews, _>::default();
+        let app = CrabNews;
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Apple);
 
@@ -169,7 +168,7 @@ mod accts {
 
     #[test]
     fn fail_new_platform_account() {
-        let app = AppTester::<CrabNews, _>::default();
+        let app = CrabNews;
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Apple);
 
@@ -187,7 +186,7 @@ mod accts {
 
     #[test]
     fn delete_platform_account() {
-        let app = AppTester::<CrabNews, _>::default();
+        let app = CrabNews;
         let mut model = Model::default();
         let account_to_delete = Account::new(&AccountType::Apple);
 
