@@ -1,10 +1,9 @@
+use crate::Error;
 use chrono::Local;
 use feed_rs::model::Feed;
 use feed_rs::parser::{self, ParseFeedError};
 use opml::{self, Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
-use std::io;
-use thiserror::Error;
 
 // ANCHOR: type aliases
 pub type OpmlFile = String;
@@ -20,20 +19,6 @@ pub type SubscriptionTitle = String;
 pub type SubscriptionLink = String;
 pub type Feeds = Vec<Feed>;
 // ANCHOR_END: types aliases
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("{action} \"{item}\". {reason}")]
-    AlreadyExists {
-        action: String,
-        item: String,
-        reason: String,
-    },
-    #[error("{0}")]
-    Io(#[from] io::Error),
-    #[error("{0}")]
-    Opml(#[from] opml::Error),
-}
 
 // NOTE - crate: https://crates.io/crates/opml to deal with subscriptions and outlines:
 // NOTE - crate: https://crates.io/crates/feed-rs to deal with feeds data *after* subscribtions.

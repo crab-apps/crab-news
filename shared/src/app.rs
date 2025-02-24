@@ -6,6 +6,8 @@ use crux_core::{
 };
 use crux_http::command::Http;
 use serde::{Deserialize, Serialize};
+use std::io;
+use thiserror::Error;
 
 mod accounts;
 pub use accounts::{Account, AccountType, Accounts, AccountsExt};
@@ -16,6 +18,21 @@ pub use subscriptions::{
     Subscription, SubscriptionLink, SubscriptionTitle, Subscriptions,
 };
 // ANCHOR_END: imports
+
+// my custom Error for accounts and subscriptions
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("{action} \"{item}\". {reason}")]
+    AlreadyExists {
+        action: String,
+        item: String,
+        reason: String,
+    },
+    #[error("{0}")]
+    Io(#[from] io::Error),
+    #[error("{0}")]
+    Opml(#[from] opml::Error),
+}
 
 // ANCHOR: events
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

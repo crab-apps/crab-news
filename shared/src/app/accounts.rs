@@ -1,6 +1,6 @@
 use super::subscriptions::Subscriptions;
+use crate::Error;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 pub type Accounts = Vec<Account>;
 
@@ -39,16 +39,6 @@ impl Account {
             subs: Subscriptions::default(),
         }
     }
-}
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("{action} \"{item}\". {reason}")]
-    AlreadyExists {
-        action: String,
-        item: String,
-        reason: String,
-    },
 }
 
 trait AccountsHelpers {
