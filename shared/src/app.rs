@@ -1,6 +1,9 @@
 // ANCHOR: app
 // ANCHOR: imports
-use crux_core::{render::Render, App};
+use crux_core::{
+    render::{render, Render},
+    App, Command,
+};
 use crux_http::Http;
 use serde::{Deserialize, Serialize};
 
@@ -35,11 +38,11 @@ pub enum Event {
     DeleteSubscription(Account, Option<FolderName>, SubscriptionTitle),
     RenameSubscription(Account, Option<FolderName>, OldName, OldLink, NewName),
     MoveSubscription(Account, Subscription, OldFolder, NewFolder),
-    GetFeed(Account, SubscriptionLink),
+    // GetFeed(Account, SubscriptionLink),
 
     // EVENTS LOCAL TO THE CORE
-    #[serde(skip)]
-    SetFeed(Account, crux_http::Result<crux_http::Response<Vec<u8>>>),
+    // #[serde(skip)]
+    // SetFeed(Account, crux_http::Result<crux_http::Response<Vec<u8>>>),
 }
 // ANCHOR_END: events
 
@@ -87,8 +90,41 @@ impl App for CrabNews {
     type Model = Model;
     type ViewModel = ViewModel;
     type Capabilities = Capabilities;
+    type Effect = Effect;
 
-    fn update(&self, event: Self::Event, model: &mut Self::Model, caps: &Self::Capabilities) {
+    fn update(
+        &self,
+        event: Self::Event,
+        model: &mut Self::Model,
+        _caps: &Self::Capabilities,
+    ) -> Command<Effect, Event> {
+        // we no longer use the capabilities directly, but they are passed in
+        // until the migration to managed effects with `Command` is complete
+        // (at which point the capabilities will be removed from the `update`
+        // signature). Until then we delegate to our own `update` method so that
+        // we can test the app without needing to use AppTester.
+
+        self.update(event, model)
+    }
+
+    fn view(&self, model: &Self::Model) -> Self::ViewModel {
+        ViewModel {
+            notification: model.notification.clone(),
+            accounts: model.accounts.clone(),
+            // feeds: model.accounts.
+            // subscriptions: model.subscriptions.clone(),
+            // subscription_folder: model.subscription_folder.to_string(),
+            // subscription_title: model.subscription_title.to_string(),
+            // subscription_link: model.subscription_link.to_string(),
+        }
+    }
+}
+
+impl CrabNews {
+    // note: this function can be moved into the `App` trait implementation, above,
+    // once the `App` trait has been updated (as the final part of the migration
+    // to managed effects with `Command`).
+    fn update(&self, event: Event, model: &mut Model) -> Command<Effect, Event> {
         match event {
             Event::CreateAccount(account_type) => {
                 match Accounts::add_account(&model.accounts, &account_type) {
@@ -230,47 +266,35 @@ impl App for CrabNews {
                         };
                     }
                 }
-            }
-            Event::GetFeed(account, sub_link) => caps
-                .http
-                .get(sub_link)
-                .send(move |result| Event::SetFeed(account, result)),
-            Event::SetFeed(account, Ok(mut response)) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
-                let body = response.take_body().unwrap();
-                match Subscriptions::add_feed(&model.accounts[account_index].subs, body) {
-                    Ok(subs) => model.accounts[account_index].subs = subs,
-                    Err(err) => {
-                        return model.notification = Notification {
-                            title: "Feed Error".to_string(),
-                            message: err.to_string(),
-                        };
-                    }
-                }
-            }
-            Event::SetFeed(_, Err(err)) => {
-                return model.notification = Notification {
-                    title: "Http Error".to_string(),
-                    message: err.to_string(),
-                };
-            }
+            } //     Event::GetFeed(account, sub_link) => caps
+              //         .http
+              //         .get(sub_link)
+              //         .send(move |result| Event::SetFeed(account, result)),
+              //     Event::SetFeed(account, Ok(mut response)) => {
+              //         let account_index = Accounts::find_account_index(&model.accounts, &account);
+              //         let body = response.take_body().unwrap();
+              //         match Subscriptions::add_feed(&model.accounts[account_index].subs, body) {
+              //             Ok(subs) => model.accounts[account_index].subs = subs,
+              //             Err(err) => {
+              //                 return model.notification = Notification {
+              //                     title: "Feed Error".to_string(),
+              //                     message: err.to_string(),
+              //                 };
+              //             }
+              //         }
+              //     }
+              //     Event::SetFeed(_, Err(err)) => {
+              //         return model.notification = Notification {
+              //             title: "Http Error".to_string(),
+              //             message: err.to_string(),
+              //         };
+              //     }
         };
 
-        caps.render.render();
-    }
-
-    fn view(&self, model: &Self::Model) -> Self::ViewModel {
-        ViewModel {
-            notification: model.notification.clone(),
-            accounts: model.accounts.clone(),
-            // feeds: model.accounts.
-            // subscriptions: model.subscriptions.clone(),
-            // subscription_folder: model.subscription_folder.to_string(),
-            // subscription_title: model.subscription_title.to_string(),
-            // subscription_link: model.subscription_link.to_string(),
-        }
+        render()
     }
 }
+
 // ANCHOR_END: impl_app
 // ANCHOR_END: app
 
