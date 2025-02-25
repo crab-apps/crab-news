@@ -25,6 +25,7 @@ pub type Feeds = Vec<Feed>;
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Subscriptions {
     pub opml: OPML,
+    #[serde(skip)]
     pub feeds: Feeds,
 }
 
