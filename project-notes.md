@@ -12,10 +12,9 @@ sketchpad for this project. notes, they come and go.
   > when Vec and HashMap are technically suboptimal, they're probably a good
   > enough choice to get started.
 
-- The `pub struct ViewModel {`{.verbatim}} exposes its data via
-  `pub`{.verbatim}. Is this an Adapter?
+- The `pub struct ViewModel` exposes its data via `pub`. Is this an Adapter?
 
-- All else have `pub struct {`{.verbatim}} only. Is this a Port?
+- All else have `pub struct` only. Is this a Port?
 
 ## Elm vs Crux
 
@@ -24,8 +23,8 @@ differences.
 
 > [!NOTE]
 >
-> this can be updated once Crux Command API has been finalized.
-> It would also be a good time to contribute to Crux docs.
+> this can be updated once Crux Command API has been finalized. It would also be
+> a good time to contribute to Crux docs.
 
 - <https://redbadger.github.io/crux/guide/elm_architecture.html>
 
@@ -40,7 +39,7 @@ differences.
 | a) Msg       | Events                          | are all the possible things the user can do                                                                                               |
 | b) Cmd Msg   | Events                          | invoke Capabilities and may also callback more Events                                                                                     |
 | (Model, Msg) | fn update() implicit return of? | self.update(Event::Update(count), model, caps);                                                                                           |
-| main         | crux~core~::App entry point     | is an implementation of the App trait, exposed via the Core or Bridge                                                                     |
+| main         | crux_core::App entry point      | is an implementation of the App trait, exposed via the Core or Bridge                                                                     |
 | a) init      | ​#[derive(Default)]             | set Model initial state with [Default](https://doc.rust-lang.org/std/default/trait.Default.html) Trait; impl Default for any custom Types |
 | b) init      | works like Elm's sandbox        | no request effects during init. You can always add Event::Init if needed                                                                  |
 
@@ -114,8 +113,8 @@ pub struct Model {
 
 ## ViewModel
 
-the ViewModel is a straight "projection" of the Model -- it's calculated from
-it (with the view function)
+the ViewModel is a straight "projection" of the Model -- it's calculated from it
+(with the view function)
 
 - This needs some more love and thinking. It's a start though
 
@@ -246,13 +245,13 @@ pub enum RefreshInterval {
   - <https://developer.apple.com/documentation/uikit/documents_data_and_pasteboard/synchronizing_documents_in_the_icloud_environment>
 - Probably best left for a future version?
 
-> I don't think you need a crate here nor create a Capability. You can
-> implement all inside the crux app and probably the only use crux~http~ and
-> crux~kv~ (key value store) capabilities. You will use crux~http~ to
-> communicate to the account clouds and probably the crux~kv~ to store the
-> tokens locally. There are already examples on how to implement the crux~http~
-> on Android, iOS and the Web, but, I don't remember seeing any of the crux~kv~
-> shell implementations.
+> I don't think you need a crate here nor create a Capability. You can implement
+> all inside the crux app and probably the only use crux_http and crux_kv (key
+> value store) capabilities. You will use crux_http to communicate to the
+> account clouds and probably the crux_kv to store the tokens locally. There
+> are already examples on how to implement the crux_http on Android, iOS and
+> the Web, but, I don't remember seeing any of the crux_kv shell
+> implementations.
 
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -295,19 +294,21 @@ pub enum AccountCloud {
 ## Subscriptions
 
 - crate: <https://crates.io/crates/opml>
-
 - <http://opml.org/spec2.opml>
-
 - <http://outlinerhowto.opml.org>
-
 - OPML crate to deal with subscriptions and outlines:
 
-> ImportSubscriptions(OpmlFile), ExportSubscriptions(OpmlName),
-> AddNewFolder(FolderName), DeleteFolder(FolderName), RenameFolder(OldName,
-> NewName), AddNewSubscription(Option<FolderName>, SubscriptionName,
-> SubscriptionURL), DeleteSubscription(Option<FolderName>, SubscriptionName),
-> RenameSubscription(Option<FolderName>, OldName, NewName),
-> MoveSubscriptionToFolder(Subscription, OldFolder, NewFolder),
+```rust
+ImportSubscriptions(OpmlFile),
+ExportSubscriptions(OpmlName),
+AddNewFolder(FolderName),
+DeleteFolder(FolderName),
+RenameFolder(OldName, NewName),
+AddNewSubscription(Option<FolderName>, SubscriptionName, SubscriptionURL),
+DeleteSubscription(Option<FolderName>, SubscriptionName),
+RenameSubscription(Option<FolderName>, OldName, NewName),
+MoveSubscriptionToFolder(Subscription, OldFolder, NewFolder),
+```
 
 ```xml
 <!-- Example OPML -->
@@ -332,8 +333,9 @@ pub enum AccountCloud {
 
 ## Feeds
 
-- crate: <https://crates.io/crates/rss> to deal with RSS crate:
-  <https://crates.io/crates/atom_syndication> to deal with Atom
+- crate: <https://crates.io/crates/rss> to deal with RSS
+- crate: <https://crates.io/crates/atom_syndication> to deal with Atom
+- crate: <https://docs.rs/feed-rs/latest/feed_rs> handles both
 - <https://datatracker.ietf.org/doc/html/rfc4287>
 - <https://validator.w3.org/feed/docs/atom.html>
 - <https://www.rssboard.org/rss-specification>
