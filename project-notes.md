@@ -24,8 +24,8 @@ differences.
 
 > [!NOTE]
 >
-> this can be updated once Crux Command API has been finalized.
-> It would also be a good time to contribute to Crux docs.
+> this can be updated once Crux Command API has been finalized. It would also be
+> a good time to contribute to Crux docs.
 
 - <https://redbadger.github.io/crux/guide/elm_architecture.html>
 
@@ -114,8 +114,8 @@ pub struct Model {
 
 ## ViewModel
 
-the ViewModel is a straight "projection" of the Model -- it's calculated from
-it (with the view function)
+the ViewModel is a straight "projection" of the Model -- it's calculated from it
+(with the view function)
 
 - This needs some more love and thinking. It's a start though
 
@@ -246,13 +246,13 @@ pub enum RefreshInterval {
   - <https://developer.apple.com/documentation/uikit/documents_data_and_pasteboard/synchronizing_documents_in_the_icloud_environment>
 - Probably best left for a future version?
 
-> I don't think you need a crate here nor create a Capability. You can
-> implement all inside the crux app and probably the only use crux~http~ and
-> crux~kv~ (key value store) capabilities. You will use crux~http~ to
-> communicate to the account clouds and probably the crux~kv~ to store the
-> tokens locally. There are already examples on how to implement the crux~http~
-> on Android, iOS and the Web, but, I don't remember seeing any of the crux~kv~
-> shell implementations.
+> I don't think you need a crate here nor create a Capability. You can implement
+> all inside the crux app and probably the only use crux~http~ and crux~kv~ (key
+> value store) capabilities. You will use crux~http~ to communicate to the
+> account clouds and probably the crux~kv~ to store the tokens locally. There
+> are already examples on how to implement the crux~http~ on Android, iOS and
+> the Web, but, I don't remember seeing any of the crux~kv~ shell
+> implementations.
 
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
