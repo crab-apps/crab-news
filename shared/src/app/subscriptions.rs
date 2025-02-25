@@ -428,6 +428,25 @@ mod import_export {
     }
 
     #[test]
+    fn fail_import_for_body_has_no_outlines() {
+        let app = CrabNews;
+        let mut model = Model::default();
+        let account = Account::new(&AccountType::Local);
+
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let subs_opml_file = "invalid_body.opml".to_string();
+
+        let _ = app.update(
+            Event::ImportSubscriptions(account, subs_opml_file),
+            &mut model,
+        );
+        let actual_error = model.notification.message;
+        let expected_error = "OPML body has no <outline> elements";
+
+        assert_eq!(actual_error, expected_error);
+    }
+
+    #[test]
     fn export_subscriptions() {
         let app = CrabNews;
         let mut model: Model = Model::default();
