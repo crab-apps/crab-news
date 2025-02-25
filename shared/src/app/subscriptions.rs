@@ -58,7 +58,7 @@ impl Subscriptions {
     // TODO on duplicates, prompt user for merge or replace
     pub fn import(&self, subs_opml_file: &OpmlFile) -> Result<Self, self::Error> {
         // TODO use proper Shell/WASM functionality to pass on File operations
-        let mut file = std::fs::File::open(subs_opml_file)?;
+        let mut file = std::fs::File::open(subs_opml_file).unwrap();
         Ok(Self {
             opml: OPML::from_reader(&mut file)?,
             feeds: vec![],
