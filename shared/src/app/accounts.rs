@@ -2,8 +2,6 @@ use super::subscriptions::Subscriptions;
 use crate::Error;
 use serde::{Deserialize, Serialize};
 
-pub type Accounts = Vec<Account>;
-
 // TODO add more fields?
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Account {
@@ -40,6 +38,8 @@ impl Account {
         }
     }
 }
+
+pub type Accounts = Vec<Account>;
 
 trait AccountsHelpers {
     fn set_duplicate_err(action: &str, item: &str, reason: &str) -> self::Error;
