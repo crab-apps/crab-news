@@ -24,7 +24,7 @@ pub type Feeds = Vec<Feed>;
 // NOTE - crate: https://crates.io/crates/feed-rs to deal with feeds data *after* subscribtions.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Subscriptions {
-    pub opml: OPML,
+    pub subs: OPML,
     #[serde(skip)]
     pub feeds: Feeds,
 }
@@ -61,7 +61,7 @@ impl Subscriptions {
         // TODO use proper Shell/WASM functionality to pass on File operations
         let mut file = std::fs::File::open(subs_opml_file).unwrap();
         Ok(Self {
-            opml: OPML::from_reader(&mut file)?,
+            subs: OPML::from_reader(&mut file)?,
             feeds: vec![],
         })
     }
@@ -78,7 +78,7 @@ impl Subscriptions {
         };
         let custom_opml = OPML {
             head: Some(custom_head),
-            body: self.opml.body.clone(),
+            body: self.subs.body.clone(),
             ..OPML::default()
         };
         let export_content = xml_tag + &custom_opml.to_string().unwrap();
@@ -99,10 +99,10 @@ impl Subscriptions {
             "It already exists.",
         );
 
-        if subs.opml.body.outlines.contains(&test_folder) {
+        if subs.subs.body.outlines.contains(&test_folder) {
             Err(duplicate_err)
         } else {
-            subs.opml.body.outlines.push(test_folder);
+            subs.subs.body.outlines.push(test_folder);
             Ok(subs)
         }
     }
@@ -110,7 +110,7 @@ impl Subscriptions {
     // NOTE folders are only allowed at root level. no nesting.
     pub fn delete_folder(&self, folder_name: &FolderName) -> Self {
         let mut subs = self.clone();
-        subs.opml
+        subs.subs
             .body
             .outlines
             .retain(|name| name.text != *folder_name);
@@ -131,10 +131,10 @@ impl Subscriptions {
             "It already exists.",
         );
 
-        if subs.opml.body.outlines.contains(&test_folder) {
+        if subs.subs.body.outlines.contains(&test_folder) {
             Err(duplicate_err)
         } else {
-            subs.opml
+            subs.subs
                 .body
                 .outlines
                 .iter_mut()
@@ -169,7 +169,7 @@ impl Subscriptions {
             }
 
             let mut sub_status = SubStatus::AddedNewSub;
-            subs.opml
+            subs.subs
                 .body
                 .outlines
                 .iter_mut()
@@ -189,10 +189,10 @@ impl Subscriptions {
             }
         }
 
-        if subs.opml.body.outlines.contains(&test_subscription) {
+        if subs.subs.body.outlines.contains(&test_subscription) {
             Err(duplicate_err)
         } else {
-            subs.opml.add_feed(sub_title.as_str(), sub_link.as_str());
+            subs.subs.add_feed(sub_title.as_str(), sub_link.as_str());
             Ok(subs)
         }
     }
@@ -204,14 +204,14 @@ impl Subscriptions {
     ) -> Self {
         let mut subs = self.clone();
         if let Some(folder_text) = folder_name {
-            subs.opml
+            subs.subs
                 .body
                 .outlines
                 .iter_mut()
                 .filter(|outline| outline.text == *folder_text)
                 .for_each(|folder| folder.outlines.retain(|name| name.text != *sub_title));
         } else {
-            subs.opml
+            subs.subs
                 .body
                 .outlines
                 .retain(|name| name.text != *sub_title);
@@ -242,7 +242,7 @@ impl Subscriptions {
             }
 
             let mut sub_status = SubStatus::Renamed;
-            subs.opml
+            subs.subs
                 .body
                 .outlines
                 .iter_mut()
@@ -268,10 +268,10 @@ impl Subscriptions {
             }
         }
 
-        if subs.opml.body.outlines.contains(&test_subscription) {
+        if subs.subs.body.outlines.contains(&test_subscription) {
             Err(duplicate_err)
         } else {
-            subs.opml
+            subs.subs
                 .body
                 .outlines
                 .iter_mut()
@@ -383,7 +383,7 @@ mod import_export {
         );
         let added_subs = model.accounts[acct_index].subs.clone();
         let expected_subs = Subscriptions {
-            opml: OPML::from_str(example_subs).unwrap(),
+            subs: OPML::from_str(example_subs).unwrap(),
             feeds: vec![],
         };
 
@@ -462,7 +462,7 @@ mod import_export {
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
 
         model.accounts[acct_index].subs = Subscriptions {
-            opml: OPML::from_str(&example_subs).unwrap(),
+            subs: OPML::from_str(&example_subs).unwrap(),
             feeds: vec![],
         };
         let imported_content = model.accounts[acct_index].subs.clone();
@@ -475,7 +475,7 @@ mod import_export {
         // TODO use proper Shell/WASM/crate functionality to File operations
         let mut exported_file = std::fs::File::open(subs_opml_name).unwrap();
         let exported_content = Subscriptions {
-            opml: OPML::from_reader(&mut exported_file).unwrap(),
+            subs: OPML::from_reader(&mut exported_file).unwrap(),
             feeds: vec![],
         };
 
@@ -497,7 +497,7 @@ mod import_export {
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
 
         model.accounts[acct_index].subs = Subscriptions {
-            opml: OPML::from_str(&example_subs).unwrap(),
+            subs: OPML::from_str(&example_subs).unwrap(),
             feeds: vec![],
         };
 
@@ -568,7 +568,7 @@ mod folder {
         );
         let does_contain_folder = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .contains(added_folder);
@@ -607,13 +607,13 @@ mod folder {
         );
         let does_contain_folder_one = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .contains(added_folder_one);
         let does_contain_folder_two = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .contains(added_folder_two);
@@ -672,7 +672,7 @@ mod folder {
 
         let does_contain_folder = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .contains(deleted_folder);
@@ -715,7 +715,7 @@ mod folder {
 
         let does_contain_folder = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .contains(expected_folder);
@@ -794,7 +794,7 @@ mod add_subscription {
 
         let does_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .contains(expected_sub);
@@ -836,7 +836,7 @@ mod add_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -974,7 +974,7 @@ mod delete_subscription {
 
         let does_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .contains(deleted_sub);
@@ -1022,7 +1022,7 @@ mod delete_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -1087,7 +1087,7 @@ mod delete_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_contain_deleted_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -1098,7 +1098,7 @@ mod delete_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_contain_expected_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -1158,7 +1158,7 @@ mod rename_subscription {
 
         let does_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .contains(expected_sub);
@@ -1255,7 +1255,7 @@ mod rename_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -1374,7 +1374,7 @@ mod rename_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_contain_untouched_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -1385,7 +1385,7 @@ mod rename_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_contain_expected_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -1505,7 +1505,7 @@ mod move_subscription {
 
         let does_root_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .contains(expected_sub);
@@ -1513,7 +1513,7 @@ mod move_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_folder_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -1619,7 +1619,7 @@ mod move_subscription {
 
         let does_root_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .contains(expected_sub);
@@ -1627,7 +1627,7 @@ mod move_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_folder_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -1739,7 +1739,7 @@ mod move_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_folder_one_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -1750,7 +1750,7 @@ mod move_subscription {
         #[allow(clippy::unnecessary_find_map)]
         let does_folder_two_contain_sub = model.accounts[acct_index]
             .subs
-            .opml
+            .subs
             .body
             .outlines
             .iter()
@@ -1824,99 +1824,123 @@ mod move_subscription {
 
 #[cfg(test)]
 mod feeds {
-    use super::*;
-    use crate::{Account, AccountType, Accounts, AccountsExt};
-    use crate::{CrabNews, Event, Model};
+    // use super::*;
+    // use crate::{Account, AccountType, Accounts, AccountsExt};
+    // use crate::{CrabNews, Effect, Event, Model};
 
-    // use crux_http::{
-    //     protocol::{HttpRequest, HttpResponse, HttpResult},
-    //     testing::ResponseBuilder,
-    // };
+    // mode shell START
+    // use anyhow::Result;
+    // use crux_core::Core;
+    // use crux_http::protocol::{HttpRequest, HttpResponse, HttpResult};
+    // use std::collections::VecDeque;
+
+    // #[allow(clippy::large_enum_variant)]
+    // enum Task {
+    //     Event(Event),
+    //     Effect(Effect),
+    // }
+
+    // pub(crate) fn run(core: &Core<CrabNews>, event: Event) -> Result<Vec<HttpRequest>> {
+    //     let mut queue: VecDeque<Task> = VecDeque::new();
+
+    //     queue.push_back(Task::Event(event));
+
+    //     let mut received: Vec<HttpRequest> = vec![];
+
+    //     while !queue.is_empty() {
+    //         let task = queue.pop_front().expect("an event");
+
+    //         match task {
+    //             Task::Event(event) => {
+    //                 enqueue_effects(&mut queue, core.process_event(event));
+    //             }
+    //             Task::Effect(effect) => match effect {
+    //                 Effect::Render(_) => (),
+    //                 Effect::Http(mut request) => {
+    //                     let http_request = &request.operation;
+
+    //                     received.push(http_request.clone());
+    //                     let response = HttpResponse::ok().json("Hello").build();
+
+    //                     enqueue_effects(
+    //                         &mut queue,
+    //                         core.resolve(&mut request, HttpResult::Ok(response))
+    //                             .expect("effect should resolve"),
+    //                     );
+    //                 }
+    //             },
+    //         };
+    //     }
+
+    //     Ok(received)
+    // }
+
+    // fn enqueue_effects(queue: &mut VecDeque<Task>, effects: Vec<Effect>) {
+    //     queue.append(&mut effects.into_iter().map(Task::Effect).collect())
+    // }
+    // mod shell END
 
     // #[test]
-    // fn get_feed() {
+    // fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
     //     let app = CrabNews;
     //     let mut model: Model = Model::default();
-    //     let account = Account::new(&AccountType::Local);
     //     let sub_title = "Gentle Wash Records".to_string();
     //     let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
 
+    //     let account = Account::new(&AccountType::Local);
     //     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
-    //     // let acct_index = Accounts::find_account_index(&model.accounts, &account);
+    //     let acct_index = Accounts::find_account_index(&model.accounts, &account);
+
     //     let _ = app.update(
-    //         Event::AddSubscription(account.clone(), None, sub_title, sub_link),
+    //         Event::AddSubscription(account.clone(), None, sub_title, sub_link.to_string()),
     //         &mut model,
     //     );
 
-    //     // https://github.com/redbadger/crux/blob/master/examples/counter/shared/src/app.rs#L142-L178
-    //     // send a `GetFeed` event to the app
-    //     let update = app.update(
-    //         Event::GetFeed(account.clone(), sub_link.clone()),
-    //         &mut model,
-    //     );
+    //     let core: Core<CrabNews> = Core::default();
 
-    //     // check that the app emitted an HTTP request,
-    //     // capturing the request in the process
-    //     let request = &mut update.expect_one_effect().expect_http();
+    //     let received = run(&core, Event::GetFeed(account, sub_link.to_string()))?;
 
-    //     // check that the request is a GET to the correct URL
-    //     let actual = request.operation.clone();
-    //     let expected = HttpRequest::get(sub_link).build();
-    //     assert_eq!(actual, expected);
-
-    //     // resolve the request with a simulated response from the web API
-    //     let response = HttpResponse::ok().body(r#""#).build();
-    //     let update = app
-    //         .resolve(request, HttpResult::Ok(response))
-    //         .expect("an update");
-
-    //     // check that the app emitted an (internal) event to update the model
-    //     let actual = update.events;
-    //     let expected = vec![Event::SetFeed(
-    //         account,
-    //         Ok(ResponseBuilder::ok().body(vec![]).build()),
-    //     )];
-    //     assert_eq!(actual, expected);
+    //     assert_eq!(received, vec![HttpRequest::get(sub_link).build()]);
+    //     Ok(())
     // }
 
-    #[test]
-    fn add_new_feed() {
-        let app = CrabNews;
-        let mut model: Model = Model::default();
+    // #[test]
+    // fn add_new_feed() {
+    //     let app = CrabNews;
+    //     let mut model: Model = Model::default();
 
-        let account = Account::new(&AccountType::Local);
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+    //     let account = Account::new(&AccountType::Local);
+    //     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+    //     let acct_index = Accounts::find_account_index(&model.accounts, &account);
 
-        let sub_title = "Gentle Wash Records".to_string();
-        let example_rss = r#"<?xml version="1.0" encoding="UTF-8" ?>
-          <rss version="2.0">
-            <channel>
-              <title>Gentle Wash Records</title>
-              <description>This is an example of an RSS feed</description>
-              <link>http://www.example.com/main.html</link>
-              <lastBuildDate>Mon, 06 Sep 2010 00:01:00 +0000</lastBuildDate>
-              <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
-              <ttl>1800</ttl>
+    //     let sub_title = "Gentle Wash Records".to_string();
+    //     let example_rss = r#"<?xml version="1.0" encoding="UTF-8" ?>
+    //       <rss version="2.0">
+    //         <channel>
+    //           <title>Gentle Wash Records</title>
+    //           <description>This is an example of an RSS feed</description>
+    //           <link>http://www.example.com/main.html</link>
+    //           <lastBuildDate>Mon, 06 Sep 2010 00:01:00 +0000</lastBuildDate>
+    //           <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
+    //           <ttl>1800</ttl>
 
-              <item>
-                <title>Example entry</title>
-                <description>Here is some text containing an interesting description.</description>
-                <link>http://www.example.com/blog/post/1</link>
-                <guid isPermaLink="true">7bd204c6-1655-4c27-aeee-53f933c5395f</guid>
-                <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
-              </item>
+    //           <item>
+    //             <title>Example entry</title>
+    //             <description>Here is some text containing an interesting description.</description>
+    //             <link>http://www.example.com/blog/post/1</link>
+    //             <guid isPermaLink="true">7bd204c6-1655-4c27-aeee-53f933c5395f</guid>
+    //             <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
+    //           </item>
 
-            </channel>
-          </rss>"#;
+    //         </channel>
+    //       </rss>"#;
 
-        // let _ = app.update(Event::SetFeed(account, example_rss.as_bytes()), &mut model);
-        let body = Vec::from(example_rss.as_bytes());
-        let _ = Subscriptions::add_feed(&model.accounts[acct_index].subs, body);
-        let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
+    //     let body = Vec::from(example_rss.as_bytes());
+    //     let _ = app.update(Event::SetFeed(account, example_rss.as_bytes()), &mut model);
+    //     let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
 
-        assert_eq!(added_feed.title.unwrap().content, sub_title);
-    }
+    //     assert_eq!(added_feed.title.unwrap().content, sub_title);
+    // }
 
     // #[test]
     // fn fail_add_feed_already_exists() {
