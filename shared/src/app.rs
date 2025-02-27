@@ -4,7 +4,7 @@ use crux_core::{
     render::{self, Render},
     App, Command,
 };
-use crux_http::command::Http;
+// use crux_http::command::Http;
 use serde::{Deserialize, Serialize};
 use std::io;
 use thiserror::Error;
@@ -55,11 +55,11 @@ pub enum Event {
     DeleteSubscription(Account, Option<FolderName>, SubscriptionTitle),
     RenameSubscription(Account, Option<FolderName>, OldName, OldLink, NewName),
     MoveSubscription(Account, Subscription, OldFolder, NewFolder),
-    GetFeed(Account, SubscriptionLink),
+    // GetFeed(Account, SubscriptionLink),
 
     // EVENTS LOCAL TO THE CORE
-    #[serde(skip)]
-    SetFeed(Account, crux_http::Result<crux_http::Response<Vec<u8>>>),
+    // #[serde(skip)]
+    // SetFeed(Account, crux_http::Result<crux_http::Response<Vec<u8>>>),
 }
 // ANCHOR_END: events
 
@@ -70,7 +70,9 @@ pub struct Model {
     // NOTE Accounts contains Subscriptions
     // NOTE Subscriptions contains Feeds and OPML
     pub accounts: Accounts,
-    // pub feeds: Feeds,
+    pub account_name: String,                 // extrapolated from account
+    pub folder_name: FolderName,              // root or folder if None -> nothing? root? phantom?
+    pub subscription_name: SubscriptionTitle, // extrapolated from feed
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
@@ -83,8 +85,10 @@ pub struct Notification {
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ViewModel {
     pub notification: Notification,
+    pub account_name: String,                 // extrapolated from account
+    pub folder_name: FolderName,              // root or folder if None -> nothing? root? phantom?
+    pub subscription_name: SubscriptionTitle, // extrapolated from feed
     pub accounts: Accounts,
-    // pub feeds: Feeds,
 }
 // ANCHOR_END: view model
 // ANCHOR_END: model
@@ -128,7 +132,10 @@ impl App for CrabNews {
     fn view(&self, model: &Self::Model) -> Self::ViewModel {
         ViewModel {
             notification: model.notification.clone(),
-            accounts: model.accounts.clone(),
+            // account_name: model.accounts.clone(),
+            // folder_name: FolderName, // root or folder if None -> nothing? root? phantom?
+            // subscription_name: SubscriptionTitle, // extrapolated from feed
+            // accounts: model.accounts.clone(),
             // feeds: model.accounts.
             // subscriptions: model.subscriptions.clone(),
             // subscription_folder: model.subscription_folder.to_string(),
@@ -319,34 +326,32 @@ impl CrabNews {
                         render::render()
                     }
                 }
-            }
-            Event::GetFeed(account, sub_link) => Http::get(sub_link)
-                .build()
-                .then_send(move |result| Event::SetFeed(account, result)),
-            Event::SetFeed(account, Ok(mut response)) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
-                let body = response.take_body().unwrap();
-                match Subscriptions::add_feed(&model.accounts[account_index].subs, body) {
-                    Ok(subs) => {
-                        model.accounts[account_index].subs = subs;
-                        render::render()
-                    }
-                    Err(err) => {
-                        model.notification = Notification {
-                            title: "Feed Error".to_string(),
-                            message: err.to_string(),
-                        };
-                        render::render()
-                    }
-                }
-            }
-            Event::SetFeed(_, Err(err)) => {
-                model.notification = Notification {
-                    title: "Http Error".to_string(),
-                    message: err.to_string(),
-                };
-                render::render()
-            }
+            } // Event::GetFeed(account, sub_link) => Http::get(sub_link)
+              //     .build()
+              //     .then_send(move |result| Event::SetFeed(account, result)),
+              // Event::SetFeed(account, Ok(mut response)) => {
+              //     let account_index = Accounts::find_account_index(&model.accounts, &account);
+              //     let body = response.take_body().unwrap();
+              //     match Subscriptions::add_feed(&model.accounts[account_index].subs, body) {
+              //         Ok(subs) => {
+              //             model.accounts[account_index].subs = subs;
+              //             render::render()
+              //         }
+              //         Err(err) => {
+              //             model.notification = Notification {
+              //                 title: "Feed Error".to_string(),
+              //                 message: err.to_string(),
+              //             };
+              //             render::render()
+              //         }
+              //     }
+              // } // Event::SetFeed(_, Err(err)) => {
+              //     model.notification = Notification {
+              //         title: "Http Error".to_string(),
+              //         message: err.to_string(),
+              //     };
+              //     render::render()
+              // }
         }
     }
 }
