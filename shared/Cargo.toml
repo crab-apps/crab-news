@@ -21,18 +21,18 @@ crux_core.workspace = true
 crux_http.workspace = true
 serde = { workspace = true, features = ["derive"] }
 lazy_static = "1.5.0"
-uniffi = "0.29.0"
+uniffi = "0.29.1"
 wasm-bindgen = "0.2.100"
 opml = "1.1"
 feed-rs = "2.3.1"
-chrono = { version = "0.4.39", features = ["unstable-locales"] }
-thiserror = "2.0.11"
+chrono = { version = "0.4.40", features = ["unstable-locales"] }
+thiserror = "2.0.12"
 
 [target.uniffi-bindgen.dependencies]
-uniffi = { version = "0.29.0", features = ["cli"] }
+uniffi = { version = "0.29.1", features = ["cli"] }
 
 [build-dependencies]
-uniffi = { version = "0.29.0", features = ["build"] }
+uniffi = { version = "0.29.1", features = ["build"] }
 
 [dev-dependencies]
 assert_fs = "1.1"

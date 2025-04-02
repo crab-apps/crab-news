@@ -1,7 +1,7 @@
 use crate::Error;
 use chrono::Local;
 use feed_rs::model::Feed;
-// use feed_rs::parser::{self, ParseFeedError};
+use feed_rs::parser::{self, ParseFeedError};
 use opml::{self, Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 
@@ -25,8 +25,8 @@ pub type Feeds = Vec<Feed>;
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Subscriptions {
     pub subs: OPML,
-    // #[serde(skip)]
-    // pub feeds: Feeds,
+    #[serde(skip)]
+    pub feeds: Feeds,
 }
 
 impl Subscriptions {
@@ -62,7 +62,7 @@ impl Subscriptions {
         let mut file = std::fs::File::open(subs_opml_file).unwrap();
         Ok(Self {
             subs: OPML::from_reader(&mut file)?,
-            // feeds: vec![],
+            feeds: vec![],
         })
     }
 
@@ -342,20 +342,20 @@ impl Subscriptions {
         }
     }
 
-    // pub fn add_feed(&self, body: Vec<u8>) -> Result<Self, ParseFeedError> {
-    //     let mut subs = self.clone();
-    //     let feed = parser::parse(&*body)?;
-    //     subs.feeds.push(feed);
-    //     Ok(subs)
-    // }
+    pub fn add_feed(&self, body: Vec<u8>) -> Result<Self, ParseFeedError> {
+        let mut subs = self.clone();
+        let feed = parser::parse(&*body)?;
+        subs.feeds.push(feed);
+        Ok(subs)
+    }
 
-    // pub fn find_feed(&self, sub_title: &SubscriptionTitle) -> Feed {
-    //     self.feeds
-    //         .iter()
-    //         .find(|feed| feed.title.clone().unwrap().content == *sub_title)
-    //         .unwrap()
-    //         .clone()
-    // }
+    pub fn find_feed(&self, sub_title: &SubscriptionTitle) -> Feed {
+        self.feeds
+            .iter()
+            .find(|feed| feed.title.clone().unwrap().content == *sub_title)
+            .unwrap()
+            .clone()
+    }
 }
 
 #[cfg(test)]
@@ -384,7 +384,7 @@ mod import_export {
         let added_subs = model.accounts[acct_index].subs.clone();
         let expected_subs = Subscriptions {
             subs: OPML::from_str(example_subs).unwrap(),
-            // feeds: vec![],
+            feeds: vec![],
         };
 
         assert_eq!(added_subs, expected_subs);
@@ -463,7 +463,7 @@ mod import_export {
 
         model.accounts[acct_index].subs = Subscriptions {
             subs: OPML::from_str(&example_subs).unwrap(),
-            // feeds: vec![],
+            feeds: vec![],
         };
         let imported_content = model.accounts[acct_index].subs.clone();
 
@@ -476,7 +476,7 @@ mod import_export {
         let mut exported_file = std::fs::File::open(subs_opml_name).unwrap();
         let exported_content = Subscriptions {
             subs: OPML::from_reader(&mut exported_file).unwrap(),
-            // feeds: vec![],
+            feeds: vec![],
         };
 
         assert_eq!(exported_content, imported_content);
@@ -498,7 +498,7 @@ mod import_export {
 
         model.accounts[acct_index].subs = Subscriptions {
             subs: OPML::from_str(&example_subs).unwrap(),
-            // feeds: vec![],
+            feeds: vec![],
         };
 
         let _ = app.update(
