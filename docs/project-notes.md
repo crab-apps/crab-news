@@ -248,10 +248,9 @@ pub enum RefreshInterval {
 > I don't think you need a crate here nor create a Capability. You can implement
 > all inside the crux app and probably the only use crux_http and crux_kv (key
 > value store) capabilities. You will use crux_http to communicate to the
-> account clouds and probably the crux_kv to store the tokens locally. There
-> are already examples on how to implement the crux_http on Android, iOS and
-> the Web, but, I don't remember seeing any of the crux_kv shell
-> implementations.
+> account clouds and probably the crux_kv to store the tokens locally. There are
+> already examples on how to implement the crux_http on Android, iOS and the
+> Web, but, I don't remember seeing any of the crux_kv shell implementations.
 
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
