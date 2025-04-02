@@ -1,0 +1,15 @@
+[build]
+target = "./index.html"
+minify = "always"
+
+[watch]
+ignore = ["./src-tauri"]
+
+[serve]
+port = 1420
+open = false
+
+[tools]
+# This is tailwind-cli-extra which includes daisyUI!!!
+# https://github.com/dobicinaitis/tailwind-cli-extra
+tailwindcss = "2.0.9"
