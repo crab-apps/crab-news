@@ -1,5 +1,5 @@
 [workspace]
-members = ["shared", "shared_types"]
+members = ["shared", "shared_types", "tauri/src-tauri"]
 resolver = "1"
 
 [workspace.package]
@@ -7,6 +7,7 @@ authors = ["Andrea Callea"]
 edition = "2021"
 repository = "https://github.com/crabapps/crab-news"
 license = "Apache-2.0"
+description = "A multi-platform RSS client for desktop and mobile written in Rust."
 keywords = ["atom", "rss", "feed-reader", "rss-reader", "news-client"]
 rust-version = "1.83"
 
