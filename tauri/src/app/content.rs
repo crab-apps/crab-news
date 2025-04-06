@@ -21,10 +21,10 @@ fn Content(
             aria-label="actual article/blog post content with text, image, and video, including multimedia elements, such as audio and interactive elements"
         >
             <div class="card-body">
-                <div class="-mt-6 -mb-12 xl:-mt-4 card-title">
-                    <div class="flex-1 text-sm xl:text-base">
-                        <h1>{feed_title}</h1>
-                        <p class="-mt-7 font-bold opacity-75 xl:-mt-9">{date_time}</p>
+                <div class="card-title">
+                    <div class="flex-1 text-xs xl:text-sm">
+                        <h1 class="max-w-10/12">{feed_title}</h1>
+                        <p class="-mt-4 font-bold opacity-75 xl:-mt-7">{date_time}</p>
                     </div>
                     <div class="mb-12 avatar">
                         <div class="w-16 rounded xl:w-20">
@@ -36,11 +36,11 @@ fn Content(
                     </div>
                 </div>
 
-                <div class="divider"></div>
+                <div class="-mt-8 divider"></div>
 
                 <div class="justify-between -mt-8 text-xs font-bold opacity-75 xl:text-sm card-actions">
-                    <p>{authors}</p>
-                    <p class="text-right">{on_subscribe}</p>
+                    <p class="max-w-7/12">{authors}</p>
+                    <p class="text-right max-w-4/12">{on_subscribe}</p>
                 </div>
 
                 <div class="w-full text-sm xl:text-base">
@@ -57,9 +57,10 @@ pub fn ContentColumn() -> impl IntoView {
         <div class="max-h-full h-dvh bg-base-100">
             <div class="overflow-y-auto overscroll-contain flex-col max-h-22/24">
                 <Content
-                    feed_name="Subscription"
+                    feed_name="Communications of the ACM"
+                    // feed_title="Lorem Ipsum long title love laugh more more more"
                     feed_title="Lorem Ipsum"
-                    feed_author="Jane Doe"
+                    feed_author="Jamal Mazrui, Stacy M. Branham, Sheri Byrne-Haber, Shahtab Wahid, Carlos Muncharaz, Carl Myhill, Jane Doe"
                     date_time="1 Apr 2025 at 10:37 AM"
                     content="
                     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vulputate urna scelerisque, accumsan ex non, condimentum nunc. Donec ullamcorper velit cursus tellus fringilla tristique. Proin sollicitudin arcu vitae egestas consequat. Aenean elit ligula, vulputate at leo quis, vulputate eleifend ipsum. In convallis eros magna. Ut malesuada mauris ac sapien efficitur condimentum. Sed sodales, nibh id bibendum accumsan, lacus risus suscipit urna, eu vulputate dui neque a odio. Ut dignissim felis neque, eu vestibulum sem eleifend ut. Suspendisse tempor quam a lorem molestie aliquet et nec ligula. Nulla tincidunt sodales urna. Aliquam a feugiat purus, non fringilla est. Ut elit est, luctus ut egestas a, feugiat nec nibh. Nunc id viverra mauris. Duis eleifend facilisis sapien, at semper justo placerat nec. Sed elit sem, viverra vel hendrerit nec, accumsan varius ante.
