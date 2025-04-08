@@ -66,7 +66,11 @@ fn FeedsAndFolders() -> impl IntoView {
             aria-label="all feeds belonging to a specific account, with unread count. the count is dynamic based on their unread status."
         >
             // Loop over account feeds to populate the list
-            <Feed feed_name="Subscription" feed_icon=i::FaSquareRssSolid feed_unread_count=1 />
+            <Feed
+                feed_name="Fake Random Communications"
+                feed_icon=i::FaSquareRssSolid
+                feed_unread_count=1
+            />
             <Feed feed_name="Close Folder" feed_icon=i::FaFolderClosedRegular feed_unread_count=0 />
             <Feed feed_name="Open Folder" feed_icon=i::FaFolderOpenRegular feed_unread_count=0 />
         </div>

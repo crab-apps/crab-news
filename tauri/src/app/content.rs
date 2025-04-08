@@ -24,7 +24,7 @@ fn Content(
             <div class="card-body">
                 <div class="card-title">
                     <div class="flex-1 text-xs xl:text-sm">
-                        <h1 class="max-w-10/12">{content_title}</h1>
+                        <h1 class="max-w-11/12">{content_title}</h1>
                         <p class="-mt-4 font-bold opacity-75 xl:-mt-7">{content_time}</p>
                     </div>
                     <div class="mb-12 avatar">
@@ -58,11 +58,11 @@ pub fn ContentColumn() -> impl IntoView {
                 aria-label="this is where the content of the selected entry is displayed"
             >
                 <Content
-                    feed_name="Communications of the ACM"
+                    feed_name="Fake Random Communications"
                     feed_logo="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-                    content_title="Lorem Ipsum"
+                    content_title="Lorem ipsum dolor sit amet, consectetur adipiscing elit"
                     content_time="1 Apr 2025 at 10:37 AM"
-                    content_author="Jamal Mazrui, Stacy M. Branham, Sheri Byrne-Haber, Shahtab Wahid, Carlos Muncharaz, Carl Myhill, Jane Doe"
+                    content_author="Jane Doe, John Smith, Jane Smith, David Smith, John Doe, William Smith, Emily Johnson, Sarah Johnson, Michael Smith"
                     content_content="
                     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vulputate urna scelerisque, accumsan ex non, condimentum nunc. Donec ullamcorper velit cursus tellus fringilla tristique. Proin sollicitudin arcu vitae egestas consequat. Aenean elit ligula, vulputate at leo quis, vulputate eleifend ipsum. In convallis eros magna. Ut malesuada mauris ac sapien efficitur condimentum. Sed sodales, nibh id bibendum accumsan, lacus risus suscipit urna, eu vulputate dui neque a odio. Ut dignissim felis neque, eu vestibulum sem eleifend ut. Suspendisse tempor quam a lorem molestie aliquet et nec ligula. Nulla tincidunt sodales urna. Aliquam a feugiat purus, non fringilla est. Ut elit est, luctus ut egestas a, feugiat nec nibh. Nunc id viverra mauris. Duis eleifend facilisis sapien, at semper justo placerat nec. Sed elit sem, viverra vel hendrerit nec, accumsan varius ante.
                     

@@ -36,7 +36,7 @@ pub fn App() -> impl IntoView {
                     <FeedsHeader />
                 </section>
                 <section class=entries_classes>
-                    <EntriesHeader feed_name="Subscription" unread_count=1 />
+                    <EntriesHeader feed_name="Fake Random Communications" unread_count=1 />
                 </section>
                 <section class=content_classes>
                     <ContentHeader />
