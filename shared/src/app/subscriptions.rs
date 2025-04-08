@@ -364,6 +364,7 @@ mod import_export {
     use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
     use chrono::prelude::Local;
+    use crux_core::App;
     use opml::OPML;
 
     #[test]
@@ -372,7 +373,7 @@ mod import_export {
         let mut model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let subs_opml_file = "example_import.opml".to_string();
         let example_subs = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
@@ -380,6 +381,7 @@ mod import_export {
         let _ = app.update(
             Event::ImportSubscriptions(account.clone(), subs_opml_file),
             &mut model,
+            &(),
         );
         let added_subs = model.accounts[acct_index].subs.clone();
         let expected_subs = Subscriptions {
@@ -396,12 +398,13 @@ mod import_export {
         let mut model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let subs_opml_file = "invalid_xml.opml".to_string();
 
         let _ = app.update(
             Event::ImportSubscriptions(account, subs_opml_file),
             &mut model,
+            &(),
         );
         let actual_error = model.notification.message;
         let expected_error = "Failed to process XML file";
@@ -415,12 +418,13 @@ mod import_export {
         let mut model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let subs_opml_file = "invalid_opml_version.opml".to_string();
 
         let _ = app.update(
             Event::ImportSubscriptions(account, subs_opml_file),
             &mut model,
+            &(),
         );
         let actual_error = model.notification.message;
         let expected_error = "Unsupported OPML version: \"0.1\"";
@@ -434,12 +438,13 @@ mod import_export {
         let mut model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let subs_opml_file = "invalid_body.opml".to_string();
 
         let _ = app.update(
             Event::ImportSubscriptions(account, subs_opml_file),
             &mut model,
+            &(),
         );
         let actual_error = model.notification.message;
         let expected_error = "OPML body has no <outline> elements";
@@ -453,7 +458,7 @@ mod import_export {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
         let subs_opml_name = "Subscriptions.opml".to_string();
@@ -470,6 +475,7 @@ mod import_export {
         let _ = app.update(
             Event::ExportSubscriptions(account, subs_opml_name.to_string()),
             &mut model,
+            &(),
         );
 
         // TODO use proper Shell/WASM/crate functionality to File operations
@@ -488,7 +494,7 @@ mod import_export {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
         let subs_opml_name = "Subscriptions.opml".to_string();
@@ -504,6 +510,7 @@ mod import_export {
         let _ = app.update(
             Event::ExportSubscriptions(account, subs_opml_name.to_string()),
             &mut model,
+            &(),
         );
 
         let actual_error = model.notification.message;
@@ -528,7 +535,7 @@ mod import_export {
 
     //     let _ = app.update(
     //         Event::ExportSubscriptions(subs_opml_name.clone()),
-    //         &mut model,
+    //         &mut model, &()
     //     );
 
     //     // TODO use proper Shell/WASM/crate functionality to File operations
@@ -545,6 +552,7 @@ mod folder {
     use super::*;
     use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
+    use crux_core::App;
     use opml::Outline;
 
     #[test]
@@ -553,7 +561,7 @@ mod folder {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Added Folder".to_string();
         let added_folder = &Outline {
@@ -565,6 +573,7 @@ mod folder {
         let _ = app.update(
             Event::AddNewFolder(account, folder_name.to_string()),
             &mut model,
+            &(),
         );
         let does_contain_folder = model.accounts[acct_index]
             .subs
@@ -582,7 +591,7 @@ mod folder {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name_one = "Added Folder Ome".to_string();
         let folder_name_two = "Added Folder Two".to_string();
@@ -600,10 +609,12 @@ mod folder {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name_one.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddNewFolder(account, folder_name_two.to_string()),
             &mut model,
+            &(),
         );
         let does_contain_folder_one = model.accounts[acct_index]
             .subs
@@ -627,16 +638,18 @@ mod folder {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let folder_name = "Added Folder".to_string();
 
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let actual_error = model.notification.message;
         let expected_error = format!(
@@ -653,7 +666,7 @@ mod folder {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let deleted_folder = &Outline {
             text: "Deleted Folder".to_string(),
@@ -664,10 +677,12 @@ mod folder {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), deleted_folder.text.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::DeleteFolder(account.clone(), deleted_folder.text.to_string()),
             &mut model,
+            &(),
         );
 
         let does_contain_folder = model.accounts[acct_index]
@@ -686,7 +701,7 @@ mod folder {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let rename_folder = &Outline {
             text: "Rename Folder".to_string(),
@@ -703,6 +718,7 @@ mod folder {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), rename_folder.text.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::RenameFolder(
@@ -711,6 +727,7 @@ mod folder {
                 expected_folder.text.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         let does_contain_folder = model.accounts[acct_index]
@@ -729,7 +746,7 @@ mod folder {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let test_folder = &Outline {
             text: "Expected Folder".to_string(),
             title: Some("Expected Folder".to_string()),
@@ -739,6 +756,7 @@ mod folder {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), test_folder.text.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::RenameFolder(
@@ -747,6 +765,7 @@ mod folder {
                 test_folder.text.to_string(),
             ),
             &mut model,
+            &(),
         );
         let actual_error = model.notification.message;
         let expected_error = format!(
@@ -764,6 +783,7 @@ mod add_subscription {
     use super::*;
     use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
+    use crux_core::App;
     use opml::Outline;
 
     #[test]
@@ -772,7 +792,7 @@ mod add_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let sub_title = "New Sub Root".to_string();
         let sub_link = "https://example.com/atom.xml".to_string();
@@ -790,6 +810,7 @@ mod add_subscription {
                 sub_link.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         let does_contain_sub = model.accounts[acct_index]
@@ -808,7 +829,7 @@ mod add_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "New Sub Folder".to_string();
         let sub_title = "New Sub Folder".to_string();
@@ -822,6 +843,7 @@ mod add_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -831,6 +853,7 @@ mod add_subscription {
                 sub_link.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         #[allow(clippy::unnecessary_find_map)]
@@ -853,7 +876,7 @@ mod add_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let sub_title = "New Sub Root".to_string();
         let sub_link = "https://example.com/atom.xml".to_string();
         let test_subscription = &Outline {
@@ -870,6 +893,7 @@ mod add_subscription {
                 sub_link.to_string(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -879,6 +903,7 @@ mod add_subscription {
                 sub_link.to_string(),
             ),
             &mut model,
+            &(),
         );
         let actual_error = model.notification.message;
         let expected_error = format!(
@@ -895,7 +920,7 @@ mod add_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let folder_name = "New Sub Folder".to_string();
         let sub_title = "New Sub Folder".to_string();
         let sub_link = "https://example.com/atom.xml".to_string();
@@ -908,6 +933,7 @@ mod add_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -917,6 +943,7 @@ mod add_subscription {
                 sub_link.to_string(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -926,6 +953,7 @@ mod add_subscription {
                 sub_link.to_string(),
             ),
             &mut model,
+            &(),
         );
         let actual_error = model.notification.message;
         let expected_error = format!(
@@ -942,6 +970,7 @@ mod delete_subscription {
     use super::*;
     use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
+    use crux_core::App;
     use opml::Outline;
 
     #[test]
@@ -950,7 +979,7 @@ mod delete_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let deleted_sub = &Outline {
             text: "Deleted Sub Root".to_string(),
@@ -966,10 +995,12 @@ mod delete_subscription {
                 deleted_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::DeleteSubscription(account.clone(), None, deleted_sub.text.to_string()),
             &mut model,
+            &(),
         );
 
         let does_contain_sub = model.accounts[acct_index]
@@ -988,7 +1019,7 @@ mod delete_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Deleted Sub Folder".to_string();
         let deleted_sub = &Outline {
@@ -1000,6 +1031,7 @@ mod delete_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1009,6 +1041,7 @@ mod delete_subscription {
                 deleted_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::DeleteSubscription(
@@ -1017,6 +1050,7 @@ mod delete_subscription {
                 deleted_sub.text.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         #[allow(clippy::unnecessary_find_map)]
@@ -1039,7 +1073,7 @@ mod delete_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Deleted Multi Subs".to_string();
         let delete_sub = &Outline {
@@ -1056,6 +1090,7 @@ mod delete_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1065,6 +1100,7 @@ mod delete_subscription {
                 delete_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1074,6 +1110,7 @@ mod delete_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::DeleteSubscription(
@@ -1082,6 +1119,7 @@ mod delete_subscription {
                 delete_sub.text.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         #[allow(clippy::unnecessary_find_map)]
@@ -1115,6 +1153,7 @@ mod rename_subscription {
     use super::*;
     use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
+    use crux_core::App;
     use opml::Outline;
 
     #[test]
@@ -1123,7 +1162,7 @@ mod rename_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
@@ -1144,6 +1183,7 @@ mod rename_subscription {
                 rename_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::RenameSubscription(
@@ -1154,6 +1194,7 @@ mod rename_subscription {
                 expected_sub.text.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         let does_contain_sub = model.accounts[acct_index]
@@ -1172,7 +1213,7 @@ mod rename_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1187,6 +1228,7 @@ mod rename_subscription {
                 rename_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::RenameSubscription(
@@ -1197,6 +1239,7 @@ mod rename_subscription {
                 rename_sub.text.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         let actual_error = model.notification.message;
@@ -1214,7 +1257,7 @@ mod rename_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Renamed Sub Folder".to_string();
         let rename_sub = &Outline {
@@ -1231,6 +1274,7 @@ mod rename_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1240,6 +1284,7 @@ mod rename_subscription {
                 rename_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::RenameSubscription(
@@ -1250,6 +1295,7 @@ mod rename_subscription {
                 expected_sub.text.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         #[allow(clippy::unnecessary_find_map)]
@@ -1272,7 +1318,7 @@ mod rename_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let folder_name = "Renamed Sub Folder".to_string();
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
@@ -1283,6 +1329,7 @@ mod rename_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1292,6 +1339,7 @@ mod rename_subscription {
                 rename_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::RenameSubscription(
@@ -1302,6 +1350,7 @@ mod rename_subscription {
                 rename_sub.text.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         let actual_error = model.notification.message;
@@ -1319,7 +1368,7 @@ mod rename_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Renamed Multi Sub Folder".to_string();
         let untouched_sub = &Outline {
@@ -1341,6 +1390,7 @@ mod rename_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1350,6 +1400,7 @@ mod rename_subscription {
                 untouched_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1359,6 +1410,7 @@ mod rename_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::RenameSubscription(
@@ -1369,6 +1421,7 @@ mod rename_subscription {
                 expected_sub.text.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         #[allow(clippy::unnecessary_find_map)]
@@ -1402,7 +1455,7 @@ mod rename_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let folder_name = "Renamed Multi Sub Folder".to_string();
         let untouched_sub = &Outline {
             text: "Untouched Sub".to_string(),
@@ -1418,6 +1471,7 @@ mod rename_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1427,6 +1481,7 @@ mod rename_subscription {
                 untouched_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1436,6 +1491,7 @@ mod rename_subscription {
                 rename_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::RenameSubscription(
@@ -1446,6 +1502,7 @@ mod rename_subscription {
                 rename_sub.text.to_string(),
             ),
             &mut model,
+            &(),
         );
 
         let actual_error = model.notification.message;
@@ -1463,6 +1520,7 @@ mod move_subscription {
     use super::*;
     use crate::{Account, AccountType, Accounts, AccountsExt};
     use crate::{CrabNews, Event, Model};
+    use crux_core::App;
     use opml::Outline;
 
     #[test]
@@ -1471,7 +1529,7 @@ mod move_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Move Sub To Folder".to_string();
         let expected_sub = &Outline {
@@ -1483,6 +1541,7 @@ mod move_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1492,6 +1551,7 @@ mod move_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::MoveSubscription(
@@ -1501,6 +1561,7 @@ mod move_subscription {
                 Some(folder_name.to_string()),
             ),
             &mut model,
+            &(),
         );
 
         let does_root_contain_sub = model.accounts[acct_index]
@@ -1530,7 +1591,7 @@ mod move_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let folder_name = "Move Sub To Folder".to_string();
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
@@ -1541,6 +1602,7 @@ mod move_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1550,6 +1612,7 @@ mod move_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1559,6 +1622,7 @@ mod move_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::MoveSubscription(
@@ -1568,6 +1632,7 @@ mod move_subscription {
                 Some(folder_name.to_string()),
             ),
             &mut model,
+            &(),
         );
 
         let actual_error = model.notification.message;
@@ -1585,7 +1650,7 @@ mod move_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Move Sub To Root".to_string();
         let expected_sub = &Outline {
@@ -1597,6 +1662,7 @@ mod move_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1606,6 +1672,7 @@ mod move_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::MoveSubscription(
@@ -1615,6 +1682,7 @@ mod move_subscription {
                 None,
             ),
             &mut model,
+            &(),
         );
 
         let does_root_contain_sub = model.accounts[acct_index]
@@ -1644,7 +1712,7 @@ mod move_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let folder_name = "Move Sub To Root".to_string();
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
@@ -1655,6 +1723,7 @@ mod move_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_name.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1664,6 +1733,7 @@ mod move_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1673,6 +1743,7 @@ mod move_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::MoveSubscription(
@@ -1682,6 +1753,7 @@ mod move_subscription {
                 None,
             ),
             &mut model,
+            &(),
         );
 
         let actual_error = model.notification.message;
@@ -1699,7 +1771,7 @@ mod move_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let acct_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_one = "Folder One".to_string();
         let folder_two = "Folder Two".to_string();
@@ -1712,10 +1784,12 @@ mod move_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_one.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_two.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1725,6 +1799,7 @@ mod move_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::MoveSubscription(
@@ -1734,6 +1809,7 @@ mod move_subscription {
                 Some(folder_two.to_string()),
             ),
             &mut model,
+            &(),
         );
 
         #[allow(clippy::unnecessary_find_map)]
@@ -1767,7 +1843,7 @@ mod move_subscription {
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let folder_one = "Folder One".to_string();
         let folder_two = "Folder Two".to_string();
         let expected_sub = &Outline {
@@ -1779,10 +1855,12 @@ mod move_subscription {
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_one.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddNewFolder(account.clone(), folder_two.to_string()),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1792,6 +1870,7 @@ mod move_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::AddSubscription(
@@ -1801,6 +1880,7 @@ mod move_subscription {
                 expected_sub.xml_url.clone().unwrap().clone(),
             ),
             &mut model,
+            &(),
         );
         let _ = app.update(
             Event::MoveSubscription(
@@ -1810,6 +1890,7 @@ mod move_subscription {
                 Some(folder_two.to_string()),
             ),
             &mut model,
+            &(),
         );
 
         let actual_error = model.notification.message;
@@ -1822,158 +1903,158 @@ mod move_subscription {
     }
 }
 
-#[cfg(test)]
-mod feeds {
-    // use super::*;
-    // use crate::{Account, AccountType, Accounts, AccountsExt};
-    // use crate::{CrabNews, Effect, Event, Model};
+// #[cfg(test)]
+// mod feeds {
+// use super::*;
+// use crate::{Account, AccountType, Accounts, AccountsExt};
+// use crate::{CrabNews, Effect, Event, Model};
 
-    // mode shell START
-    // use anyhow::Result;
-    // use crux_core::Core;
-    // use crux_http::protocol::{HttpRequest, HttpResponse, HttpResult};
-    // use std::collections::VecDeque;
+// mode shell START
+// use anyhow::Result;
+// use crux_core::Core;
+// use crux_http::protocol::{HttpRequest, HttpResponse, HttpResult};
+// use std::collections::VecDeque;
 
-    // #[allow(clippy::large_enum_variant)]
-    // enum Task {
-    //     Event(Event),
-    //     Effect(Effect),
-    // }
+// #[allow(clippy::large_enum_variant)]
+// enum Task {
+//     Event(Event),
+//     Effect(Effect),
+// }
 
-    // pub(crate) fn run(core: &Core<CrabNews>, event: Event) -> Result<Vec<HttpRequest>> {
-    //     let mut queue: VecDeque<Task> = VecDeque::new();
+// pub(crate) fn run(core: &Core<CrabNews>, event: Event) -> Result<Vec<HttpRequest>> {
+//     let mut queue: VecDeque<Task> = VecDeque::new();
 
-    //     queue.push_back(Task::Event(event));
+//     queue.push_back(Task::Event(event));
 
-    //     let mut received: Vec<HttpRequest> = vec![];
+//     let mut received: Vec<HttpRequest> = vec![];
 
-    //     while !queue.is_empty() {
-    //         let task = queue.pop_front().expect("an event");
+//     while !queue.is_empty() {
+//         let task = queue.pop_front().expect("an event");
 
-    //         match task {
-    //             Task::Event(event) => {
-    //                 enqueue_effects(&mut queue, core.process_event(event));
-    //             }
-    //             Task::Effect(effect) => match effect {
-    //                 Effect::Render(_) => (),
-    //                 Effect::Http(mut request) => {
-    //                     let http_request = &request.operation;
+//         match task {
+//             Task::Event(event) => {
+//                 enqueue_effects(&mut queue, core.process_event(event));
+//             }
+//             Task::Effect(effect) => match effect {
+//                 Effect::Render(_) => (),
+//                 Effect::Http(mut request) => {
+//                     let http_request = &request.operation;
 
-    //                     received.push(http_request.clone());
-    //                     let response = HttpResponse::ok().json("Hello").build();
+//                     received.push(http_request.clone());
+//                     let response = HttpResponse::ok().json("Hello").build();
 
-    //                     enqueue_effects(
-    //                         &mut queue,
-    //                         core.resolve(&mut request, HttpResult::Ok(response))
-    //                             .expect("effect should resolve"),
-    //                     );
-    //                 }
-    //             },
-    //         };
-    //     }
+//                     enqueue_effects(
+//                         &mut queue,
+//                         core.resolve(&mut request, HttpResult::Ok(response))
+//                             .expect("effect should resolve"),
+//                     );
+//                 }
+//             },
+//         };
+//     }
 
-    //     Ok(received)
-    // }
+//     Ok(received)
+// }
 
-    // fn enqueue_effects(queue: &mut VecDeque<Task>, effects: Vec<Effect>) {
-    //     queue.append(&mut effects.into_iter().map(Task::Effect).collect())
-    // }
-    // mod shell END
+// fn enqueue_effects(queue: &mut VecDeque<Task>, effects: Vec<Effect>) {
+//     queue.append(&mut effects.into_iter().map(Task::Effect).collect())
+// }
+// mod shell END
 
-    // #[test]
-    // fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
-    //     let app = CrabNews;
-    //     let mut model: Model = Model::default();
-    //     let sub_title = "Gentle Wash Records".to_string();
-    //     let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
+// #[test]
+// fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
+//     let app = CrabNews;
+//     let mut model: Model = Model::default();
+//     let sub_title = "Gentle Wash Records".to_string();
+//     let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
 
-    //     let account = Account::new(&AccountType::Local);
-    //     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
-    //     let acct_index = Accounts::find_account_index(&model.accounts, &account);
+//     let account = Account::new(&AccountType::Local);
+//     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
+//     let acct_index = Accounts::find_account_index(&model.accounts, &account);
 
-    //     let _ = app.update(
-    //         Event::AddSubscription(account.clone(), None, sub_title, sub_link.to_string()),
-    //         &mut model,
-    //     );
+//     let _ = app.update(
+//         Event::AddSubscription(account.clone(), None, sub_title, sub_link.to_string()),
+//         &mut model, &()
+//     );
 
-    //     let core: Core<CrabNews> = Core::default();
+//     let core: Core<CrabNews> = Core::default();
 
-    //     let received = run(&core, Event::GetFeed(account, sub_link.to_string()))?;
+//     let received = run(&core, Event::GetFeed(account, sub_link.to_string()))?;
 
-    //     assert_eq!(received, vec![HttpRequest::get(sub_link).build()]);
-    //     Ok(())
-    // }
+//     assert_eq!(received, vec![HttpRequest::get(sub_link).build()]);
+//     Ok(())
+// }
 
-    // #[test]
-    // fn add_new_feed() {
-    //     let app = CrabNews;
-    //     let mut model: Model = Model::default();
+// #[test]
+// fn add_new_feed() {
+//     let app = CrabNews;
+//     let mut model: Model = Model::default();
 
-    //     let account = Account::new(&AccountType::Local);
-    //     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
-    //     let acct_index = Accounts::find_account_index(&model.accounts, &account);
+//     let account = Account::new(&AccountType::Local);
+//     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
+//     let acct_index = Accounts::find_account_index(&model.accounts, &account);
 
-    //     let sub_title = "Gentle Wash Records".to_string();
-    //     let example_rss = r#"<?xml version="1.0" encoding="UTF-8" ?>
-    //       <rss version="2.0">
-    //         <channel>
-    //           <title>Gentle Wash Records</title>
-    //           <description>This is an example of an RSS feed</description>
-    //           <link>http://www.example.com/main.html</link>
-    //           <lastBuildDate>Mon, 06 Sep 2010 00:01:00 +0000</lastBuildDate>
-    //           <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
-    //           <ttl>1800</ttl>
+//     let sub_title = "Gentle Wash Records".to_string();
+//     let example_rss = r#"<?xml version="1.0" encoding="UTF-8" ?>
+//       <rss version="2.0">
+//         <channel>
+//           <title>Gentle Wash Records</title>
+//           <description>This is an example of an RSS feed</description>
+//           <link>http://www.example.com/main.html</link>
+//           <lastBuildDate>Mon, 06 Sep 2010 00:01:00 +0000</lastBuildDate>
+//           <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
+//           <ttl>1800</ttl>
 
-    //           <item>
-    //             <title>Example entry</title>
-    //             <description>Here is some text containing an interesting description.</description>
-    //             <link>http://www.example.com/blog/post/1</link>
-    //             <guid isPermaLink="true">7bd204c6-1655-4c27-aeee-53f933c5395f</guid>
-    //             <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
-    //           </item>
+//           <item>
+//             <title>Example entry</title>
+//             <description>Here is some text containing an interesting description.</description>
+//             <link>http://www.example.com/blog/post/1</link>
+//             <guid isPermaLink="true">7bd204c6-1655-4c27-aeee-53f933c5395f</guid>
+//             <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
+//           </item>
 
-    //         </channel>
-    //       </rss>"#;
+//         </channel>
+//       </rss>"#;
 
-    //     let body = Vec::from(example_rss.as_bytes());
-    //     let _ = app.update(Event::SetFeed(account, example_rss.as_bytes()), &mut model);
-    //     let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
+//     let body = Vec::from(example_rss.as_bytes());
+//     let _ = app.update(Event::SetFeed(account, example_rss.as_bytes()), &mut model, &());
+//     let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
 
-    //     assert_eq!(added_feed.title.unwrap().content, sub_title);
-    // }
+//     assert_eq!(added_feed.title.unwrap().content, sub_title);
+// }
 
-    // #[test]
-    // fn fail_add_feed_already_exists() {
-    //     let app = CrabNews;
-    //     let mut model: Model = Model::default();
-    //     let account = Account::new(&AccountType::Local);
-    //     let acct_index = Accounts::find_account_index(&model.accounts, &account);
-    //     let sub_title = "Gentle Wash Records".to_string();
-    //     let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
+// #[test]
+// fn fail_add_feed_already_exists() {
+//     let app = CrabNews;
+//     let mut model: Model = Model::default();
+//     let account = Account::new(&AccountType::Local);
+//     let acct_index = Accounts::find_account_index(&model.accounts, &account);
+//     let sub_title = "Gentle Wash Records".to_string();
+//     let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
 
-    //     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
-    //     let _ = app.update(
-    //         Event::AddNewSubscription(
-    //             account.clone(),
-    //             None,
-    //             sub_title.to_string(),
-    //             sub_link.to_string(),
-    //         ),
-    //         &mut model,
-    //     );
-    //     let _response = app
-    //         .update(Event::GetFeed(account.clone(), sub_link), &mut model)
-    //         .expect_one_event();
-    //     // let _ = app.update(Event::SetFeed(account.clone(), response), &mut model);
+//     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
+//     let _ = app.update(
+//         Event::AddNewSubscription(
+//             account.clone(),
+//             None,
+//             sub_title.to_string(),
+//             sub_link.to_string(),
+//         ),
+//         &mut model, &()
+//     );
+//     let _response = app
+//         .update(Event::GetFeed(account.clone(), sub_link), &mut model, &())
+//         .expect_one_event();
+//     // let _ = app.update(Event::SetFeed(account.clone(), response), &mut model, &());
 
-    //     let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
-    //     let added_feed_title = added_feed.title.clone().unwrap().content;
-    //     let actual_error = model.notification.message;
-    //     let expected_error = format!(
-    //         "Cannot add new subscription \"{}\". You are already subscribed.",
-    //         added_feed_title
-    //     );
+//     let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
+//     let added_feed_title = added_feed.title.clone().unwrap().content;
+//     let actual_error = model.notification.message;
+//     let expected_error = format!(
+//         "Cannot add new subscription \"{}\". You are already subscribed.",
+//         added_feed_title
+//     );
 
-    //     assert_eq!(actual_error, expected_error);
-    // }
-}
+//     assert_eq!(actual_error, expected_error);
+// }
+// }

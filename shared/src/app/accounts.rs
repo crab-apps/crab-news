@@ -19,7 +19,7 @@ pub enum AccountType {
     // TODO add cloud accounts
 }
 
-// FIXME make this do proper stuff such as platform checks and authehtication
+// FIXME make this do proper stuff such as platform checks and authentication
 impl Account {
     fn set_account_name(account_type: &AccountType) -> &str {
         match account_type {
@@ -99,6 +99,7 @@ impl AccountsExt for Accounts {
 mod accts {
     use super::*;
     use crate::{CrabNews, Event, Model};
+    use crux_core::App;
 
     #[test]
     fn add_new_local_account() {
@@ -106,7 +107,7 @@ mod accts {
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let does_contain_account = model.accounts.contains(&account_to_add);
 
         assert!(does_contain_account);
@@ -118,8 +119,8 @@ mod accts {
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
 
         let actual_error = model.notification.message;
         let expected_error = format!(
@@ -136,8 +137,12 @@ mod accts {
         let mut model = Model::default();
         let account_to_delete = Account::new(&AccountType::Local);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model);
-        let _ = app.update(Event::DeleteAccount(account_to_delete.clone()), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
+        let _ = app.update(
+            Event::DeleteAccount(account_to_delete.clone()),
+            &mut model,
+            &(),
+        );
 
         let does_contain_account = model.accounts.contains(&account_to_delete);
 
@@ -150,7 +155,7 @@ mod accts {
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Apple);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model, &());
         let does_contain_account = model.accounts.contains(&account_to_add);
 
         assert!(does_contain_account);
@@ -162,8 +167,8 @@ mod accts {
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Apple);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model);
-        let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model, &());
+        let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model, &());
 
         let actual_error = model.notification.message;
         let expected_error = format!(
@@ -180,8 +185,12 @@ mod accts {
         let mut model = Model::default();
         let account_to_delete = Account::new(&AccountType::Apple);
 
-        let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model);
-        let _ = app.update(Event::DeleteAccount(account_to_delete.clone()), &mut model);
+        let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model, &());
+        let _ = app.update(
+            Event::DeleteAccount(account_to_delete.clone()),
+            &mut model,
+            &(),
+        );
 
         let does_contain_account = model.accounts.contains(&account_to_delete);
 

@@ -1,10 +1,11 @@
 // ANCHOR: app
 // ANCHOR: imports
 use crux_core::{
-    render::{render, Render},
+    macros::effect,
+    render::{render, RenderOperation},
     App, Command,
 };
-use crux_http::command::Http;
+use crux_http::{command::Http, protocol::HttpRequest};
 use serde::{Deserialize, Serialize};
 use std::io;
 use thiserror::Error;
@@ -94,11 +95,11 @@ pub struct ViewModel {
 // ANCHOR_END: model
 
 // ANCHOR: capabilities
-#[cfg_attr(feature = "typegen", derive(crux_core::macros::Export))]
-#[derive(crux_core::macros::Effect)]
-pub struct Capabilities {
-    pub render: Render<Event>,
-    pub http: crux_http::Http<Event>,
+effect! {
+    pub enum Effect {
+        Render(RenderOperation),
+        Http(HttpRequest),
+    }
 }
 // ANCHOR_END: capabilities
 
@@ -107,50 +108,18 @@ pub struct CrabNews;
 
 // ANCHOR: impl_app
 impl App for CrabNews {
-    type Event = Event;
     type Model = Model;
+    type Event = Event;
     type ViewModel = ViewModel;
-    type Capabilities = Capabilities;
+    type Capabilities = (); // will be deprecated, so use unit type for now
     type Effect = Effect;
 
     fn update(
         &self,
         event: Self::Event,
         model: &mut Self::Model,
-        _caps: &Self::Capabilities,
+        _caps: &(), // will be deprecated, so prefix with underscore for now
     ) -> Command<Effect, Event> {
-        // NOTE:
-        // we no longer use the capabilities directly, but they are passed in
-        // until the migration to managed effects with `Command` is complete
-        // (at which point the capabilities will be removed from the `update`
-        // signature). Until then we delegate to our own `update` method so that
-        // we can test the app without needing to use AppTester.
-
-        self.update(event, model)
-    }
-
-    fn view(&self, model: &Self::Model) -> Self::ViewModel {
-        ViewModel {
-            notification: model.notification.clone(),
-            account_name: model.account_name.clone(),
-            folder_name: model.folder_name.clone(), // root or folder if None -> nothing? root? phantom?
-            subscription_name: model.subscription_name.clone(), // extrapolated from feed
-                                                    // accounts: model.accounts.clone(),
-                                                    // feeds: model.accounts.
-                                                    // subscriptions: model.subscriptions.clone(),
-                                                    // subscription_folder: model.subscription_folder.to_string(),
-                                                    // subscription_title: model.subscription_title.to_string(),
-                                                    // subscription_link: model.subscription_link.to_string(),
-        }
-    }
-}
-
-impl CrabNews {
-    // NOTE:
-    // this function can be moved into the `App` trait implementation, above,
-    // once the `App` trait has been updated (as the final part of the migration
-    // to managed effects with `Command`).
-    fn update(&self, event: Event, model: &mut Model) -> Command<Effect, Event> {
         match event {
             Event::CreateAccount(account_type) => {
                 match Accounts::add_account(&model.accounts, &account_type) {
@@ -354,6 +323,21 @@ impl CrabNews {
                 };
                 render()
             }
+        }
+    }
+
+    fn view(&self, model: &Self::Model) -> Self::ViewModel {
+        ViewModel {
+            notification: model.notification.clone(),
+            account_name: model.account_name.clone(),
+            folder_name: model.folder_name.clone(), // root or folder if None -> nothing? root? phantom?
+            subscription_name: model.subscription_name.clone(), // extrapolated from feed
+                                                    // accounts: model.accounts.clone(),
+                                                    // feeds: model.accounts.
+                                                    // subscriptions: model.subscriptions.clone(),
+                                                    // subscription_folder: model.subscription_folder.to_string(),
+                                                    // subscription_title: model.subscription_title.to_string(),
+                                                    // subscription_link: model.subscription_link.to_string(),
         }
     }
 }
