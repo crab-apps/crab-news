@@ -5,7 +5,6 @@ use leptos_icons::Icon;
 // CENTER COLUMN
 #[component]
 fn Entry(
-    feed_name: &'static str,
     entry_title: &'static str,
     entry_author: &'static str,
     entry_time: &'static str,
@@ -54,7 +53,6 @@ pub fn EntriesColumn() -> impl IntoView {
                 aria-label="all entries for the selected feed or smart view category"
             >
                 <Entry
-                    feed_name="Fake Random Communications"
                     entry_title="Lorem ipsum dolor sit amet, consectetur adipiscing ..."
                     entry_author="Jane Doe, John Smith, Jane Smith, David Smith..."
                     entry_time="10:37 AM"
@@ -62,7 +60,6 @@ pub fn EntriesColumn() -> impl IntoView {
                 />
 
                 <Entry
-                    feed_name="Music"
                     entry_title="MMXXV"
                     entry_author="Gentle Wash Records"
                     entry_time="9 Jan 2025"
