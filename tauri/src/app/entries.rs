@@ -21,12 +21,11 @@ fn Entry(
             aria-pressed="false"
             aria-label="single feed entry with title, published time, and first two lines of the content"
         >
-
             <div class="card-body">
                 <div class="justify-between text-xs xl:text-sm card-title">
                     <h2 class="flex-1">{entry_title}</h2>
                     // Show starred status based on signal
-                    <span class="self-end mr-2 mb-3 w-2 h-2 text-accent-content">
+                    <span class="self-end mr-2 mb-3 w-2 h-2">
                         <Icon icon=i::FaStarSolid />
                     </span>
                     // Show unread status based on signal
