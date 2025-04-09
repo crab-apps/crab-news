@@ -95,11 +95,10 @@ pub struct ViewModel {
 // ANCHOR_END: model
 
 // ANCHOR: capabilities
-effect! {
-    pub enum Effect {
-        Render(RenderOperation),
-        Http(HttpRequest),
-    }
+#[effect]
+pub enum Effect {
+    Render(RenderOperation),
+    Http(HttpRequest),
 }
 // ANCHOR_END: capabilities
 
