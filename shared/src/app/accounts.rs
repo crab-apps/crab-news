@@ -1,5 +1,5 @@
 use super::subscriptions::Subscriptions;
-use crate::Error;
+use super::Error;
 use serde::{Deserialize, Serialize};
 
 // TODO add more fields?

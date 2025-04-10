@@ -1,5 +1,3 @@
-// ANCHOR: app
-// ANCHOR: imports
 use crux_core::{
     macros::effect,
     render::{render, RenderOperation},
@@ -7,33 +5,15 @@ use crux_core::{
 };
 use crux_http::{command::Http, protocol::HttpRequest};
 use serde::{Deserialize, Serialize};
-use std::io;
-use thiserror::Error;
+
+mod error;
+pub use error::Error;
 
 mod accounts;
-pub use accounts::{Account, AccountType, Accounts, AccountsExt};
+pub use accounts::*;
 
 mod subscriptions;
-pub use subscriptions::{
-    Feeds, FolderName, NewFolder, NewName, OldFolder, OldLink, OldName, OpmlFile, OpmlName,
-    Subscription, SubscriptionLink, SubscriptionTitle, Subscriptions,
-};
-// ANCHOR_END: imports
-
-// my custom Error for accounts and subscriptions
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("{action} \"{item}\". {reason}")]
-    AlreadyExists {
-        action: String,
-        item: String,
-        reason: String,
-    },
-    #[error("{0}")]
-    Io(#[from] io::Error),
-    #[error("{0}")]
-    Opml(#[from] opml::Error),
-}
+pub use subscriptions::*;
 
 // ANCHOR: events
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -64,6 +44,14 @@ pub enum Event {
 }
 // ANCHOR_END: events
 
+// ANCHOR: effects and capabilities
+#[effect]
+pub enum Effect {
+    Render(RenderOperation),
+    Http(HttpRequest),
+}
+// ANCHOR_END: effects and capabilities
+
 // ANCHOR: model
 #[derive(Default, Serialize)]
 pub struct Model {
@@ -81,6 +69,7 @@ pub struct Notification {
     pub title: String,
     pub message: String,
 }
+// ANCHOR_END: model
 
 // ANCHOR: view model
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -92,20 +81,11 @@ pub struct ViewModel {
                                  // pub accounts: Accounts,
 }
 // ANCHOR_END: view model
-// ANCHOR_END: model
 
-// ANCHOR: capabilities
-#[effect]
-pub enum Effect {
-    Render(RenderOperation),
-    Http(HttpRequest),
-}
-// ANCHOR_END: capabilities
-
+// ANCHOR: app
 #[derive(Default)]
 pub struct CrabNews;
 
-// ANCHOR: impl_app
 impl App for CrabNews {
     type Model = Model;
     type Event = Event;
@@ -340,8 +320,6 @@ impl App for CrabNews {
         }
     }
 }
-
-// ANCHOR_END: impl_app
 // ANCHOR_END: app
 
 // ANCHOR: test

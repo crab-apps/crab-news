@@ -1,4 +1,4 @@
-use crate::Error;
+use super::Error;
 use chrono::Local;
 use feed_rs::model::Feed;
 use feed_rs::parser::{self, ParseFeedError};
