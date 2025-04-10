@@ -4,7 +4,38 @@ use leptos_icons::Icon;
 
 // LEFT COLUMN
 #[component]
-fn Feed(feed_icon: i::Icon, feed_name: &'static str, feed_unread_count: u32) -> impl IntoView {
+fn Folder(folder_name: &'static str, feeds: &'static str) -> impl IntoView {
+    let (get_content_visibility, set_content_visibility) = signal("hidden");
+    let content_visibility = move || get_content_visibility.get();
+    let folder_icon = move || {
+        if content_visibility() == "visible" {
+            i::FaFolderOpenRegular
+        } else {
+            i::FaFolderClosedRegular
+        }
+    };
+
+    view! {
+        <div class="text-xs rounded-sm outline-none xl:text-sm collapse focus:bg-accent focus:text-accent-content active:bg-accent active:text-accent-content">
+            <input type="checkbox" aria-label="folder name with unread count" />
+            <div class="collapse-title">
+                <Feed feed_icon=folder_icon() feed_name=folder_name feed_unread_count=3 />
+            </div>
+            <div class="collapse-content">
+                <Feed feed_name="Yada Yada Boom" feed_unread_count=1 />
+                <Feed feed_name="Dada Dada Boom" feed_unread_count=1 />
+                <Feed feed_name="f0f0 f0f0 Boom" feed_unread_count=1 />
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn Feed(
+    #[prop(default = i::FaSquareRssSolid)] feed_icon: i::Icon,
+    feed_name: &'static str,
+    feed_unread_count: u32,
+) -> impl IntoView {
     view! {
         <div
             class="flex justify-between px-2 text-xs rounded-sm outline-none xl:text-sm focus:bg-accent focus:text-accent-content active:bg-accent active:text-accent-content"
@@ -22,7 +53,6 @@ fn Feed(feed_icon: i::Icon, feed_name: &'static str, feed_unread_count: u32) -> 
                 </i>
                 <p aria-label="feed name">{feed_name}</p>
             </div>
-
             <div class="py-1" aria-label="unread count">
                 <span class="badge badge-xs bg-base-300 xl:badge-sm">{feed_unread_count}</span>
             </div>
@@ -65,14 +95,10 @@ fn FeedsAndFolders() -> impl IntoView {
             class="flex-col px-3 pt-1"
             aria-label="all feeds belonging to a specific account, with unread count. the count is dynamic based on their unread status."
         >
-            // Loop over account feeds to populate the list
-            <Feed
-                feed_name="Fake Random Communications"
-                feed_icon=i::FaSquareRssSolid
-                feed_unread_count=1
-            />
-            <Feed feed_name="Close Folder" feed_icon=i::FaFolderClosedRegular feed_unread_count=0 />
-            <Feed feed_name="Open Folder" feed_icon=i::FaFolderOpenRegular feed_unread_count=0 />
+            // Loop over account feeds to populate the list and make a distinction between feeds and folders
+            <Feed feed_name="Fake Random Communications" feed_unread_count=1 />
+            <Folder folder_name="Close Folder" feeds="" />
+            <Folder folder_name="Open Folder" feeds="" />
         </div>
     }
 }
