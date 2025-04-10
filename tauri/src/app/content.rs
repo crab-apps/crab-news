@@ -15,7 +15,7 @@ fn Content(
 
     view! {
         <article
-            class="m-auto w-10/12 max-w-4xl rounded-none md:rounded-sm xl:w-9/12 card prose-sm xl:prose-lg focus:bg-accent focus:text-accent-content active:bg-accent active:text-accent-content"
+            class="m-auto w-10/12 max-w-4xl rounded-none md:rounded-sm xl:w-9/12 card prose-sm xl:prose-lg"
             tabindex="0"
             role="article"
             aria-pressed="false"

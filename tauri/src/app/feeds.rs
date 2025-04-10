@@ -1,27 +1,39 @@
 use icondata as i;
+use leptos::html::Div;
 use leptos::prelude::*;
 use leptos_icons::Icon;
+use leptos_use::use_element_visibility;
 
 // LEFT COLUMN
 #[component]
 fn Folder(folder_name: &'static str, feeds: &'static str) -> impl IntoView {
-    let (get_content_visibility, set_content_visibility) = signal("hidden");
-    let content_visibility = move || get_content_visibility.get();
-    let folder_icon = move || {
-        if content_visibility() == "visible" {
-            i::FaFolderOpenRegular
-        } else {
-            i::FaFolderClosedRegular
-        }
-    };
+    let el = NodeRef::<Div>::new();
+    let is_visible = use_element_visibility(el);
 
     view! {
-        <div class="text-xs rounded-sm outline-none xl:text-sm collapse focus:bg-accent focus:text-accent-content active:bg-accent active:text-accent-content">
+        <div class="text-xs rounded-sm outline-none xl:text-sm collapse">
             <input type="checkbox" aria-label="folder name with unread count" />
             <div class="collapse-title">
-                <Feed feed_icon=folder_icon() feed_name=folder_name feed_unread_count=3 />
+                <Show
+                    when=move || { is_visible == true.into() }
+                    fallback=move || {
+                        view! {
+                            <Feed
+                                feed_icon=i::FaFolderOpenRegular
+                                feed_name=folder_name
+                                feed_unread_count=3
+                            />
+                        }
+                    }
+                >
+                    <Feed
+                        feed_icon=i::FaFolderClosedRegular
+                        feed_name=folder_name
+                        feed_unread_count=3
+                    />
+                </Show>
             </div>
-            <div class="collapse-content">
+            <div node_ref=el class="collapse-content">
                 <Feed feed_name="Yada Yada Boom" feed_unread_count=1 />
                 <Feed feed_name="Dada Dada Boom" feed_unread_count=1 />
                 <Feed feed_name="f0f0 f0f0 Boom" feed_unread_count=1 />
@@ -97,8 +109,8 @@ fn FeedsAndFolders() -> impl IntoView {
         >
             // Loop over account feeds to populate the list and make a distinction between feeds and folders
             <Feed feed_name="Fake Random Communications" feed_unread_count=1 />
-            <Folder folder_name="Close Folder" feeds="" />
-            <Folder folder_name="Open Folder" feeds="" />
+            <Folder folder_name="One Folder" feeds="" />
+            <Folder folder_name="Two Folder" feeds="" />
         </div>
     }
 }
