@@ -9,9 +9,9 @@ use serde::{Deserialize, Serialize};
 pub type OpmlFile = String;
 pub type OpmlName = String;
 pub type FolderName = String;
-pub type OldName = String;
+pub type OldFolderName = String;
 pub type OldLink = String;
-pub type NewName = String;
+pub type NewFolderName = String;
 pub type OldFolder = Option<FolderName>;
 pub type NewFolder = Option<FolderName>;
 pub type Subscription = Outline;
@@ -47,8 +47,8 @@ impl Subscriptions {
         }
     }
 
-    fn set_duplicate_err(action: &str, item: &str, reason: &str) -> self::Error {
-        self::Error::AlreadyExists {
+    fn set_error(action: &str, item: &str, reason: &str) -> self::Error {
+        self::Error::CrabError {
             action: action.to_string(),
             item: item.to_string(),
             reason: reason.to_string(),
@@ -93,7 +93,7 @@ impl Subscriptions {
     pub fn add_folder(&self, folder_name: &FolderName) -> Result<Self, self::Error> {
         let mut subs = self.clone();
         let test_folder = Self::set_test_folder(folder_name);
-        let duplicate_err = Self::set_duplicate_err(
+        let duplicate_err = Self::set_error(
             "Cannot add new folder",
             folder_name.as_str(),
             "It already exists.",
@@ -120,12 +120,12 @@ impl Subscriptions {
     // NOTE folders are only allowed at root level. no nesting.
     pub fn rename_folder(
         &self,
-        old_folder_name: &OldName,
-        new_folder_name: &NewName,
+        old_folder_name: &OldFolderName,
+        new_folder_name: &NewFolderName,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
         let test_folder = Self::set_test_folder(new_folder_name);
-        let duplicate_err = Self::set_duplicate_err(
+        let duplicate_err = Self::set_error(
             "Cannot rename folder to",
             new_folder_name.as_str(),
             "It already exists.",
@@ -156,7 +156,7 @@ impl Subscriptions {
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
         let test_subscription = Self::set_test_sub(sub_title, sub_link);
-        let duplicate_err = Self::set_duplicate_err(
+        let duplicate_err = Self::set_error(
             "Cannot add new subscription",
             sub_title.as_str(),
             "You are already subscribed.",
@@ -223,13 +223,13 @@ impl Subscriptions {
     pub fn rename_subscription(
         &self,
         folder_name: &Option<FolderName>,
-        old_name: &OldName,
+        old_name: &OldFolderName,
         old_link: &OldLink,
-        new_name: &NewName,
+        new_name: &NewFolderName,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
         let test_subscription = Self::set_test_sub(new_name, old_link);
-        let duplicate_err = Self::set_duplicate_err(
+        let duplicate_err = Self::set_error(
             "Cannot rename subscription to",
             new_name.as_str(),
             "It already exists.",
@@ -288,7 +288,7 @@ impl Subscriptions {
         new_folder: &NewFolder,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
-        let duplicate_err = Self::set_duplicate_err(
+        let duplicate_err = Self::set_error(
             "Cannot move subscription to",
             subscription.text.as_str(),
             "It already exists.",

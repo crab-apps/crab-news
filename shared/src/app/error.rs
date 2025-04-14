@@ -4,7 +4,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("{action} \"{item}\". {reason}")]
-    AlreadyExists {
+    CrabError {
         action: String,
         item: String,
         reason: String,

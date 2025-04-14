@@ -22,11 +22,12 @@ pub enum Event {
     // EVENTS FROM THE SHELL
     CreateAccount(AccountType),
     DeleteAccount(Account),
+    RenameAccount(OldAccountName, NewAccountName),
     ImportSubscriptions(Account, OpmlFile),
     ExportSubscriptions(Account, OpmlName),
     AddNewFolder(Account, FolderName),
     DeleteFolder(Account, FolderName),
-    RenameFolder(Account, OldName, NewName),
+    RenameFolder(Account, OldFolderName, NewFolderName),
     AddSubscription(
         Account,
         Option<FolderName>,
@@ -34,7 +35,13 @@ pub enum Event {
         SubscriptionLink,
     ),
     DeleteSubscription(Account, Option<FolderName>, SubscriptionTitle),
-    RenameSubscription(Account, Option<FolderName>, OldName, OldLink, NewName),
+    RenameSubscription(
+        Account,
+        Option<FolderName>,
+        OldFolderName,
+        OldLink,
+        NewFolderName,
+    ),
     MoveSubscription(Account, Subscription, OldFolder, NewFolder),
     GetFeed(Account, SubscriptionLink),
 
@@ -118,6 +125,22 @@ impl App for CrabNews {
             Event::DeleteAccount(account) => {
                 model.accounts = Accounts::delete_account(&model.accounts, &account);
                 render()
+            }
+            Event::RenameAccount(old_account_name, new_account_name) => {
+                match Accounts::rename_account(&model.accounts, old_account_name, new_account_name)
+                {
+                    Ok(accts) => {
+                        model.accounts = accts;
+                        render()
+                    }
+                    Err(err) => {
+                        model.notification = Notification {
+                            title: "Account Error".to_string(),
+                            message: err.to_string(),
+                        };
+                        render()
+                    }
+                }
             }
             Event::ImportSubscriptions(account, subs_opml_file) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
