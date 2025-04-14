@@ -121,10 +121,13 @@ impl App for CrabNews {
             }
             Event::ImportSubscriptions(account, subs_opml_file) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
-                match Subscriptions::import(&model.accounts[account_index].subs, &subs_opml_file) {
+                match Subscriptions::import(
+                    &model.accounts.acct[account_index].subs,
+                    &subs_opml_file,
+                ) {
                     // TODO on duplicates, prompt user for merge or replace
                     Ok(subs) => {
-                        model.accounts[account_index].subs = subs;
+                        model.accounts.acct[account_index].subs = subs;
                         render()
                     }
                     Err(err) => {
@@ -138,7 +141,10 @@ impl App for CrabNews {
             }
             Event::ExportSubscriptions(account, subs_opml_name) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
-                match Subscriptions::export(&model.accounts[account_index].subs, &subs_opml_name) {
+                match Subscriptions::export(
+                    &model.accounts.acct[account_index].subs,
+                    &subs_opml_name,
+                ) {
                     Ok(success) => {
                         model.notification = Notification {
                             title: "Subscriptions Exported".to_string(),
@@ -158,9 +164,12 @@ impl App for CrabNews {
             }
             Event::AddNewFolder(account, folder_name) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
-                match Subscriptions::add_folder(&model.accounts[account_index].subs, &folder_name) {
+                match Subscriptions::add_folder(
+                    &model.accounts.acct[account_index].subs,
+                    &folder_name,
+                ) {
                     Ok(subs) => {
-                        model.accounts[account_index].subs = subs;
+                        model.accounts.acct[account_index].subs = subs;
                         render()
                     }
                     Err(err) => {
@@ -174,20 +183,23 @@ impl App for CrabNews {
             }
             Event::DeleteFolder(account, folder_name) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
-                model.accounts[account_index].subs = {
-                    Subscriptions::delete_folder(&model.accounts[account_index].subs, &folder_name)
+                model.accounts.acct[account_index].subs = {
+                    Subscriptions::delete_folder(
+                        &model.accounts.acct[account_index].subs,
+                        &folder_name,
+                    )
                 };
                 render()
             }
             Event::RenameFolder(account, old_folder_name, new_folder_name) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::rename_folder(
-                    &model.accounts[account_index].subs,
+                    &model.accounts.acct[account_index].subs,
                     &old_folder_name,
                     &new_folder_name,
                 ) {
                     Ok(subs) => {
-                        model.accounts[account_index].subs = subs;
+                        model.accounts.acct[account_index].subs = subs;
                         render()
                     }
                     Err(err) => {
@@ -202,13 +214,13 @@ impl App for CrabNews {
             Event::AddSubscription(account, folder_name, sub_title, sub_link) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::add_subscription(
-                    &model.accounts[account_index].subs,
+                    &model.accounts.acct[account_index].subs,
                     &folder_name,
                     &sub_title,
                     &sub_link,
                 ) {
                     Ok(subs) => {
-                        model.accounts[account_index].subs = subs;
+                        model.accounts.acct[account_index].subs = subs;
                         render()
                     }
                     Err(err) => {
@@ -225,8 +237,8 @@ impl App for CrabNews {
             }
             Event::DeleteSubscription(account, folder_name, sub_name) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
-                model.accounts[account_index].subs = Subscriptions::delete_subscription(
-                    &model.accounts[account_index].subs,
+                model.accounts.acct[account_index].subs = Subscriptions::delete_subscription(
+                    &model.accounts.acct[account_index].subs,
                     &folder_name,
                     &sub_name,
                 );
@@ -235,14 +247,14 @@ impl App for CrabNews {
             Event::RenameSubscription(account, folder_name, old_title, old_link, new_name) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::rename_subscription(
-                    &model.accounts[account_index].subs,
+                    &model.accounts.acct[account_index].subs,
                     &folder_name,
                     &old_title,
                     &old_link,
                     &new_name,
                 ) {
                     Ok(subs) => {
-                        model.accounts[account_index].subs = subs;
+                        model.accounts.acct[account_index].subs = subs;
                         render()
                     }
                     Err(err) => {
@@ -257,13 +269,13 @@ impl App for CrabNews {
             Event::MoveSubscription(account, subscription, old_folder, new_folder) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 match Subscriptions::move_subscription(
-                    &model.accounts[account_index].subs,
+                    &model.accounts.acct[account_index].subs,
                     &subscription,
                     &old_folder,
                     &new_folder,
                 ) {
                     Ok(subs) => {
-                        model.accounts[account_index].subs = subs;
+                        model.accounts.acct[account_index].subs = subs;
                         render()
                     }
                     Err(err) => {
@@ -281,9 +293,9 @@ impl App for CrabNews {
             Event::SetFeed(account, Ok(mut response)) => {
                 let account_index = Accounts::find_account_index(&model.accounts, &account);
                 let body = response.take_body().unwrap();
-                match Subscriptions::add_feed(&model.accounts[account_index].subs, body) {
+                match Subscriptions::add_feed(&model.accounts.acct[account_index].subs, body) {
                     Ok(subs) => {
-                        model.accounts[account_index].subs = subs;
+                        model.accounts.acct[account_index].subs = subs;
                         render()
                     }
                     Err(err) => {

@@ -24,9 +24,9 @@ pub type Feeds = Vec<Feed>;
 // NOTE - crate: https://crates.io/crates/feed-rs to deal with feeds data *after* subscribtions.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Subscriptions {
-    pub subs: OPML,
     #[serde(skip)]
     pub feeds: Feeds,
+    pub subs: OPML,
 }
 
 impl Subscriptions {
@@ -361,7 +361,7 @@ impl Subscriptions {
 #[cfg(test)]
 mod import_export {
     use super::*;
-    use crate::{Account, AccountType, Accounts, AccountsExt};
+    use crate::{Account, AccountType, Accounts};
     use crate::{CrabNews, Event, Model};
     use chrono::prelude::Local;
     use crux_core::App;
@@ -374,7 +374,7 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let subs_opml_file = "example_import.opml".to_string();
         let example_subs = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
 
@@ -383,7 +383,7 @@ mod import_export {
             &mut model,
             &(),
         );
-        let added_subs = model.accounts[acct_index].subs.clone();
+        let added_subs = model.accounts.acct[account_index].subs.clone();
         let expected_subs = Subscriptions {
             subs: OPML::from_str(example_subs).unwrap(),
             feeds: vec![],
@@ -459,18 +459,18 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
         let subs_opml_name = "Subscriptions.opml".to_string();
 
         #[allow(clippy::unnecessary_literal_unwrap)]
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
 
-        model.accounts[acct_index].subs = Subscriptions {
+        model.accounts.acct[account_index].subs = Subscriptions {
             subs: OPML::from_str(&example_subs).unwrap(),
             feeds: vec![],
         };
-        let imported_content = model.accounts[acct_index].subs.clone();
+        let imported_content = model.accounts.acct[account_index].subs.clone();
 
         let _ = app.update(
             Event::ExportSubscriptions(account, subs_opml_name.to_string()),
@@ -495,14 +495,14 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
         let subs_opml_name = "Subscriptions.opml".to_string();
 
         #[allow(clippy::unnecessary_literal_unwrap)]
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
 
-        model.accounts[acct_index].subs = Subscriptions {
+        model.accounts.acct[account_index].subs = Subscriptions {
             subs: OPML::from_str(&example_subs).unwrap(),
             feeds: vec![],
         };
@@ -550,7 +550,7 @@ mod import_export {
 #[cfg(test)]
 mod folder {
     use super::*;
-    use crate::{Account, AccountType, Accounts, AccountsExt};
+    use crate::{Account, AccountType, Accounts};
     use crate::{CrabNews, Event, Model};
     use crux_core::App;
     use opml::Outline;
@@ -562,7 +562,7 @@ mod folder {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Added Folder".to_string();
         let added_folder = &Outline {
             text: folder_name.to_string(),
@@ -575,7 +575,7 @@ mod folder {
             &mut model,
             &(),
         );
-        let does_contain_folder = model.accounts[acct_index]
+        let does_contain_folder = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -592,7 +592,7 @@ mod folder {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name_one = "Added Folder Ome".to_string();
         let folder_name_two = "Added Folder Two".to_string();
         let added_folder_one = &Outline {
@@ -616,13 +616,13 @@ mod folder {
             &mut model,
             &(),
         );
-        let does_contain_folder_one = model.accounts[acct_index]
+        let does_contain_folder_one = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .contains(added_folder_one);
-        let does_contain_folder_two = model.accounts[acct_index]
+        let does_contain_folder_two = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -667,7 +667,7 @@ mod folder {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let deleted_folder = &Outline {
             text: "Deleted Folder".to_string(),
             title: Some("Deleted Folder".to_string()),
@@ -685,7 +685,7 @@ mod folder {
             &(),
         );
 
-        let does_contain_folder = model.accounts[acct_index]
+        let does_contain_folder = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -702,7 +702,7 @@ mod folder {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let rename_folder = &Outline {
             text: "Rename Folder".to_string(),
             title: Some("Rename Folder".to_string()),
@@ -730,7 +730,7 @@ mod folder {
             &(),
         );
 
-        let does_contain_folder = model.accounts[acct_index]
+        let does_contain_folder = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -781,7 +781,7 @@ mod folder {
 #[cfg(test)]
 mod add_subscription {
     use super::*;
-    use crate::{Account, AccountType, Accounts, AccountsExt};
+    use crate::{Account, AccountType, Accounts};
     use crate::{CrabNews, Event, Model};
     use crux_core::App;
     use opml::Outline;
@@ -793,7 +793,7 @@ mod add_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let sub_title = "New Sub Root".to_string();
         let sub_link = "https://example.com/atom.xml".to_string();
         let expected_sub = &Outline {
@@ -813,7 +813,7 @@ mod add_subscription {
             &(),
         );
 
-        let does_contain_sub = model.accounts[acct_index]
+        let does_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -830,7 +830,7 @@ mod add_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "New Sub Folder".to_string();
         let sub_title = "New Sub Folder".to_string();
         let sub_link = "https://example.com/atom.xml".to_string();
@@ -857,7 +857,7 @@ mod add_subscription {
         );
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_contain_sub = model.accounts[acct_index]
+        let does_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -968,7 +968,7 @@ mod add_subscription {
 #[cfg(test)]
 mod delete_subscription {
     use super::*;
-    use crate::{Account, AccountType, Accounts, AccountsExt};
+    use crate::{Account, AccountType, Accounts};
     use crate::{CrabNews, Event, Model};
     use crux_core::App;
     use opml::Outline;
@@ -980,7 +980,7 @@ mod delete_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let deleted_sub = &Outline {
             text: "Deleted Sub Root".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1003,7 +1003,7 @@ mod delete_subscription {
             &(),
         );
 
-        let does_contain_sub = model.accounts[acct_index]
+        let does_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1020,7 +1020,7 @@ mod delete_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Deleted Sub Folder".to_string();
         let deleted_sub = &Outline {
             text: "Sub Name".to_string(),
@@ -1054,7 +1054,7 @@ mod delete_subscription {
         );
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_contain_sub = model.accounts[acct_index]
+        let does_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1074,7 +1074,7 @@ mod delete_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Deleted Multi Subs".to_string();
         let delete_sub = &Outline {
             text: "Deleted Sub".to_string(),
@@ -1123,7 +1123,7 @@ mod delete_subscription {
         );
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_contain_deleted_sub = model.accounts[acct_index]
+        let does_contain_deleted_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1134,7 +1134,7 @@ mod delete_subscription {
             .unwrap();
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_contain_expected_sub = model.accounts[acct_index]
+        let does_contain_expected_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1151,7 +1151,7 @@ mod delete_subscription {
 #[cfg(test)]
 mod rename_subscription {
     use super::*;
-    use crate::{Account, AccountType, Accounts, AccountsExt};
+    use crate::{Account, AccountType, Accounts};
     use crate::{CrabNews, Event, Model};
     use crux_core::App;
     use opml::Outline;
@@ -1163,7 +1163,7 @@ mod rename_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1197,7 +1197,7 @@ mod rename_subscription {
             &(),
         );
 
-        let does_contain_sub = model.accounts[acct_index]
+        let does_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1258,7 +1258,7 @@ mod rename_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Renamed Sub Folder".to_string();
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
@@ -1299,7 +1299,7 @@ mod rename_subscription {
         );
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_contain_sub = model.accounts[acct_index]
+        let does_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1369,7 +1369,7 @@ mod rename_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Renamed Multi Sub Folder".to_string();
         let untouched_sub = &Outline {
             text: "Untouched Sub".to_string(),
@@ -1425,7 +1425,7 @@ mod rename_subscription {
         );
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_contain_untouched_sub = model.accounts[acct_index]
+        let does_contain_untouched_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1436,7 +1436,7 @@ mod rename_subscription {
             .unwrap();
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_contain_expected_sub = model.accounts[acct_index]
+        let does_contain_expected_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1518,7 +1518,7 @@ mod rename_subscription {
 #[cfg(test)]
 mod move_subscription {
     use super::*;
-    use crate::{Account, AccountType, Accounts, AccountsExt};
+    use crate::{Account, AccountType, Accounts};
     use crate::{CrabNews, Event, Model};
     use crux_core::App;
     use opml::Outline;
@@ -1530,7 +1530,7 @@ mod move_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Move Sub To Folder".to_string();
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
@@ -1564,7 +1564,7 @@ mod move_subscription {
             &(),
         );
 
-        let does_root_contain_sub = model.accounts[acct_index]
+        let does_root_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1572,7 +1572,7 @@ mod move_subscription {
             .contains(expected_sub);
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_folder_contain_sub = model.accounts[acct_index]
+        let does_folder_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1651,7 +1651,7 @@ mod move_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_name = "Move Sub To Root".to_string();
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
@@ -1685,7 +1685,7 @@ mod move_subscription {
             &(),
         );
 
-        let does_root_contain_sub = model.accounts[acct_index]
+        let does_root_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1693,7 +1693,7 @@ mod move_subscription {
             .contains(expected_sub);
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_folder_contain_sub = model.accounts[acct_index]
+        let does_folder_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1772,7 +1772,7 @@ mod move_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let acct_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_account_index(&model.accounts, &account);
         let folder_one = "Folder One".to_string();
         let folder_two = "Folder Two".to_string();
         let expected_sub = &Outline {
@@ -1813,7 +1813,7 @@ mod move_subscription {
         );
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_folder_one_contain_sub = model.accounts[acct_index]
+        let does_folder_one_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1824,7 +1824,7 @@ mod move_subscription {
             .unwrap();
 
         #[allow(clippy::unnecessary_find_map)]
-        let does_folder_two_contain_sub = model.accounts[acct_index]
+        let does_folder_two_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
@@ -1970,7 +1970,7 @@ mod move_subscription {
 
 //     let account = Account::new(&AccountType::Local);
 //     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-//     let acct_index = Accounts::find_account_index(&model.accounts, &account);
+//     let account_index = Accounts::find_account_index(&model.accounts, &account);
 
 //     let _ = app.update(
 //         Event::AddSubscription(account.clone(), None, sub_title, sub_link.to_string()),
@@ -1992,7 +1992,7 @@ mod move_subscription {
 
 //     let account = Account::new(&AccountType::Local);
 //     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-//     let acct_index = Accounts::find_account_index(&model.accounts, &account);
+//     let account_index = Accounts::find_account_index(&model.accounts, &account);
 
 //     let sub_title = "Gentle Wash Records".to_string();
 //     let example_rss = r#"<?xml version="1.0" encoding="UTF-8" ?>
@@ -2018,7 +2018,7 @@ mod move_subscription {
 
 //     let body = Vec::from(example_rss.as_bytes());
 //     let _ = app.update(Event::SetFeed(account, example_rss.as_bytes()), &mut model, &());
-//     let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
+//     let added_feed = Subscriptions::find_feed(&model.accounts.acct[account_index].subs, &sub_title);
 
 //     assert_eq!(added_feed.title.unwrap().content, sub_title);
 // }
@@ -2028,7 +2028,7 @@ mod move_subscription {
 //     let app = CrabNews;
 //     let mut model: Model = Model::default();
 //     let account = Account::new(&AccountType::Local);
-//     let acct_index = Accounts::find_account_index(&model.accounts, &account);
+//     let account_index = Accounts::find_account_index(&model.accounts, &account);
 //     let sub_title = "Gentle Wash Records".to_string();
 //     let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
 
@@ -2047,7 +2047,7 @@ mod move_subscription {
 //         .expect_one_event();
 //     // let _ = app.update(Event::SetFeed(account.clone(), response), &mut model, &());
 
-//     let added_feed = Subscriptions::find_feed(&model.accounts[acct_index].subs, &sub_title);
+//     let added_feed = Subscriptions::find_feed(&model.accounts.acct[account_index].subs, &sub_title);
 //     let added_feed_title = added_feed.title.clone().unwrap().content;
 //     let actual_error = model.notification.message;
 //     let expected_error = format!(

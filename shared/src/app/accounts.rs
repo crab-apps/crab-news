@@ -39,13 +39,12 @@ impl Account {
     }
 }
 
-pub type Accounts = Vec<Account>;
-
-trait AccountsHelpers {
-    fn set_duplicate_err(action: &str, item: &str, reason: &str) -> self::Error;
+#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct Accounts {
+    pub acct: Vec<Account>,
 }
 
-impl AccountsHelpers for Accounts {
+impl Accounts {
     // ANCHOR: helper functions
     fn set_duplicate_err(action: &str, item: &str, reason: &str) -> self::Error {
         self::Error::AlreadyExists {
@@ -54,24 +53,15 @@ impl AccountsHelpers for Accounts {
             reason: reason.to_string(),
         }
     }
-}
 
-pub trait AccountsExt {
-    fn find_account_index(&self, account: &Account) -> usize;
-    fn add_account(&self, account_type: &AccountType) -> Result<Self, self::Error>
-    where
-        Self: Sized;
-    fn delete_account(&self, account: &Account) -> Self
-    where
-        Self: Sized;
-}
-
-impl AccountsExt for Accounts {
-    fn find_account_index(&self, account: &Account) -> usize {
-        self.iter().position(|a| a.name == account.name).unwrap()
+    pub fn find_account_index(&self, account: &Account) -> usize {
+        self.acct
+            .iter()
+            .position(|a| a.name == account.name)
+            .unwrap()
     }
 
-    fn add_account(&self, account_type: &AccountType) -> Result<Self, self::Error> {
+    pub fn add_account(&self, account_type: &AccountType) -> Result<Self, self::Error> {
         let mut subs = self.clone();
         let account_to_add = Account::new(account_type);
         let duplicate_err = Self::set_duplicate_err(
@@ -80,17 +70,17 @@ impl AccountsExt for Accounts {
             "It already exists.",
         );
 
-        if subs.contains(&account_to_add) {
+        if subs.acct.contains(&account_to_add) {
             Err(duplicate_err)
         } else {
-            subs.push(account_to_add);
+            subs.acct.push(account_to_add);
             Ok(subs)
         }
     }
 
-    fn delete_account(&self, account: &Account) -> Self {
+    pub fn delete_account(&self, account: &Account) -> Self {
         let mut subs = self.clone();
-        subs.retain(|a| a.name != account.name);
+        subs.acct.retain(|a| a.name != account.name);
         subs
     }
 }
@@ -108,7 +98,7 @@ mod accts {
         let account_to_add = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let does_contain_account = model.accounts.contains(&account_to_add);
+        let does_contain_account = model.accounts.acct.contains(&account_to_add);
 
         assert!(does_contain_account);
     }
@@ -144,7 +134,7 @@ mod accts {
             &(),
         );
 
-        let does_contain_account = model.accounts.contains(&account_to_delete);
+        let does_contain_account = model.accounts.acct.contains(&account_to_delete);
 
         assert!(!does_contain_account);
     }
@@ -156,7 +146,7 @@ mod accts {
         let account_to_add = Account::new(&AccountType::Apple);
 
         let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model, &());
-        let does_contain_account = model.accounts.contains(&account_to_add);
+        let does_contain_account = model.accounts.acct.contains(&account_to_add);
 
         assert!(does_contain_account);
     }
@@ -192,7 +182,7 @@ mod accts {
             &(),
         );
 
-        let does_contain_account = model.accounts.contains(&account_to_delete);
+        let does_contain_account = model.accounts.acct.contains(&account_to_delete);
 
         assert!(!does_contain_account);
     }
