@@ -7,6 +7,18 @@ pub fn FeedsHeader() -> impl IntoView {
     view! {
         <div class="flex flex-row px-2 bg-base-200">
             <div class="flex-1">
+                <div class="tooltip tooltip-bottom" aria-label="add new account">
+                    <div class="tooltip-content">
+                        <div class="text-xs xl:text-sm">add account</div>
+                    </div>
+                    <button
+                        id="add-account-button"
+                        aria-label="Add new account"
+                        class="text-sm xl:text-lg btn btn-ghost btn-square"
+                    >
+                        <Icon icon=i::FaUserPlusSolid />
+                    </button>
+                </div>
                 <div class="tooltip tooltip-bottom" aria-label="add new subscription">
                     <div class="tooltip-content">
                         <div class="text-xs xl:text-sm">add feed</div>
