@@ -6,43 +6,38 @@ use leptos_icons::Icon;
 pub fn FeedsHeader() -> impl IntoView {
     view! {
         <div class="flex flex-row px-2 bg-base-200">
-            <div class="flex-1">
-                <div class="tooltip tooltip-bottom" aria-label="add new account">
-                    <div class="tooltip-content">
-                        <div class="text-xs xl:text-sm">add account</div>
-                    </div>
-                    <button
-                        id="add-account-button"
-                        aria-label="Add new account"
-                        class="text-sm xl:text-lg btn btn-ghost btn-square"
-                    >
-                        <Icon icon=i::FaUserPlusSolid />
-                    </button>
+            <div class="flex-1 dropdown dropdown-bottom">
+                <div
+                    tabindex="0"
+                    role="button"
+                    class="text-sm xl:text-lg btn btn-ghost btn-square"
+                    aria-label="add new..."
+                >
+                    <Icon icon=i::FaPlusSolid />
                 </div>
-                <div class="tooltip tooltip-bottom" aria-label="add new subscription">
-                    <div class="tooltip-content">
-                        <div class="text-xs xl:text-sm">add feed</div>
-                    </div>
-                    <button
-                        id="add-feed-button"
-                        aria-label="Add new subscription"
-                        class="text-sm xl:text-lg btn btn-ghost btn-square"
-                    >
-                        <Icon icon=i::FaPlusSolid />
-                    </button>
-                </div>
-                <div class="tooltip tooltip-bottom" aria-label="add new folder">
-                    <div class="tooltip-content">
-                        <div class="text-xs xl:text-sm">add folder</div>
-                    </div>
-                    <button
-                        id="add-folder-button"
-                        aria-label="Add new folder"
-                        class="text-sm xl:text-lg btn btn-ghost btn-square"
-                    >
-                        <Icon icon=i::FaFolderPlusSolid />
-                    </button>
-                </div>
+                <ul
+                    tabindex="0"
+                    class="flex p-2 w-52 shadow-sm dropdown-content menu bg-base-100 rounded-box z-1"
+                >
+                    <li aria-label="add new account">
+                        <p>
+                            <Icon icon=i::FaUserPlusSolid />
+                            New Account
+                        </p>
+                    </li>
+                    <li aria-label="add new folder">
+                        <p>
+                            <Icon icon=i::FaFolderPlusSolid />
+                            New Folder
+                        </p>
+                    </li>
+                    <li aria-label="add new subscription">
+                        <p>
+                            <Icon icon=i::FaSquareRssSolid />
+                            New Subscription
+                        </p>
+                    </li>
+                </ul>
             </div>
             <div class="flex-none">
                 <div class="mr-1 tooltip tooltip-bottom" aria-label="refresh all subscriptions">
