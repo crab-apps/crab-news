@@ -41,10 +41,8 @@ opt-level = "s"   # Prioritizes small binary size. Use `3` if you prefer speed.
 panic = "abort"   # Higher performance by disabling panic handlers.
 strip = true      # Ensures debug symbols are removed.
 
-# [features]
-# this feature is used for production builds or when `devPath` points to the filesystem
-# DO NOT REMOVE!!
-# custom-protocol = ["tauri/custom-protocol"]
+[features]
+custom-protocol = ["tauri/custom-protocol"]
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = [

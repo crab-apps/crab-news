@@ -2,20 +2,21 @@ use icondata as i;
 use leptos::html::Div;
 use leptos::prelude::*;
 use leptos_icons::Icon;
-use leptos_use::use_element_visibility;
+use leptos_use::{use_element_size, UseElementSizeReturn};
 
 // LEFT COLUMN
 #[component]
 fn Folder(folder_name: &'static str, feeds: &'static str) -> impl IntoView {
     let el = NodeRef::<Div>::new();
-    let is_visible = use_element_visibility(el);
+    #[allow(unused_variables)]
+    let UseElementSizeReturn { width, height } = use_element_size(el);
 
     view! {
         <div class="text-xs rounded-sm outline-none xl:text-sm collapse">
             <input type="checkbox" aria-label="folder name with unread count" />
             <div class="collapse-title">
                 <Show
-                    when=move || { is_visible == true.into() }
+                    when=move || { height.get() <= 8.0 }
                     fallback=move || {
                         view! {
                             <Feed
@@ -33,7 +34,7 @@ fn Folder(folder_name: &'static str, feeds: &'static str) -> impl IntoView {
                     />
                 </Show>
             </div>
-            <div node_ref=el class="collapse-content">
+            <div node_ref=el class="ml-3 collapse-content">
                 <Feed feed_name="Yada Yada Boom" feed_unread_count=1 />
                 <Feed feed_name="Dada Dada Boom" feed_unread_count=1 />
                 <Feed feed_name="f0f0 f0f0 Boom" feed_unread_count=1 />
