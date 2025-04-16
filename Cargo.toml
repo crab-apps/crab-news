@@ -1,5 +1,4 @@
 [workspace]
-members = ["shared", "tauri/src-tauri"]
 resolver = "1"
 
 [workspace.package]
