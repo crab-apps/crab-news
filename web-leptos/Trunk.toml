@@ -8,4 +8,4 @@ open = true
 
 [tools]
 # https://github.com/dobicinaitis/tailwind-cli-extra
-tailwindcss = "2.1.6"
+tailwindcss = "2.1.12"
