@@ -1,8 +1,22 @@
 use dioxus::prelude::*;
+use shared::{Event, ViewModel};
 
-const FAVICON: Asset = asset!("/assets/favicon.ico");
-const MAIN_CSS: Asset = asset!("/assets/main.css");
-const HEADER_SVG: Asset = asset!("/assets/header.svg");
+mod core;
+use core::CoreService;
+mod http;
+
+mod navbar;
+use navbar::*;
+
+mod feeds;
+use feeds::*;
+
+mod entries;
+use entries::*;
+
+mod content;
+use content::*;
+
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
 
 fn main() {
@@ -11,27 +25,51 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    rsx! {
-        document::Link { rel: "icon", href: FAVICON }
-        document::Link { rel: "stylesheet", href: MAIN_CSS } document::Link { rel: "stylesheet", href: TAILWIND_CSS }
-        Hero {}
+    let view = use_signal(ViewModel::default);
 
-    }
-}
+    let core = use_coroutine(move |mut rx| {
+        let svc = CoreService::new(view);
+        async move { svc.run(&mut rx).await }
+    });
 
-#[component]
-pub fn Hero() -> Element {
+    let feeds_classes = "basis-2/12 bg-base-200 py-1";
+    let entries_classes = "basis-3/12 bg-base-100 py-1";
+    let content_classes = "basis-7/12 bg-base-100 py-1";
+
     rsx! {
-        div {
-            id: "hero",
-            img { src: HEADER_SVG, id: "header" }
-            div { id: "links",
-                a { href: "https://dioxuslabs.com/learn/0.6/", "📚 Learn Dioxus" }
-                a { href: "https://dioxuslabs.com/awesome", "🚀 Awesome Dioxus" }
-                a { href: "https://github.com/dioxus-community/", "📡 Community Libraries" }
-                a { href: "https://github.com/DioxusLabs/sdk", "⚙️ Dioxus Development Kit" }
-                a { href: "https://marketplace.visualstudio.com/items?itemName=DioxusLabs.dioxus", "💫 VSCode Extension" }
-                a { href: "https://discord.gg/XgGxMSkvUM", "👋 Community Discord" }
+        document::Link { rel: "stylesheet", href: TAILWIND_CSS }
+
+        main { class: "overflow-hidden overscroll-none font-sans bg-base-100 text-base-content h-dvh",
+            div {
+                aria_label: "navigation bar with actionable commands and search bar.",
+                class: "flex sticky top-0 z-10 flex-row border-b divide-x divide-base-300 border-base-300",
+                section { class: feeds_classes,
+                    FeedsHeader {}
+                }
+                section { class: entries_classes,
+                    EntriesHeader {
+                        feed_name: "Fake Random Communications",
+                        unread_count: 1
+                    }
+                }
+                section { class: content_classes ,
+                    ContentHeader {}
+                }
+            }
+            div {
+                aria_label: "three columns containing: the feeds, the entries for the selected feed or view, the content (article/blog post) for a specific entry",
+                class: "flex flex-col h-full",
+                div { class: "flex flex-row divide-x divide-base-300",
+                    section { class: feeds_classes,
+                        FeedsColumn {}
+                    }
+                    section { class: entries_classes,
+                        EntriesColumn {}
+                    }
+                    section { class: content_classes,
+                        ContentColumn {}
+                    }
+                }
             }
         }
     }
