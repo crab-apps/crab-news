@@ -1,5 +1,5 @@
 [workspace]
-members = ["shared", "web-leptos"]
+members = ["shared", "web-leptos", "dioxus"]
 resolver = "1"
 
 [workspace.package]
