@@ -1,7 +1,6 @@
-use leptos::prelude::*;
-
-// mod core;
-// mod http;
+use leptos::mount::mount_to_body;
+use leptos::view;
+use shared::Event;
 
 mod app;
 use app::*;

@@ -1,4 +1,4 @@
-use crate::http;
+use super::http;
 use leptos::{prelude::*, task};
 use shared::{CrabNews, Effect, Event, ViewModel};
 use std::rc::Rc;

@@ -1,9 +1,14 @@
+use super::core;
+use super::Event;
 use icondata as i;
 use leptos::prelude::*;
 use leptos_icons::Icon;
 
 #[component]
 pub fn FeedsHeader() -> impl IntoView {
+    let core = core::new();
+    let (view, render) = signal(core.view());
+
     view! {
         <div class="flex flex-row px-2 bg-base-200">
             <div class="flex-1 dropdown dropdown-bottom">
