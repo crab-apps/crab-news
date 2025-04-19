@@ -1,9 +1,12 @@
 [application]
 
+[web]
+pre_compress = true
+
 [web.app]
 
 # HTML title tag content
-title = "dioxus"
+title = ""
 
 # include `assets` in web platform
 [web.resource]

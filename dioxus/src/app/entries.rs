@@ -1,6 +1,5 @@
 use dioxus::prelude::*;
-use dioxus_free_icons::icons::fa_solid_icons::FaStar;
-use dioxus_free_icons::Icon;
+use dioxus_material_icons::MaterialIcon;
 
 // CENTER COLUMN
 #[component]
@@ -22,9 +21,7 @@ fn Entry(
         div { class: "card-body",
             div { class: "justify-between text-xs xl:text-sm card-title",
                 h2 { class: "flex-1", "{entry_title}" }
-                " // Show starred status based on signal "
-                span { class: "self-end mr-2 mb-3 w-2 h-2",  Icon { icon: FaStar } }
-                " // Show unread status based on signal "
+                span { class: "self-end mr-2 mb-3 w-2 h-2",  MaterialIcon { name: "star" } }
                 span { class: "self-end mr-2 mb-2 w-2 h-2 status status-md status-info" }
             }
             div {

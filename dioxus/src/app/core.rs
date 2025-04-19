@@ -1,9 +1,9 @@
-use crate::http;
+use crate::app::http;
 use dioxus::{
     prelude::{Signal, UnboundedReceiver},
     signals::Writable,
 };
-use futures_util::{StreamExt, TryStreamExt};
+use futures_util::StreamExt;
 use shared::{CrabNews, Effect, Event, ViewModel};
 use std::rc::Rc;
 use wasm_bindgen_futures::spawn_local;

@@ -21,7 +21,7 @@ fn Content(
             role: "article",
             tabindex: "0",
             div { class: "card-body",
-                div { class: "card-title",
+                div { class: "card-title mt-4",
                     div { class: "flex-1 text-xs xl:text-sm",
                         h1 { class: "max-w-11/12", "{content_title}" }
                         p { class: "-mt-4 font-bold opacity-75 xl:-mt-7", "{content_time}" }
