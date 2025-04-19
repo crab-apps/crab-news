@@ -1,50 +1,51 @@
+use super::core::CoreService;
 use dioxus::prelude::*;
-use dioxus_free_icons::icons::fa_regular_icons::{
-    FaCircleDot, FaCircleRight, FaCompass, FaShareFromSquare, FaStar,
-};
-use dioxus_free_icons::icons::fa_solid_icons::{
-    FaArrowsRotate, FaEyeSlash, FaFolderPlus, FaGlasses, FaMagnifyingGlass, FaPlus, FaSquareRss,
-    FaUserPlus,
-};
-use dioxus_free_icons::Icon;
+use dioxus_material_icons::MaterialIcon;
+use shared::{Event, ViewModel};
 
 #[component]
 pub fn FeedsHeader() -> Element {
+    let view = use_signal(ViewModel::default);
+    let core = use_coroutine(move |mut rx| {
+        let svc = CoreService::new(view);
+        async move { svc.run(&mut rx).await }
+    });
+
     rsx! {
-    div { class: "flex flex-row px-2 bg-base-200",
-        div { class: "flex-1 dropdown dropdown-bottom",
-            div {
-                aria_label: "add new...",
-                class: "text-sm xl:text-lg btn btn-ghost btn-square",
-                role: "button",
-                tabindex: "0",
-                Icon { icon: FaPlus }
-            }
-            ul {
-                class: "flex p-2 w-52 shadow-sm dropdown-content menu bg-base-100 rounded-box z-1",
-                tabindex: "0",
-                li { aria_label: "add new account",
-                    p {
-                        Icon { icon: FaUserPlus }
-                        " New Account "
-                    }
+        div { class: "flex flex-row px-2 bg-base-200",
+            div { class: "flex-1 dropdown dropdown-bottom",
+                div {
+                    aria_label: "add new...",
+                    class: "text-sm xl:text-lg btn btn-ghost btn-square",
+                    role: "button",
+                    tabindex: "0",
+                    MaterialIcon { name: "add" }
                 }
-                li { aria_label: "add new folder",
+                ul {
+                    class: "flex w-52 shadow-sm dropdown-content menu bg-base-100 rounded-box z-1",
+                    tabindex: "0",
+                    li { aria_label: "add new account",
+                        p {
+                            MaterialIcon { name: "person_add" }
+                            " New Account "
+                        }
+                    }
+                    li { aria_label: "add new folder",
                     p {
-                        Icon { icon: FaFolderPlus }
+                        MaterialIcon { name: "create_new_folder" }
                         " New Folder "
                     }
-                }
-                li { aria_label: "add new subscription",
+                    }
+                    li { aria_label: "add new subscription",
                     p {
-                        Icon { icon: FaSquareRss    }
+                        MaterialIcon { name: "add_circle_outline" }
                         " New Subscription "
+                    }
                     }
                 }
             }
-        }
-        div { class: "flex-none",
-            div {
+            div { class: "flex-none",
+                div {
                 aria_label: "refresh all subscriptions",
                 class: "mr-1 tooltip tooltip-bottom",
                 div { class: "tooltip-content",
@@ -54,28 +55,30 @@ pub fn FeedsHeader() -> Element {
                     aria_label: "Refresh all subscriptions",
                     class: "text-sm xl:text-lg btn btn-ghost btn-square",
                     id: "refresh-button",
-                    Icon { icon: FaArrowsRotate }
+                    MaterialIcon { name: "refresh" }
+                }
                 }
             }
         }
-    }
     }
 }
 
 #[component]
 pub fn EntriesHeader(feed_name: &'static str, unread_count: u32) -> Element {
+    let count = format!("{} unread", unread_count);
+
     rsx! {
     div { class: "flex flex-row px-2",
         div { class: "flex-1 pt-1 pl-2",
             p {
                 aria_label: "feed name",
                 class: "text-xs font-medium xl:text-sm",
-                " {feed_name} "
+                " { feed_name } "
             }
             p {
                 aria_label: "unread articles count",
                 class: "text-xs opacity-75",
-                " {unread_count} "
+                " { count } "
             }
         }
         div { class: "flex",
@@ -89,7 +92,7 @@ pub fn EntriesHeader(feed_name: &'static str, unread_count: u32) -> Element {
                     aria_label: "Mark all articles as read",
                     class: "text-sm xl:text-lg btn btn-ghost btn-square",
                     id: "mark-all-read-button",
-                    Icon { icon: FaGlasses }
+                    MaterialIcon { name: "done_all" }
                 }
             }
             div {
@@ -102,7 +105,7 @@ pub fn EntriesHeader(feed_name: &'static str, unread_count: u32) -> Element {
                     aria_label: "Hide all read articles",
                     class: "text-sm xl:text-lg btn btn-ghost btn-square",
                     id: "hide-read-articles-button",
-                    Icon { icon: FaEyeSlash }
+                    MaterialIcon { name: "visibility_off" }
                 }
             }
         }
@@ -125,7 +128,7 @@ pub fn ContentHeader() -> Element {
                     aria_label: "mark article as read",
                     class: "text-sm xl:text-lg btn btn-ghost btn-square",
                     id: "mark-as-read-button",
-                    Icon { icon: FaCircleDot }
+                    MaterialIcon { name: "check" }
                 }
             }
             div {
@@ -138,7 +141,7 @@ pub fn ContentHeader() -> Element {
                     aria_label: "mark article as starred",
                     class: "text-sm xl:text-lg btn btn-ghost btn-square",
                     id: "mark-as-starred-button",
-                    Icon { icon: FaStar }
+                    MaterialIcon { name: "star_border" }
                 }
             }
             div {
@@ -151,7 +154,7 @@ pub fn ContentHeader() -> Element {
                     aria_label: "next unread article",
                     class: "text-sm xl:text-lg btn btn-ghost btn-square",
                     id: "next-unread-button",
-                    Icon { icon: FaCircleRight }
+                    MaterialIcon { name: "expand_circle_down" }
                 }
             }
             div { aria_label: "share article", class: "tooltip tooltip-bottom",
@@ -162,7 +165,7 @@ pub fn ContentHeader() -> Element {
                     aria_label: "share article",
                     class: "text-sm xl:text-lg btn btn-ghost btn-square",
                     id: "share-article-button",
-                    Icon { icon: FaShareFromSquare }
+                    MaterialIcon { name: "share" }
                 }
             }
             div {
@@ -175,15 +178,15 @@ pub fn ContentHeader() -> Element {
                     aria_label: "open article in browser",
                     class: "text-sm xl:text-lg btn btn-ghost btn-square",
                     id: "open-article-in-browser-button",
-                    Icon { icon: FaCompass }
+                    MaterialIcon { name: "open_in_new" }
                 }
             }
         }
         div {
             aria_label: "search all feeds and articles",
             class: "flex pt-2 xl:pt-1",
-            label { class: "input input-xs xl:input-sm",
-                Icon { icon: FaMagnifyingGlass }
+            label { class: "input input-xs xl:input-sm text-sm xl:text-sm",
+                MaterialIcon { name: "search" }
                 input { class: "grow", placeholder: "Search", r#type: "search" }
             }
         }

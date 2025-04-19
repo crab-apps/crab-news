@@ -1,5 +1,5 @@
 [package]
-name = "dioxus"
+name = "crab-news"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
@@ -11,7 +11,7 @@ rust-version.workspace = true
 
 [dependencies]
 dioxus = { version = "0.6.0", features = [] }
-dioxus-free-icons = { version = "0.9", features = ["font-awesome-regular", "font-awesome-solid"] }
+dioxus-material-icons = "3.0.0"
 shared = { path = "../shared" }
 anyhow.workspace = true
 gloo-net = "0.6.0"
@@ -20,6 +20,6 @@ wasm-bindgen-futures = "0.4.50"
 
 [features]
 default = ["desktop"]
-web = ["dioxus/web"]
 desktop = ["dioxus/desktop"]
 mobile = ["dioxus/mobile"]
+web = ["dioxus/web"]

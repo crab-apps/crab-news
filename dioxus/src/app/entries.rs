@@ -1,6 +1,5 @@
 use dioxus::prelude::*;
-use dioxus_free_icons::icons::fa_solid_icons::FaStar;
-use dioxus_free_icons::Icon;
+use dioxus_material_icons::MaterialIcon;
 
 // CENTER COLUMN
 #[component]
@@ -21,19 +20,17 @@ fn Entry(
         tabindex: "0",
         div { class: "card-body",
             div { class: "justify-between text-xs xl:text-sm card-title",
-                h2 { class: "flex-1", "{entry_title}" }
-                " // Show starred status based on signal "
-                span { class: "self-end mr-2 mb-3 w-2 h-2",  Icon { icon: FaStar } }
-                " // Show unread status based on signal "
+                h2 { class: "flex-1", "{ entry_title }" }
+                span { class: "self-end mr-2 mb-3 w-2 h-2",  MaterialIcon { name: "star" } }
                 span { class: "self-end mr-2 mb-2 w-2 h-2 status status-md status-info" }
             }
             div {
-                p { class: "text-xs xl:text-sm", "{entry_summary}" }
+                p { class: "text-xs xl:text-sm", "{ entry_summary }" }
             }
         }
         div { class: "justify-between mx-2 mr-3 mb-2 text-xs font-semibold opacity-75 card-actions",
-            p { "{authors}" }
-            p { "{entry_time}" }
+            p { "{ authors }" }
+            p { "{ entry_time }" }
         }
     }
     }

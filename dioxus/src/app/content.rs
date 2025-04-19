@@ -21,27 +21,27 @@ fn Content(
             role: "article",
             tabindex: "0",
             div { class: "card-body",
-                div { class: "card-title",
+                div { class: "card-title mt-4",
                     div { class: "flex-1 text-xs xl:text-sm",
-                        h1 { class: "max-w-11/12", "{content_title}" }
-                        p { class: "-mt-4 font-bold opacity-75 xl:-mt-7", "{content_time}" }
+                        h1 { class: "max-w-11/12", "{ content_title }" }
+                        p { class: "-mt-4 font-bold opacity-75 xl:-mt-7", "{ content_time }" }
                     }
                     div { class: "mb-12 avatar",
                         div { class: "w-16 rounded xl:w-20",
                             img {
                                 alt: "subscription logo or avatar",
-                                src: "{feed_logo}",
+                                src: "{ feed_logo }",
                             }
                         }
                     }
                 }
                 div { class: "-mt-8 divider" }
                 div { class: "justify-between -mt-8 text-xs font-bold opacity-75 xl:text-sm card-actions",
-                    p { class: "max-w-7/12", "{authors}" }
-                    p { class: "text-right max-w-4/12", "{on_subscribe}" }
+                    p { class: "max-w-7/12", "{ authors }" }
+                    p { class: "text-right max-w-4/12", "{ on_subscribe }" }
                 }
                 div { class: "w-full text-sm xl:text-base",
-                    p { "{content_content}" }
+                    p { "{ content_content }" }
                 }
             }
         }
