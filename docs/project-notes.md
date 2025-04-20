@@ -12,9 +12,17 @@ sketchpad for this project. notes, they come and go.
   > when Vec and HashMap are technically suboptimal, they're probably a good
   > enough choice to get started.
 
-- The `pub struct ViewModel` exposes its data via `pub`. Is this an Adapter?
+- Ports = capabilities, specifically the Operation types. They define the
+  message interface with the shell
+- Adapters = capability implementations outside the core (in Swift, Kotlin,
+  TypeScript or even in Rust).
 
-- All else have `pub struct` only. Is this a Port?
+## TODO
+
+- fix type aliases and
+  [primitive obsession ](https://www.designisrefactoring.com/2016/08/31/refactoring-rust-primitive-obsession/)
+- learn to use
+  [newtypes](https://www.howtocodeit.com/articles/ultimate-guide-rust-newtypes)
 
 ## Elm vs Crux
 
