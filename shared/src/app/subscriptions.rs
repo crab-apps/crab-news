@@ -375,7 +375,7 @@ mod import_export {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let subs_opml_file = "example_import.opml".to_string();
+        let subs_opml_file = "test_files/example_import.opml".to_string();
         let example_subs = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
 
         let _ = app.update(
@@ -399,7 +399,7 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let subs_opml_file = "invalid_xml.opml".to_string();
+        let subs_opml_file = "test_files/invalid_xml.opml".to_string();
 
         let _ = app.update(
             Event::ImportSubscriptions(account, subs_opml_file),
@@ -419,7 +419,7 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let subs_opml_file = "invalid_opml_version.opml".to_string();
+        let subs_opml_file = "test_files/invalid_opml_version.opml".to_string();
 
         let _ = app.update(
             Event::ImportSubscriptions(account, subs_opml_file),
@@ -439,7 +439,7 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let subs_opml_file = "invalid_body.opml".to_string();
+        let subs_opml_file = "test_files/invalid_body.opml".to_string();
 
         let _ = app.update(
             Event::ImportSubscriptions(account, subs_opml_file),
@@ -461,7 +461,7 @@ mod import_export {
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
-        let subs_opml_name = "Subscriptions.opml".to_string();
+        let subs_opml_name = "test_files/Subscriptions.opml".to_string();
 
         #[allow(clippy::unnecessary_literal_unwrap)]
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
@@ -497,7 +497,7 @@ mod import_export {
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
-        let subs_opml_name = "Subscriptions.opml".to_string();
+        let subs_opml_name = "test_files/Subscriptions.opml".to_string();
 
         #[allow(clippy::unnecessary_literal_unwrap)]
         let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
