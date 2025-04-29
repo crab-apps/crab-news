@@ -21,7 +21,7 @@ pub type Feeds = Vec<Feed>;
 // ANCHOR_END: types aliases
 
 // NOTE - crate: https://crates.io/crates/opml to deal with subscriptions and outlines:
-// NOTE - crate: https://crates.io/crates/feed-rs to deal with feeds data *after* subscribtions.
+// NOTE - crate: https://crates.io/crates/feed-rs to deal with feeds data *after* subscriptions.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Subscriptions {
     #[serde(skip)]
@@ -77,9 +77,9 @@ impl Subscriptions {
             ..Head::default()
         };
         let custom_opml = OPML {
+            version: "2.0".to_string(),
             head: Some(custom_head),
             body: self.subs.body.clone(),
-            ..OPML::default()
         };
         let export_content = xml_tag + &custom_opml.to_string().unwrap();
         // TODO use proper Shell/WASM functionality to pass on File operations
