@@ -140,3 +140,10 @@ google-services.json
 
 # add vale ini
 !.vale.ini
+
+# sqlite
+*.db
+*.db3
+*.sqlite
+*.sqlite3
+*.sqbpro
