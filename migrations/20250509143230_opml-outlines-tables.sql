@@ -25,3 +25,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     language TEXT,
     PRIMARY KEY (account_id, xml_url)
 );
+
+CREATE INDEX IF NOT EXISTS folders_name_idx ON folders (name);
+
+CREATE INDEX IF NOT EXISTS subscriptions_title_idx ON subscriptions (title);

@@ -5,9 +5,13 @@ use crux_core::{
 };
 use crux_http::{command::Http, protocol::HttpRequest};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 mod error;
 pub use error::Error;
+
+mod settings;
+pub use settings::*;
 
 mod accounts;
 pub use accounts::*;
@@ -20,6 +24,8 @@ pub use subscriptions::*;
 #[allow(clippy::large_enum_variant)]
 pub enum Event {
     // EVENTS FROM THE SHELL
+    GetPreferences,
+    // SetPreferences(Preferences),
     CreateAccount(AccountType),
     DeleteAccount(Account),
     RenameAccount(OldAccountName, NewAccountName),
@@ -62,6 +68,17 @@ pub enum Effect {
 // ANCHOR: model
 #[derive(Default, Serialize)]
 pub struct Model {
+    ////////////////////////////
+    // preferences UI
+    pub preferences: HashMap<String, String>,
+    pub theme_mode: ThemeMode,
+    pub light_theme: LightTheme,
+    pub dark_theme: DarkTheme,
+    pub text_size: TextSize,
+    pub browser: Browser,
+    pub opening_method: OpeningMethod,
+    pub refresh_interval: RefreshInterval,
+    ////////////////////////////
     pub notification: Notification,
     // NOTE Accounts contains Subscriptions
     // NOTE Subscriptions contains Feeds and OPML
@@ -107,6 +124,19 @@ impl App for CrabNews {
         _caps: &(), // will be deprecated, so prefix with underscore for now
     ) -> Command<Effect, Event> {
         match event {
+            Event::GetPreferences => match settings::read_config() {
+                Ok(preferences) => {
+                    model.preferences = preferences;
+                    render()
+                }
+                Err(err) => {
+                    model.notification = Notification {
+                        title: "Preferences Error".to_string(),
+                        message: err.to_string(),
+                    };
+                    render()
+                }
+            },
             Event::CreateAccount(account_type) => {
                 match Accounts::add_account(&model.accounts, &account_type) {
                     Ok(accts) => {
