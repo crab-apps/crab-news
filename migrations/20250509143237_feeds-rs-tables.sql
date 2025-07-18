@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS entry_links (
     media_type TEXT,
     hreflang TEXT,
     title TEXT,
-    length INTEGER,
+    length INTEGER
 );
 
 CREATE INDEX IF NOT EXISTS feeds_idx ON feeds (id);
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS feed_generators (
     feed_id TEXT REFERENCES feeds (id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     uri TEXT,
-    version TEXT,
+    version TEXT
 );
 
 -- https://docs.rs/feed-rs/2.3.1/feed_rs/model/struct.Category.html
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS feed_categories (
     feed_id TEXT REFERENCES feeds (id) ON DELETE CASCADE,
     term TEXT NOT NULL,
     scheme TEXT,
-    label TEXT,
+    label TEXT
 );
 
 -- https://docs.rs/feed-rs/2.3.1/feed_rs/model/struct.Category.html
@@ -101,5 +101,5 @@ CREATE TABLE IF NOT EXISTS feed_subcategories (
     category_id INTEGER REFERENCES feed_categories (id) ON DELETE CASCADE,
     term TEXT NOT NULL,
     scheme TEXT,
-    label TEXT,
+    label TEXT
 );
