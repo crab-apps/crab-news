@@ -2,8 +2,23 @@ use super::subscriptions::Subscriptions;
 use super::Error;
 use serde::{Deserialize, Serialize};
 
-pub type OldAccountName = String;
-pub type NewAccountName = String;
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+pub struct OldAccountName(String);
+
+impl std::fmt::Display for OldAccountName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+pub struct NewAccountName(String);
+
+impl std::fmt::Display for NewAccountName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 // TODO add more fields?
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -89,13 +104,13 @@ impl Accounts {
 
     pub fn rename_account(
         &self,
-        old_account_name: OldAccountName,
-        new_account_name: NewAccountName,
+        old_account_name: &OldAccountName,
+        new_account_name: &NewAccountName,
     ) -> Result<Self, self::Error> {
         let mut accounts = self.clone();
         let doesnt_exist_err = Self::set_error(
             "Cannot rename account",
-            old_account_name.as_str(),
+            old_account_name.0.as_str(),
             "It doesn't exists.",
         );
 
@@ -106,7 +121,7 @@ impl Accounts {
 
         let mut sub_status = NamingStatus::RenamedAccount;
         accounts.acct.iter_mut().for_each(|a| {
-            if a.name == old_account_name {
+            if a.name == old_account_name.to_string() {
                 a.name = new_account_name.to_string();
             } else {
                 sub_status = NamingStatus::CantFindName;
@@ -227,29 +242,32 @@ mod accts {
     fn rename_platform_account() {
         let app = CrabNews;
         let mut model = Model::default();
-        let old_account_name = "iCloud";
-        let new_account_name = "New Name";
+        let old_account_name = OldAccountName("iCloud".to_string());
+        let new_account_name = NewAccountName("New Name".to_string());
 
         let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model, &());
         let _ = app.update(
-            Event::RenameAccount(old_account_name.to_string(), new_account_name.to_string()),
+            Event::RenameAccount(old_account_name, new_account_name.clone()),
             &mut model,
             &(),
         );
 
-        assert_eq!(new_account_name, model.accounts.acct[0].name);
+        assert_eq!(
+            new_account_name,
+            NewAccountName(model.accounts.acct[0].name.clone().to_string())
+        );
     }
 
     #[test]
     fn fail_rename_platform_account_with_empty_name() {
         let app = CrabNews;
         let mut model = Model::default();
-        let old_account_name = "";
-        let new_account_name = "New Name";
+        let old_account_name = OldAccountName("".to_string());
+        let new_account_name = NewAccountName("New Name".to_string());
 
         let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model, &());
         let _ = app.update(
-            Event::RenameAccount(old_account_name.to_string(), new_account_name.to_string()),
+            Event::RenameAccount(old_account_name.clone(), new_account_name),
             &mut model,
             &(),
         );
@@ -257,7 +275,7 @@ mod accts {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot rename account \"{}\". It doesn't exists.",
-            old_account_name
+            old_account_name.0.as_str()
         );
 
         assert_eq!(actual_error, expected_error);
@@ -267,12 +285,12 @@ mod accts {
     fn fail_rename_platform_account_with_wrong_name() {
         let app = CrabNews;
         let mut model = Model::default();
-        let old_account_name = "Dada";
-        let new_account_name = "New Name";
+        let old_account_name = OldAccountName("Dada".to_string());
+        let new_account_name = NewAccountName("New Name".to_string());
 
         let _ = app.update(Event::CreateAccount(AccountType::Apple), &mut model, &());
         let _ = app.update(
-            Event::RenameAccount(old_account_name.to_string(), new_account_name.to_string()),
+            Event::RenameAccount(old_account_name.clone(), new_account_name),
             &mut model,
             &(),
         );
@@ -280,7 +298,7 @@ mod accts {
         let actual_error = model.notification.message;
         let expected_error = format!(
             "Cannot rename account \"{}\". It doesn't exists.",
-            old_account_name
+            old_account_name.0.as_str()
         );
 
         assert_eq!(actual_error, expected_error);

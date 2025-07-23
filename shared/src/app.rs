@@ -157,8 +157,11 @@ impl App for CrabNews {
                 render()
             }
             Event::RenameAccount(old_account_name, new_account_name) => {
-                match Accounts::rename_account(&model.accounts, old_account_name, new_account_name)
-                {
+                match Accounts::rename_account(
+                    &model.accounts,
+                    &old_account_name,
+                    &new_account_name,
+                ) {
                     Ok(accts) => {
                         model.accounts = accts;
                         render()
@@ -340,7 +343,7 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::GetFeed(account, sub_link) => Http::get(sub_link)
+            Event::GetFeed(account, sub_link) => Http::get(sub_link.to_string())
                 .build()
                 .then_send(move |result| Event::SetFeed(account, result)),
             Event::SetFeed(account, Ok(mut response)) => {

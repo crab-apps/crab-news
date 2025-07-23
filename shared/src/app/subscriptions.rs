@@ -5,20 +5,85 @@ use feed_rs::parser::{self, ParseFeedError};
 use opml::{self, Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 
-// ANCHOR: type aliases
-pub type OpmlFile = String;
-pub type OpmlName = String;
-pub type FolderName = String;
-pub type OldFolderName = String;
-pub type OldLink = String;
-pub type NewFolderName = String;
+// ANCHOR: types
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+pub struct OpmlFile(String);
+
+impl std::fmt::Display for OpmlFile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+pub struct OpmlName(String);
+
+impl std::fmt::Display for OpmlName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
+pub struct FolderName(String);
+
+impl std::fmt::Display for FolderName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
+pub struct OldFolderName(String);
+
+impl std::fmt::Display for OldFolderName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
+pub struct NewFolderName(String);
+
+impl std::fmt::Display for NewFolderName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
+pub struct OldLink(String);
+
+impl std::fmt::Display for OldLink {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 pub type OldFolder = Option<FolderName>;
 pub type NewFolder = Option<FolderName>;
 pub type Subscription = Outline;
-pub type SubscriptionTitle = String;
-pub type SubscriptionLink = String;
+
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
+pub struct SubscriptionTitle(String);
+
+impl std::fmt::Display for SubscriptionTitle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
+pub struct SubscriptionLink(String);
+
+impl std::fmt::Display for SubscriptionLink {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 pub type Feeds = Vec<Feed>;
-// ANCHOR_END: types aliases
+// ANCHOR_END: types
 
 // NOTE - crate: https://crates.io/crates/opml to deal with subscriptions and outlines:
 // NOTE - crate: https://crates.io/crates/feed-rs to deal with feeds data *after* subscriptions.
@@ -59,7 +124,7 @@ impl Subscriptions {
     // TODO on duplicates, prompt user for merge or replace
     pub fn import(&self, subs_opml_file: &OpmlFile) -> Result<Self, self::Error> {
         // TODO use proper Shell/WASM functionality to pass on File operations
-        let mut file = std::fs::File::open(subs_opml_file).unwrap();
+        let mut file = std::fs::File::open(subs_opml_file.to_string()).unwrap();
         Ok(Self {
             subs: OPML::from_reader(&mut file)?,
             feeds: vec![],
@@ -83,7 +148,7 @@ impl Subscriptions {
         };
         let export_content = xml_tag + &custom_opml.to_string().unwrap();
         // TODO use proper Shell/WASM functionality to pass on File operations
-        match std::fs::write(subs_opml_name, &export_content) {
+        match std::fs::write(subs_opml_name.to_string(), &export_content) {
             Ok(_) => Ok("Subscriptions successfully exported".to_string()),
             Err(e) => Err(Error::Io(e)),
         }
@@ -92,10 +157,10 @@ impl Subscriptions {
     // NOTE folders are only allowed at root level. no nesting.
     pub fn add_folder(&self, folder_name: &FolderName) -> Result<Self, self::Error> {
         let mut subs = self.clone();
-        let test_folder = Self::set_test_folder(folder_name);
+        let test_folder = Self::set_test_folder(&folder_name.to_string());
         let duplicate_err = Self::set_error(
             "Cannot add new folder",
-            folder_name.as_str(),
+            folder_name.0.as_str(),
             "It already exists.",
         );
 
@@ -113,7 +178,7 @@ impl Subscriptions {
         subs.subs
             .body
             .outlines
-            .retain(|name| name.text != *folder_name);
+            .retain(|name| name.text != folder_name.to_string());
         subs
     }
 
@@ -124,10 +189,10 @@ impl Subscriptions {
         new_folder_name: &NewFolderName,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
-        let test_folder = Self::set_test_folder(new_folder_name);
+        let test_folder = Self::set_test_folder(new_folder_name.0.as_str());
         let duplicate_err = Self::set_error(
             "Cannot rename folder to",
-            new_folder_name.as_str(),
+            new_folder_name.0.as_str(),
             "It already exists.",
         );
 
@@ -138,7 +203,7 @@ impl Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == *old_folder_name)
+                .filter(|outline| outline.text == old_folder_name.to_string())
                 .for_each(|folder| {
                     folder.text = new_folder_name.to_string();
                     folder.title = Some(new_folder_name.to_string());
@@ -155,10 +220,10 @@ impl Subscriptions {
         sub_link: &SubscriptionLink,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
-        let test_subscription = Self::set_test_sub(sub_title, sub_link);
+        let test_subscription = Self::set_test_sub(sub_title.0.as_str(), sub_link.0.as_str());
         let duplicate_err = Self::set_error(
             "Cannot add new subscription",
-            sub_title.as_str(),
+            sub_title.0.as_str(),
             "You are already subscribed.",
         );
 
@@ -173,12 +238,12 @@ impl Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == *folder_text)
+                .filter(|outline| outline.text == *folder_text.to_string())
                 .for_each(|folder| {
                     if folder.outlines.contains(&test_subscription) {
                         sub_status = SubStatus::AlreadySubscribed;
                     } else {
-                        folder.add_feed(sub_title.as_str(), sub_link.as_str());
+                        folder.add_feed(sub_title.0.as_str(), sub_link.0.as_str());
                     }
                 });
 
@@ -192,7 +257,8 @@ impl Subscriptions {
         if subs.subs.body.outlines.contains(&test_subscription) {
             Err(duplicate_err)
         } else {
-            subs.subs.add_feed(sub_title.as_str(), sub_link.as_str());
+            subs.subs
+                .add_feed(sub_title.0.as_str(), sub_link.0.as_str());
             Ok(subs)
         }
     }
@@ -208,13 +274,17 @@ impl Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == *folder_text)
-                .for_each(|folder| folder.outlines.retain(|name| name.text != *sub_title));
+                .filter(|outline| outline.text == folder_text.to_string())
+                .for_each(|folder| {
+                    folder
+                        .outlines
+                        .retain(|name| name.text != sub_title.to_string())
+                });
         } else {
             subs.subs
                 .body
                 .outlines
-                .retain(|name| name.text != *sub_title);
+                .retain(|name| name.text != sub_title.to_string());
         }
         subs
     }
@@ -228,10 +298,10 @@ impl Subscriptions {
         new_name: &NewFolderName,
     ) -> Result<Self, self::Error> {
         let mut subs = self.clone();
-        let test_subscription = Self::set_test_sub(new_name, old_link);
+        let test_subscription = Self::set_test_sub(new_name.0.as_str(), old_link.0.as_str());
         let duplicate_err = Self::set_error(
             "Cannot rename subscription to",
-            new_name.as_str(),
+            new_name.0.as_str(),
             "It already exists.",
         );
 
@@ -246,7 +316,7 @@ impl Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == *folder_text)
+                .filter(|outline| outline.text == *folder_text.to_string())
                 .for_each(|folder| {
                     if folder.outlines.contains(&test_subscription) {
                         sub_status = SubStatus::AlreadyExists;
@@ -254,7 +324,7 @@ impl Subscriptions {
                         folder
                             .outlines
                             .iter_mut()
-                            .filter(|sub| sub.text == *old_name)
+                            .filter(|sub| sub.text == old_name.to_string())
                             .for_each(|sub| {
                                 sub.text = new_name.to_string();
                             });
@@ -275,7 +345,7 @@ impl Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == *old_name)
+                .filter(|outline| outline.text == old_name.to_string())
                 .for_each(|sub| sub.text = new_name.to_string());
             Ok(subs)
         }
@@ -295,12 +365,16 @@ impl Subscriptions {
         );
         match (old_folder, new_folder) {
             (None, Some(folder_new)) => {
-                subs = Self::delete_subscription(&subs, &None, &subscription.text.to_string());
+                subs = Self::delete_subscription(
+                    &subs,
+                    &None,
+                    &SubscriptionTitle(subscription.text.to_string()),
+                );
                 match Self::add_subscription(
                     &subs,
-                    &Some(folder_new.to_string()),
-                    &subscription.text.to_string(),
-                    &subscription.xml_url.clone().unwrap(),
+                    &Some(FolderName(folder_new.to_string())),
+                    &SubscriptionTitle(subscription.text.to_string()),
+                    &SubscriptionLink(subscription.xml_url.clone().unwrap()),
                 ) {
                     Ok(s) => Ok(s),
                     Err(_) => Err(duplicate_err),
@@ -309,14 +383,14 @@ impl Subscriptions {
             (Some(folder_old), None) => {
                 subs = Self::delete_subscription(
                     &subs,
-                    &Some(folder_old.to_string()),
-                    &subscription.text.to_string(),
+                    &Some(FolderName(folder_old.to_string())),
+                    &SubscriptionTitle(subscription.text.to_string()),
                 );
                 match Self::add_subscription(
                     &subs,
                     &None,
-                    &subscription.text.to_string(),
-                    &subscription.xml_url.clone().unwrap(),
+                    &SubscriptionTitle(subscription.text.to_string()),
+                    &SubscriptionLink(subscription.xml_url.clone().unwrap()),
                 ) {
                     Ok(s) => Ok(s),
                     Err(_) => Err(duplicate_err),
@@ -325,14 +399,14 @@ impl Subscriptions {
             (Some(folder_old), Some(folder_new)) => {
                 subs = Self::delete_subscription(
                     &subs,
-                    &Some(folder_old.to_string()),
-                    &subscription.text.to_string(),
+                    &Some(FolderName(folder_old.to_string())),
+                    &SubscriptionTitle(subscription.text.to_string()),
                 );
                 match Self::add_subscription(
                     &subs,
-                    &Some(folder_new.to_string()),
-                    &subscription.text.to_string(),
-                    &subscription.xml_url.clone().unwrap(),
+                    &Some(FolderName(folder_new.to_string())),
+                    &SubscriptionTitle(subscription.text.to_string()),
+                    &SubscriptionLink(subscription.xml_url.clone().unwrap()),
                 ) {
                     Ok(s) => Ok(s),
                     Err(_) => Err(duplicate_err),
@@ -352,7 +426,7 @@ impl Subscriptions {
     pub fn find_feed(&self, sub_title: &SubscriptionTitle) -> Feed {
         self.feeds
             .iter()
-            .find(|feed| feed.title.clone().unwrap().content == *sub_title)
+            .find(|feed| feed.title.clone().unwrap().content == sub_title.to_string())
             .unwrap()
             .clone()
     }
@@ -375,7 +449,7 @@ mod import_export {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let subs_opml_file = "test_files/example_import.opml".to_string();
+        let subs_opml_file = OpmlFile("test_files/example_import.opml".to_string());
         let example_subs = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
 
         let _ = app.update(
@@ -399,7 +473,7 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let subs_opml_file = "test_files/invalid_xml.opml".to_string();
+        let subs_opml_file = OpmlFile("test_files/invalid_xml.opml".to_string());
 
         let _ = app.update(
             Event::ImportSubscriptions(account, subs_opml_file),
@@ -419,7 +493,7 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let subs_opml_file = "test_files/invalid_opml_version.opml".to_string();
+        let subs_opml_file = OpmlFile("test_files/invalid_opml_version.opml".to_string());
 
         let _ = app.update(
             Event::ImportSubscriptions(account, subs_opml_file),
@@ -439,7 +513,7 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let subs_opml_file = "test_files/invalid_body.opml".to_string();
+        let subs_opml_file = OpmlFile("test_files/invalid_body.opml".to_string());
 
         let _ = app.update(
             Event::ImportSubscriptions(account, subs_opml_file),
@@ -461,10 +535,10 @@ mod import_export {
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
-        let subs_opml_name = "test_files/Subscriptions.opml".to_string();
+        let subs_opml_name = OpmlName("test_files/Subscriptions.opml".to_string());
 
         #[allow(clippy::unnecessary_literal_unwrap)]
-        let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
+        let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name.0, date_created.unwrap());
 
         model.accounts.acct[account_index].subs = Subscriptions {
             subs: OPML::from_str(&example_subs).unwrap(),
@@ -473,13 +547,13 @@ mod import_export {
         let imported_content = model.accounts.acct[account_index].subs.clone();
 
         let _ = app.update(
-            Event::ExportSubscriptions(account, subs_opml_name.to_string()),
+            Event::ExportSubscriptions(account, subs_opml_name.clone()),
             &mut model,
             &(),
         );
 
         // TODO use proper Shell/WASM/crate functionality to File operations
-        let mut exported_file = std::fs::File::open(subs_opml_name).unwrap();
+        let mut exported_file = std::fs::File::open(subs_opml_name.0).unwrap();
         let exported_content = Subscriptions {
             subs: OPML::from_reader(&mut exported_file).unwrap(),
             feeds: vec![],
@@ -497,10 +571,10 @@ mod import_export {
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
-        let subs_opml_name = "test_files/Subscriptions.opml".to_string();
+        let subs_opml_name = OpmlName("test_files/Subscriptions.opml".to_string());
 
         #[allow(clippy::unnecessary_literal_unwrap)]
-        let example_subs = format!("<opml version=\"2.0\"><head><title>{}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
+        let example_subs = format!("<opml version=\"2.0\"><head><title>{:?}</title><dateCreated>{}</dateCreated><ownerName>Crab News</ownerName><ownerId>https://github.com/crab-apps/crab-news</ownerId></head><body><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/atom.xml\"/><outline text=\"Group Name\" title=\"Group Name\"><outline text=\"Feed Name\" title=\"Feed Name\" description=\"\" type=\"rss\" version=\"RSS\" htmlUrl=\"https://example.com/\" xmlUrl=\"https://example.com/rss.xml\"/></outline></body></opml>", subs_opml_name, date_created.unwrap());
 
         model.accounts.acct[account_index].subs = Subscriptions {
             subs: OPML::from_str(&example_subs).unwrap(),
@@ -508,7 +582,7 @@ mod import_export {
         };
 
         let _ = app.update(
-            Event::ExportSubscriptions(account, subs_opml_name.to_string()),
+            Event::ExportSubscriptions(account, subs_opml_name),
             &mut model,
             &(),
         );
@@ -563,18 +637,14 @@ mod folder {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_name = "Added Folder".to_string();
+        let folder_name = FolderName("Added Folder".to_string());
         let added_folder = &Outline {
             text: folder_name.to_string(),
             title: Some(folder_name.to_string()),
             ..Outline::default()
         };
 
-        let _ = app.update(
-            Event::AddNewFolder(account, folder_name.to_string()),
-            &mut model,
-            &(),
-        );
+        let _ = app.update(Event::AddNewFolder(account, folder_name), &mut model, &());
         let does_contain_folder = model.accounts.acct[account_index]
             .subs
             .subs
@@ -593,8 +663,8 @@ mod folder {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_name_one = "Added Folder Ome".to_string();
-        let folder_name_two = "Added Folder Two".to_string();
+        let folder_name_one = FolderName("Added Folder Ome".to_string());
+        let folder_name_two = FolderName("Added Folder Two".to_string());
         let added_folder_one = &Outline {
             text: folder_name_one.to_string(),
             title: Some(folder_name_one.to_string()),
@@ -607,12 +677,12 @@ mod folder {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name_one.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name_one),
             &mut model,
             &(),
         );
         let _ = app.update(
-            Event::AddNewFolder(account, folder_name_two.to_string()),
+            Event::AddNewFolder(account, folder_name_two),
             &mut model,
             &(),
         );
@@ -639,23 +709,20 @@ mod folder {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let folder_name = "Added Folder".to_string();
+        let folder_name = FolderName("Added Folder".to_string());
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let actual_error = model.notification.message;
-        let expected_error = format!(
-            "Cannot add new folder \"{}\". It already exists.",
-            folder_name
-        );
+        let expected_error = format!("Cannot add new folder \"{folder_name}\". It already exists.");
 
         assert_eq!(actual_error, expected_error);
     }
@@ -675,12 +742,12 @@ mod folder {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), deleted_folder.text.to_string()),
+            Event::AddNewFolder(account.clone(), FolderName(deleted_folder.text.to_string())),
             &mut model,
             &(),
         );
         let _ = app.update(
-            Event::DeleteFolder(account.clone(), deleted_folder.text.to_string()),
+            Event::DeleteFolder(account.clone(), FolderName(deleted_folder.text.to_string())),
             &mut model,
             &(),
         );
@@ -716,15 +783,15 @@ mod folder {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), rename_folder.text.to_string()),
+            Event::AddNewFolder(account.clone(), FolderName(rename_folder.text.to_string())),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::RenameFolder(
                 account.clone(),
-                rename_folder.text.to_string(),
-                expected_folder.text.to_string(),
+                OldFolderName(rename_folder.text.to_string()),
+                NewFolderName(expected_folder.text.to_string()),
             ),
             &mut model,
             &(),
@@ -754,15 +821,15 @@ mod folder {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), test_folder.text.to_string()),
+            Event::AddNewFolder(account.clone(), FolderName(test_folder.text.to_string())),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::RenameFolder(
                 account.clone(),
-                test_folder.text.to_string(),
-                test_folder.text.to_string(),
+                OldFolderName(test_folder.text.to_string()),
+                NewFolderName(test_folder.text.to_string()),
             ),
             &mut model,
             &(),
@@ -794,8 +861,8 @@ mod add_subscription {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let sub_title = "New Sub Root".to_string();
-        let sub_link = "https://example.com/atom.xml".to_string();
+        let sub_title = SubscriptionTitle("New Sub Root".to_string());
+        let sub_link = SubscriptionLink("https://example.com/atom.xml".to_string());
         let expected_sub = &Outline {
             text: sub_title.to_string(),
             xml_url: Some(sub_link.to_string()),
@@ -803,12 +870,7 @@ mod add_subscription {
         };
 
         let _ = app.update(
-            Event::AddSubscription(
-                account.clone(),
-                None,
-                sub_title.to_string(),
-                sub_link.to_string(),
-            ),
+            Event::AddSubscription(account.clone(), None, sub_title, sub_link),
             &mut model,
             &(),
         );
@@ -831,9 +893,9 @@ mod add_subscription {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_name = "New Sub Folder".to_string();
-        let sub_title = "New Sub Folder".to_string();
-        let sub_link = "https://example.com/atom.xml".to_string();
+        let folder_name = FolderName("New Sub Folder".to_string());
+        let sub_title = SubscriptionTitle("New Sub Folder".to_string());
+        let sub_link = SubscriptionLink("https://example.com/atom.xml".to_string());
         let expected_sub = &Outline {
             text: sub_title.to_string(),
             xml_url: Some(sub_link.to_string()),
@@ -841,16 +903,16 @@ mod add_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                sub_title.to_string(),
-                sub_link.to_string(),
+                Some(folder_name.clone()),
+                sub_title,
+                sub_link,
             ),
             &mut model,
             &(),
@@ -863,7 +925,7 @@ mod add_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name)
+            .filter(|outline| outline.text == folder_name.to_string())
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
@@ -877,8 +939,8 @@ mod add_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let sub_title = "New Sub Root".to_string();
-        let sub_link = "https://example.com/atom.xml".to_string();
+        let sub_title = SubscriptionTitle("New Sub Root".to_string());
+        let sub_link = SubscriptionLink("https://example.com/atom.xml".to_string());
         let test_subscription = &Outline {
             text: sub_title.to_string(),
             xml_url: Some(sub_link.to_string()),
@@ -886,22 +948,12 @@ mod add_subscription {
         };
 
         let _ = app.update(
-            Event::AddSubscription(
-                account.clone(),
-                None,
-                sub_title.to_string(),
-                sub_link.to_string(),
-            ),
+            Event::AddSubscription(account.clone(), None, sub_title.clone(), sub_link.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
-            Event::AddSubscription(
-                account.clone(),
-                None,
-                sub_title.to_string(),
-                sub_link.to_string(),
-            ),
+            Event::AddSubscription(account.clone(), None, sub_title, sub_link),
             &mut model,
             &(),
         );
@@ -921,9 +973,9 @@ mod add_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let folder_name = "New Sub Folder".to_string();
-        let sub_title = "New Sub Folder".to_string();
-        let sub_link = "https://example.com/atom.xml".to_string();
+        let folder_name = FolderName("New Sub Folder".to_string());
+        let sub_title = SubscriptionTitle("New Sub Folder".to_string());
+        let sub_link = SubscriptionLink("https://example.com/atom.xml".to_string());
         let test_subscription = &Outline {
             text: sub_title.to_string(),
             xml_url: Some(sub_link.to_string()),
@@ -931,27 +983,22 @@ mod add_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                sub_title.to_string(),
-                sub_link.to_string(),
+                Some(folder_name.clone()),
+                sub_title.clone(),
+                sub_link.clone(),
             ),
             &mut model,
             &(),
         );
         let _ = app.update(
-            Event::AddSubscription(
-                account.clone(),
-                Some(folder_name.to_string()),
-                sub_title.to_string(),
-                sub_link.to_string(),
-            ),
+            Event::AddSubscription(account.clone(), Some(folder_name), sub_title, sub_link),
             &mut model,
             &(),
         );
@@ -991,14 +1038,18 @@ mod delete_subscription {
             Event::AddSubscription(
                 account.clone(),
                 None,
-                deleted_sub.text.to_string(),
-                deleted_sub.xml_url.clone().unwrap().clone(),
+                SubscriptionTitle(deleted_sub.text.to_string()),
+                SubscriptionLink(deleted_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
         );
         let _ = app.update(
-            Event::DeleteSubscription(account.clone(), None, deleted_sub.text.to_string()),
+            Event::DeleteSubscription(
+                account.clone(),
+                None,
+                SubscriptionTitle(deleted_sub.text.to_string()),
+            ),
             &mut model,
             &(),
         );
@@ -1021,7 +1072,7 @@ mod delete_subscription {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_name = "Deleted Sub Folder".to_string();
+        let folder_name = FolderName("Deleted Sub Folder".to_string());
         let deleted_sub = &Outline {
             text: "Sub Name".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1029,16 +1080,16 @@ mod delete_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                deleted_sub.text.to_string(),
-                deleted_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(deleted_sub.text.to_string()),
+                SubscriptionLink(deleted_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1046,8 +1097,8 @@ mod delete_subscription {
         let _ = app.update(
             Event::DeleteSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                deleted_sub.text.to_string(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(deleted_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1060,7 +1111,7 @@ mod delete_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name)
+            .filter(|outline| outline.text == folder_name.to_string())
             .find_map(|folder| Some(folder.outlines.contains(deleted_sub)))
             .unwrap();
 
@@ -1075,7 +1126,7 @@ mod delete_subscription {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_name = "Deleted Multi Subs".to_string();
+        let folder_name = FolderName("Deleted Multi Subs".to_string());
         let delete_sub = &Outline {
             text: "Deleted Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1088,16 +1139,16 @@ mod delete_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                delete_sub.text.to_string(),
-                delete_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(delete_sub.text.to_string()),
+                SubscriptionLink(delete_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1105,9 +1156,9 @@ mod delete_subscription {
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1115,8 +1166,8 @@ mod delete_subscription {
         let _ = app.update(
             Event::DeleteSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                delete_sub.text.to_string(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(delete_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1129,7 +1180,7 @@ mod delete_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name)
+            .filter(|outline| outline.text == folder_name.to_string())
             .find_map(|folder| Some(folder.outlines.contains(delete_sub)))
             .unwrap();
 
@@ -1140,7 +1191,7 @@ mod delete_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name)
+            .filter(|outline| outline.text == folder_name.to_string())
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
@@ -1179,8 +1230,8 @@ mod rename_subscription {
             Event::AddSubscription(
                 account.clone(),
                 None,
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
+                SubscriptionTitle(rename_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1189,9 +1240,9 @@ mod rename_subscription {
             Event::RenameSubscription(
                 account.clone(),
                 None,
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
-                expected_sub.text.to_string(),
+                OldFolderName(rename_sub.text.to_string()),
+                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
+                NewFolderName(expected_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1224,8 +1275,8 @@ mod rename_subscription {
             Event::AddSubscription(
                 account.clone(),
                 None,
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
+                SubscriptionTitle(rename_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1234,9 +1285,9 @@ mod rename_subscription {
             Event::RenameSubscription(
                 account.clone(),
                 None,
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
-                rename_sub.text.to_string(),
+                OldFolderName(rename_sub.text.to_string()),
+                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
+                NewFolderName(rename_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1259,7 +1310,7 @@ mod rename_subscription {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_name = "Renamed Sub Folder".to_string();
+        let folder_name = FolderName("Renamed Sub Folder".to_string());
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1272,16 +1323,16 @@ mod rename_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(rename_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1289,10 +1340,10 @@ mod rename_subscription {
         let _ = app.update(
             Event::RenameSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
-                expected_sub.text.to_string(),
+                Some(folder_name.clone()),
+                OldFolderName(rename_sub.text.to_string()),
+                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
+                NewFolderName(expected_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1305,7 +1356,7 @@ mod rename_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name)
+            .filter(|outline| outline.text == folder_name.to_string())
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
@@ -1319,7 +1370,7 @@ mod rename_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let folder_name = "Renamed Sub Folder".to_string();
+        let folder_name = FolderName("Renamed Sub Folder".to_string());
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1327,16 +1378,16 @@ mod rename_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(rename_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1344,10 +1395,10 @@ mod rename_subscription {
         let _ = app.update(
             Event::RenameSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
-                rename_sub.text.to_string(),
+                Some(folder_name.clone()),
+                OldFolderName(rename_sub.text.to_string()),
+                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
+                NewFolderName(rename_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1370,7 +1421,7 @@ mod rename_subscription {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_name = "Renamed Multi Sub Folder".to_string();
+        let folder_name = FolderName("Renamed Multi Sub Folder".to_string());
         let untouched_sub = &Outline {
             text: "Untouched Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1388,16 +1439,16 @@ mod rename_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                untouched_sub.text.to_string(),
-                untouched_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(untouched_sub.text.to_string()),
+                SubscriptionLink(untouched_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1405,9 +1456,9 @@ mod rename_subscription {
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1415,10 +1466,10 @@ mod rename_subscription {
         let _ = app.update(
             Event::RenameSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
-                expected_sub.text.to_string(),
+                Some(folder_name.clone()),
+                OldFolderName(rename_sub.text.to_string()),
+                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
+                NewFolderName(expected_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1431,7 +1482,7 @@ mod rename_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name)
+            .filter(|outline| outline.text == folder_name.to_string())
             .find_map(|folder| Some(folder.outlines.contains(untouched_sub)))
             .unwrap();
 
@@ -1442,7 +1493,7 @@ mod rename_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name)
+            .filter(|outline| outline.text == folder_name.to_string())
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
@@ -1456,7 +1507,7 @@ mod rename_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let folder_name = "Renamed Multi Sub Folder".to_string();
+        let folder_name = FolderName("Renamed Multi Sub Folder".to_string());
         let untouched_sub = &Outline {
             text: "Untouched Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1469,16 +1520,16 @@ mod rename_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                untouched_sub.text.to_string(),
-                untouched_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(untouched_sub.text.to_string()),
+                SubscriptionLink(untouched_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1486,9 +1537,9 @@ mod rename_subscription {
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(rename_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1496,10 +1547,10 @@ mod rename_subscription {
         let _ = app.update(
             Event::RenameSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                rename_sub.text.to_string(),
-                rename_sub.xml_url.clone().unwrap().clone(),
-                rename_sub.text.to_string(),
+                Some(folder_name.clone()),
+                OldFolderName(rename_sub.text.to_string()),
+                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
+                NewFolderName(rename_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1531,7 +1582,7 @@ mod move_subscription {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_name = "Move Sub To Folder".to_string();
+        let folder_name = FolderName("Move Sub To Folder".to_string());
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1539,7 +1590,7 @@ mod move_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
@@ -1547,8 +1598,8 @@ mod move_subscription {
             Event::AddSubscription(
                 account.clone(),
                 None,
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1558,7 +1609,7 @@ mod move_subscription {
                 account.clone(),
                 expected_sub.clone(),
                 None,
-                Some(folder_name.to_string()),
+                Some(folder_name.clone()),
             ),
             &mut model,
             &(),
@@ -1578,7 +1629,7 @@ mod move_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name)
+            .filter(|outline| outline.text == folder_name.to_string())
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
@@ -1592,7 +1643,7 @@ mod move_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let folder_name = "Move Sub To Folder".to_string();
+        let folder_name = FolderName("Move Sub To Folder".to_string());
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1600,7 +1651,7 @@ mod move_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
@@ -1608,8 +1659,8 @@ mod move_subscription {
             Event::AddSubscription(
                 account.clone(),
                 None,
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1617,9 +1668,9 @@ mod move_subscription {
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1629,7 +1680,7 @@ mod move_subscription {
                 account.clone(),
                 expected_sub.clone(),
                 None,
-                Some(folder_name.to_string()),
+                Some(folder_name.clone()),
             ),
             &mut model,
             &(),
@@ -1652,7 +1703,7 @@ mod move_subscription {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_name = "Move Sub To Root".to_string();
+        let folder_name = FolderName("Move Sub To Root".to_string());
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1660,16 +1711,16 @@ mod move_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1678,7 +1729,7 @@ mod move_subscription {
             Event::MoveSubscription(
                 account.clone(),
                 expected_sub.clone(),
-                Some(folder_name.to_string()),
+                Some(folder_name.clone()),
                 None,
             ),
             &mut model,
@@ -1699,7 +1750,7 @@ mod move_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name)
+            .filter(|outline| outline.text == folder_name.to_string())
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
@@ -1713,7 +1764,7 @@ mod move_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let folder_name = "Move Sub To Root".to_string();
+        let folder_name = FolderName("Move Sub To Root".to_string());
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1721,16 +1772,16 @@ mod move_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_name.to_string()),
+            Event::AddNewFolder(account.clone(), folder_name.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_name.to_string()),
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_name.clone()),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1739,8 +1790,8 @@ mod move_subscription {
             Event::AddSubscription(
                 account.clone(),
                 None,
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1749,7 +1800,7 @@ mod move_subscription {
             Event::MoveSubscription(
                 account.clone(),
                 expected_sub.clone(),
-                Some(folder_name.to_string()),
+                Some(folder_name.clone()),
                 None,
             ),
             &mut model,
@@ -1773,8 +1824,8 @@ mod move_subscription {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_one = "Folder One".to_string();
-        let folder_two = "Folder Two".to_string();
+        let folder_one = FolderName("Folder One".to_string());
+        let folder_two = FolderName("Folder Two".to_string());
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1782,21 +1833,21 @@ mod move_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_one.to_string()),
+            Event::AddNewFolder(account.clone(), folder_one.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_two.to_string()),
+            Event::AddNewFolder(account.clone(), folder_two.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_one.to_string()),
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_one.clone()),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1805,8 +1856,8 @@ mod move_subscription {
             Event::MoveSubscription(
                 account.clone(),
                 expected_sub.clone(),
-                Some(folder_one.to_string()),
-                Some(folder_two.to_string()),
+                Some(folder_one.clone()),
+                Some(folder_two.clone()),
             ),
             &mut model,
             &(),
@@ -1819,7 +1870,7 @@ mod move_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_one)
+            .filter(|outline| outline.text == folder_one.to_string())
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
@@ -1830,7 +1881,7 @@ mod move_subscription {
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_two)
+            .filter(|outline| outline.text == folder_two.to_string())
             .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
             .unwrap();
 
@@ -1844,8 +1895,8 @@ mod move_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let folder_one = "Folder One".to_string();
-        let folder_two = "Folder Two".to_string();
+        let folder_one = FolderName("Folder One".to_string());
+        let folder_two = FolderName("Folder Two".to_string());
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1853,21 +1904,21 @@ mod move_subscription {
         };
 
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_one.to_string()),
+            Event::AddNewFolder(account.clone(), folder_one.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
-            Event::AddNewFolder(account.clone(), folder_two.to_string()),
+            Event::AddNewFolder(account.clone(), folder_two.clone()),
             &mut model,
             &(),
         );
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_one.to_string()),
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_one.clone()),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1875,9 +1926,9 @@ mod move_subscription {
         let _ = app.update(
             Event::AddSubscription(
                 account.clone(),
-                Some(folder_two.to_string()),
-                expected_sub.text.to_string(),
-                expected_sub.xml_url.clone().unwrap().clone(),
+                Some(folder_two.clone()),
+                SubscriptionTitle(expected_sub.text.to_string()),
+                SubscriptionLink(expected_sub.xml_url.clone().unwrap().clone()),
             ),
             &mut model,
             &(),
@@ -1886,8 +1937,8 @@ mod move_subscription {
             Event::MoveSubscription(
                 account.clone(),
                 expected_sub.clone(),
-                Some(folder_one.to_string()),
-                Some(folder_two.to_string()),
+                Some(folder_one.clone()),
+                Some(folder_two.clone()),
             ),
             &mut model,
             &(),
