@@ -17,7 +17,7 @@
 # will have compiled files and executables
 debug/
 target/
-shared/test_files/*.opml
+*.opml
 !shared/test_files/example_import.opml
 !shared/test_files/invalid_xml.opml
 !shared/test_files/invalid_body.opml
