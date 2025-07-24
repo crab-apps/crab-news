@@ -1,0 +1,12 @@
+{
+  "language": "sqlite",
+  "dialect": "sqlite",
+  "tabWidth": 2,
+  "keywordCase": "upper",
+  "functionCase": "upper",
+  "dataTypeCase": "upper",
+  "logicalOperatorNewline": "before",
+  "linesBetweenQueries": 2,
+  "denseOperators": "false",
+  "newlineBeforeSemicolon": "false"
+}

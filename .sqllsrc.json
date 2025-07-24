@@ -1,12 +1,8 @@
 {
-  "connections": [
-    {
-      "name": "crab-news",
-      "adapter": "sqlite3",
-      "filename": "/Users/andreacfromtheapp/IT/Rust/projects/crab-news/crabnews.db",
-      "projectPaths": [
-        "/Users/andreacfromtheapp/IT/Rust/projects/crab-news"
-      ]
-    }
+  "name": "crab-news",
+  "adapter": "sqlite3",
+  "filename": "$HOME/IT/Rust/projects/crab-news/crabnews.db",
+  "projectPaths": [
+    "$HOME/IT/Rust/projects/crab-news"
   ]
 }
