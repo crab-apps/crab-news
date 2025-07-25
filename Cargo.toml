@@ -1,5 +1,5 @@
 [workspace]
-members = ["shared", "dioxus"]
+members = ["shared", "shared_types", "dioxus"]
 resolver = "1"
 
 [workspace.package]
@@ -17,8 +17,8 @@ crux_core = "0.15"
 crux_http = "0.14"
 serde = "1.0"
 
-[workspace.metadata.bin]
-cargo-xcode = { version = "=1.7.0" }
+# [workspace.metadata.bin]
+# cargo-xcode = { version = "=1.7.0" }
 
 [profile]
 
