@@ -6,7 +6,5 @@
   "functionCase": "upper",
   "dataTypeCase": "upper",
   "logicalOperatorNewline": "before",
-  "linesBetweenQueries": 2,
-  "denseOperators": "false",
-  "newlineBeforeSemicolon": "false"
+  "denseOperators": "false"
 }
