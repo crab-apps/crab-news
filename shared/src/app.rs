@@ -22,6 +22,7 @@ pub use subscriptions::*;
 // ANCHOR: events
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
+#[non_exhaustive]
 pub enum Event {
     // EVENTS FROM THE SHELL
     GetPreferences,
@@ -58,7 +59,9 @@ pub enum Event {
 // ANCHOR_END: events
 
 // ANCHOR: effects and capabilities
-#[effect]
+#[effect(typegen)]
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug)]
 pub enum Effect {
     Render(RenderOperation),
     Http(HttpRequest),
@@ -67,6 +70,7 @@ pub enum Effect {
 
 // ANCHOR: model
 #[derive(Default, Serialize)]
+#[non_exhaustive]
 pub struct Model {
     ////////////////////////////
     // preferences UI
@@ -97,6 +101,7 @@ pub struct Notification {
 
 // ANCHOR: view model
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[non_exhaustive]
 pub struct ViewModel {
     pub notification: Notification,
     pub account_name: String,    // extrapolated from account

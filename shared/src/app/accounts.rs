@@ -22,12 +22,14 @@ impl std::fmt::Display for NewAccountName {
 
 // TODO add more fields?
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[non_exhaustive]
 pub struct Account {
     pub name: String,
     pub subs: Subscriptions,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[non_exhaustive]
 pub enum AccountType {
     Local,
     Apple,

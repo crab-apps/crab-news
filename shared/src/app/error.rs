@@ -2,6 +2,7 @@ use std::io;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum Error {
     #[error("{action} \"{item}\". {reason}")]
     CrabError {
