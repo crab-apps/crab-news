@@ -85,7 +85,7 @@ impl std::fmt::Display for SubscriptionLink {
 pub type Feeds = Vec<Feed>;
 // ANCHOR_END: types
 
-// NOTE - crate: https://crates.io/crates/opml to deal with subscriptions and outlines:
+// NOTE - crate: https://crates.io/crates/opml to deal with subscriptions and outlines.
 // NOTE - crate: https://crates.io/crates/feed-rs to deal with feeds data *after* subscriptions.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Subscriptions {
@@ -228,30 +228,21 @@ impl Subscriptions {
         );
 
         if let Some(folder_text) = &folder_name {
-            enum SubStatus {
-                AlreadySubscribed,
-                AddedNewSub,
-            }
-
-            let mut sub_status = SubStatus::AddedNewSub;
-            subs.subs
+            for folder in subs
+                .subs
                 .body
                 .outlines
                 .iter_mut()
                 .filter(|outline| outline.text == *folder_text.to_string())
-                .for_each(|folder| {
-                    if folder.outlines.contains(&test_subscription) {
-                        sub_status = SubStatus::AlreadySubscribed;
-                    } else {
-                        folder.add_feed(sub_title.0.as_str(), sub_link.0.as_str());
-                    }
-                });
-
-            // NOTE I'd rather do this in for_each but closure has no return
-            match sub_status {
-                SubStatus::AlreadySubscribed => return Err(duplicate_err),
-                SubStatus::AddedNewSub => return Ok(subs),
+            {
+                if folder.outlines.contains(&test_subscription) {
+                    return Err(duplicate_err);
+                } else {
+                    folder.add_feed(sub_title.0.as_str(), sub_link.0.as_str());
+                }
             }
+
+            return Ok(subs);
         }
 
         if subs.subs.body.outlines.contains(&test_subscription) {
@@ -306,36 +297,27 @@ impl Subscriptions {
         );
 
         if let Some(folder_text) = &folder_name {
-            enum SubStatus {
-                AlreadyExists,
-                Renamed,
-            }
-
-            let mut sub_status = SubStatus::Renamed;
-            subs.subs
+            for folder in subs
+                .subs
                 .body
                 .outlines
                 .iter_mut()
                 .filter(|outline| outline.text == *folder_text.to_string())
-                .for_each(|folder| {
-                    if folder.outlines.contains(&test_subscription) {
-                        sub_status = SubStatus::AlreadyExists;
-                    } else {
-                        folder
-                            .outlines
-                            .iter_mut()
-                            .filter(|sub| sub.text == old_name.to_string())
-                            .for_each(|sub| {
-                                sub.text = new_name.to_string();
-                            });
-                    }
-                });
-
-            // NOTE I'd rather do this in for_each but closure has no return
-            match sub_status {
-                SubStatus::AlreadyExists => return Err(duplicate_err),
-                SubStatus::Renamed => return Ok(subs),
+            {
+                if folder.outlines.contains(&test_subscription) {
+                    return Err(duplicate_err);
+                } else {
+                    folder
+                        .outlines
+                        .iter_mut()
+                        .filter(|sub| sub.text == old_name.to_string())
+                        .for_each(|sub| {
+                            sub.text = new_name.to_string();
+                        });
+                }
             }
+
+            return Ok(subs);
         }
 
         if subs.subs.body.outlines.contains(&test_subscription) {
@@ -663,7 +645,7 @@ mod folder {
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
         let account_index = Accounts::find_account_index(&model.accounts, &account);
-        let folder_name_one = FolderName("Added Folder Ome".to_string());
+        let folder_name_one = FolderName("Added Folder One".to_string());
         let folder_name_two = FolderName("Added Folder Two".to_string());
         let added_folder_one = &Outline {
             text: folder_name_one.to_string(),

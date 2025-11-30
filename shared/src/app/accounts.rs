@@ -116,25 +116,15 @@ impl Accounts {
             "It doesn't exists.",
         );
 
-        enum NamingStatus {
-            CantFindName,
-            RenamedAccount,
-        }
-
-        let mut sub_status = NamingStatus::RenamedAccount;
-        accounts.acct.iter_mut().for_each(|a| {
+        for a in accounts.acct.iter_mut() {
             if a.name == old_account_name.to_string() {
                 a.name = new_account_name.to_string();
             } else {
-                sub_status = NamingStatus::CantFindName;
+                return Err(doesnt_exist_err);
             }
-        });
-
-        // NOTE I'd rather do this in for_each but closure has no return
-        match sub_status {
-            NamingStatus::CantFindName => Err(doesnt_exist_err),
-            NamingStatus::RenamedAccount => Ok(accounts),
         }
+
+        Ok(accounts)
     }
 }
 
