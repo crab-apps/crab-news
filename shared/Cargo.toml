@@ -22,20 +22,20 @@ crux_core.workspace = true
 crux_http.workspace = true
 serde = { workspace = true, features = ["derive"] }
 lazy_static = "1.5.0"
-uniffi = "=0.29.2"
-wasm-bindgen = "0.2.100"
+uniffi = "0.30.0"
+wasm-bindgen = "0.2.106"
 opml = "1.1"
 feed-rs = "2.3.1"
-chrono = { version = "0.4.41", features = ["unstable-locales"] }
-thiserror = "2.0.12"
+chrono = { version = "0.4.42", features = ["unstable-locales"] }
+thiserror = "2.0.17"
 sqlx = { version = "0.8.6", features = ["sqlite", "chrono", "macros"] }
-config = { version = "0.15.13", features = ["toml"] }
+config = { version = "0.15.19", features = ["toml"] }
 
 [target.uniffi-bindgen.dependencies]
-uniffi = { version = "=0.29.2", features = ["cli"] }
+uniffi = { version = "0.30.0", features = ["cli"] }
 
 [build-dependencies]
-uniffi = { version = "=0.29.2", features = ["build"] }
+uniffi = { version = "0.30.0", features = ["build"] }
 
 [dev-dependencies]
 assert_fs = "1.1"
