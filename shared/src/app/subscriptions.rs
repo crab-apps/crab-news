@@ -1,4 +1,6 @@
 use super::Error;
+use crate::define_newtype;
+
 use chrono::Local;
 use feed_rs::model::Feed;
 use feed_rs::parser::{self, ParseFeedError};
@@ -6,82 +8,20 @@ use opml::{self, Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 
 // ANCHOR: types
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
-pub struct OpmlFile(String);
+// Generate newtypes using the macro
+define_newtype!(OpmlFile);
+define_newtype!(OpmlName);
+define_newtype!(FolderName);
+define_newtype!(OldFolderName);
+define_newtype!(NewFolderName);
+define_newtype!(OldLink);
+define_newtype!(SubscriptionTitle);
+define_newtype!(SubscriptionLink);
 
-impl std::fmt::Display for OpmlFile {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
-pub struct OpmlName(String);
-
-impl std::fmt::Display for OpmlName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
-pub struct FolderName(String);
-
-impl std::fmt::Display for FolderName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
-pub struct OldFolderName(String);
-
-impl std::fmt::Display for OldFolderName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
-pub struct NewFolderName(String);
-
-impl std::fmt::Display for NewFolderName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
-pub struct OldLink(String);
-
-impl std::fmt::Display for OldLink {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
+// Optional types and type aliases remain the same
 pub type OldFolder = Option<FolderName>;
 pub type NewFolder = Option<FolderName>;
 pub type Subscription = Outline;
-
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
-pub struct SubscriptionTitle(String);
-
-impl std::fmt::Display for SubscriptionTitle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone)]
-pub struct SubscriptionLink(String);
-
-impl std::fmt::Display for SubscriptionLink {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
 pub type Feeds = Vec<Feed>;
 // ANCHOR_END: types
 

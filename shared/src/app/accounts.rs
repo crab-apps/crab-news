@@ -1,24 +1,11 @@
 use super::subscriptions::Subscriptions;
 use super::Error;
+use crate::define_newtype;
+
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
-pub struct OldAccountName(String);
-
-impl std::fmt::Display for OldAccountName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
-pub struct NewAccountName(String);
-
-impl std::fmt::Display for NewAccountName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
+define_newtype!(OldAccountName);
+define_newtype!(NewAccountName);
 
 // TODO add more fields?
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]

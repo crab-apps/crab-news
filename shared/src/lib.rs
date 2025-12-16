@@ -1,5 +1,8 @@
 pub mod app;
 
+#[macro_use]
+mod macros;
+
 use std::sync::LazyLock;
 
 pub use crux_core::{bridge::Bridge, Core, Request};
