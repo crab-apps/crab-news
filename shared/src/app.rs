@@ -75,10 +75,7 @@ pub struct Model {
     ////////////////////////////
     // preferences UI
     pub preferences: HashMap<String, String>,
-    pub theme_mode: ThemeMode,
-    pub light_theme: LightTheme,
-    pub dark_theme: DarkTheme,
-    pub text_size: TextSize,
+    pub content_body_text_size: ContentBodyTextSize,
     pub browser: Browser,
     pub opening_method: OpeningMethod,
     pub refresh_interval: RefreshInterval,

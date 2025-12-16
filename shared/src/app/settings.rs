@@ -7,72 +7,14 @@ const PREFS_FILE: &str = "/Users/andreacfromtheapp/.config/crab-news/preferences
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Preferences {
-    pub theme_mode: ThemeMode,
-    pub light_theme: LightTheme,
-    pub dark_theme: DarkTheme,
-    pub text_size: TextSize,
+    pub content_body_text_size: ContentBodyTextSize,
     pub browser: Browser,
     pub opening_method: OpeningMethod,
     pub refresh_interval: RefreshInterval,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-pub enum ThemeMode {
-    #[default]
-    Auto,
-    Light,
-    Dark,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum LightTheme {
-    #[default]
-    Light,
-    Cupcake,
-    Bumblebee,
-    Emerald,
-    Corporate,
-    Retro,
-    Cyberpunk,
-    Valentine,
-    Garden,
-    Lofi,
-    Pastel,
-    Fantasy,
-    Wireframe,
-    Cmyk,
-    Autumn,
-    Acid,
-    Lemonade,
-    Winter,
-    Nord,
-    Caramellatte,
-    Silk,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum DarkTheme {
-    #[default]
-    Dark,
-    Synthwave,
-    Halloween,
-    Forest,
-    Aqua,
-    Black,
-    Luxury,
-    Dracula,
-    Business,
-    Night,
-    Coffee,
-    Dim,
-    Sunset,
-    Abyss,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
-pub enum TextSize {
+pub enum ContentBodyTextSize {
     Small,
     #[default]
     Medium,
