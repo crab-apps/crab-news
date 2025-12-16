@@ -97,7 +97,7 @@ impl Subscriptions {
     // NOTE folders are only allowed at root level. no nesting.
     pub fn add_folder(&self, folder_name: &FolderName) -> Result<Self, self::Error> {
         let mut subs = self.clone();
-        let test_folder = Self::set_test_folder(&folder_name.to_string());
+        let test_folder = Self::set_test_folder(folder_name.as_ref());
         let duplicate_err = Self::set_error(
             "Cannot add new folder",
             folder_name.0.as_str(),

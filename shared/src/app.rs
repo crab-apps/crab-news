@@ -345,7 +345,7 @@ impl App for CrabNews {
                     }
                 }
             }
-            Event::GetFeed(account, sub_link) => Http::get(sub_link.to_string())
+            Event::GetFeed(account, sub_link) => Http::get(&sub_link)
                 .build()
                 .then_send(move |result| Event::SetFeed(account, result)),
             Event::SetFeed(account, Ok(mut response)) => {
