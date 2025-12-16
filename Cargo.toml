@@ -1,5 +1,5 @@
 [workspace]
-members = ["shared", "dioxus"]
+members = ["shared"]
 resolver = "1"
 
 [workspace.package]
