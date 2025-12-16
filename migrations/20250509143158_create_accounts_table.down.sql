@@ -1,0 +1,3 @@
+DROP INDEX IF NOT EXISTS idx_account_name;
+
+DROP TABLE IF NOT EXISTS accounts;

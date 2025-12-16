@@ -65,11 +65,11 @@ CREATE TABLE IF NOT EXISTS entry_links (
     length INTEGER
 );
 
-CREATE INDEX IF NOT EXISTS feeds_idx ON feeds (id);
+CREATE INDEX IF NOT EXISTS idx_feeds ON feeds (id);
 
-CREATE INDEX IF NOT EXISTS entries_idx ON entries (id);
+CREATE INDEX IF NOT EXISTS idx_entries ON entries (id);
 
-CREATE INDEX IF NOT EXISTS contents_idx ON contents (entry_id);
+CREATE INDEX IF NOT EXISTS idx_contents ON contents (entry_id);
 
 -- https://docs.rs/feed-rs/2.3.1/feed_rs/model/struct.Person.html
 -- https://docs.rs/feed-rs/2.3.1/feed_rs/model/struct.MediaRating.html

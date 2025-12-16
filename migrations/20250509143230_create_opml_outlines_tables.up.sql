@@ -26,6 +26,6 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     PRIMARY KEY (account_id, xml_url)
 );
 
-CREATE INDEX IF NOT EXISTS folders_name_idx ON folders (name);
+CREATE INDEX IF NOT EXISTS idx_folders_name ON folders (name);
 
-CREATE INDEX IF NOT EXISTS subscriptions_title_idx ON subscriptions (title);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_title ON subscriptions (title);

@@ -14,4 +14,4 @@ CREATE TABLE IF NOT EXISTS accounts (
     alias VARCHAR(50) DEFAULT name UNIQUE
 );
 
-CREATE INDEX IF NOT EXISTS account_name_idx ON accounts (name);
+CREATE INDEX IF NOT EXISTS idx_account_name ON accounts (name);
