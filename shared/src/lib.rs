@@ -12,7 +12,7 @@ pub use app::*;
 #[cfg(not(target_family = "wasm"))]
 uniffi::include_scaffolding!("shared");
 
-static CORE: LazyLock<Bridge<CrabNews>> = LazyLock::new(|| Bridge::new(Core::new()));
+static CORE: LazyLock<Bridge<App>> = LazyLock::new(|| Bridge::new(Core::new()));
 
 /// Ask the core to process an event
 /// # Panics

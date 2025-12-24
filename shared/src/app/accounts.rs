@@ -118,12 +118,12 @@ impl Accounts {
 #[cfg(test)]
 mod accts {
     use super::*;
-    use crate::{CrabNews, Event, Model};
-    use crux_core::App;
+    use crate::{App, Event, Model};
+    use crux_core::App as _;
 
     #[test]
     fn add_new_local_account() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Local);
 
@@ -135,7 +135,7 @@ mod accts {
 
     #[test]
     fn fail_new_local_account() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Local);
 
@@ -153,7 +153,7 @@ mod accts {
 
     #[test]
     fn delete_local_account() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let account_to_delete = Account::new(&AccountType::Local);
 
@@ -171,7 +171,7 @@ mod accts {
 
     #[test]
     fn add_new_platform_account() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Apple);
 
@@ -183,7 +183,7 @@ mod accts {
 
     #[test]
     fn fail_new_platform_account() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let account_to_add = Account::new(&AccountType::Apple);
 
@@ -201,7 +201,7 @@ mod accts {
 
     #[test]
     fn delete_platform_account() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let account_to_delete = Account::new(&AccountType::Apple);
 
@@ -219,7 +219,7 @@ mod accts {
 
     #[test]
     fn rename_platform_account() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let old_account_name = OldAccountName("iCloud".to_string());
         let new_account_name = NewAccountName("New Name".to_string());
@@ -239,7 +239,7 @@ mod accts {
 
     #[test]
     fn fail_rename_platform_account_with_empty_name() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let old_account_name = OldAccountName("".to_string());
         let new_account_name = NewAccountName("New Name".to_string());
@@ -262,7 +262,7 @@ mod accts {
 
     #[test]
     fn fail_rename_platform_account_with_wrong_name() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let old_account_name = OldAccountName("Dada".to_string());
         let new_account_name = NewAccountName("New Name".to_string());

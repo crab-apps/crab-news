@@ -358,14 +358,14 @@ impl Subscriptions {
 mod import_export {
     use super::*;
     use crate::{Account, AccountType, Accounts};
-    use crate::{CrabNews, Event, Model};
+    use crate::{App, Event, Model};
     use chrono::prelude::Local;
-    use crux_core::App;
+    use crux_core::App as _;
     use opml::OPML;
 
     #[test]
     fn import_subscriptions() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -390,7 +390,7 @@ mod import_export {
 
     #[test]
     fn fail_import_for_invalid_xml() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -410,7 +410,7 @@ mod import_export {
 
     #[test]
     fn fail_import_for_invalid_opml_version() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -430,7 +430,7 @@ mod import_export {
 
     #[test]
     fn fail_import_for_body_has_no_outlines() {
-        let app = CrabNews;
+        let app = App;
         let mut model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -450,7 +450,7 @@ mod import_export {
 
     #[test]
     fn export_subscriptions() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -486,7 +486,7 @@ mod import_export {
 
     #[test]
     fn export_subscriptions_notification() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -547,13 +547,13 @@ mod import_export {
 mod folder {
     use super::*;
     use crate::{Account, AccountType, Accounts};
-    use crate::{CrabNews, Event, Model};
-    use crux_core::App;
+    use crate::{App, Event, Model};
+    use crux_core::App as _;
     use opml::Outline;
 
     #[test]
     fn add_new_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -579,7 +579,7 @@ mod folder {
 
     #[test]
     fn add_two_new_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -626,7 +626,7 @@ mod folder {
 
     #[test]
     fn fail_add_new_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -651,7 +651,7 @@ mod folder {
 
     #[test]
     fn delete_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -686,7 +686,7 @@ mod folder {
 
     #[test]
     fn rename_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -731,7 +731,7 @@ mod folder {
 
     #[test]
     fn fail_rename_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -771,13 +771,13 @@ mod folder {
 mod add_subscription {
     use super::*;
     use crate::{Account, AccountType, Accounts};
-    use crate::{CrabNews, Event, Model};
-    use crux_core::App;
+    use crate::{App, Event, Model};
+    use crux_core::App as _;
     use opml::Outline;
 
     #[test]
     fn add_new_subscription_to_root() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -809,7 +809,7 @@ mod add_subscription {
 
     #[test]
     fn add_new_subscription_to_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -856,7 +856,7 @@ mod add_subscription {
 
     #[test]
     fn fail_add_new_subscription_to_root() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -890,7 +890,7 @@ mod add_subscription {
 
     #[test]
     fn fail_add_new_subscription_to_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -938,13 +938,13 @@ mod add_subscription {
 mod delete_subscription {
     use super::*;
     use crate::{Account, AccountType, Accounts};
-    use crate::{CrabNews, Event, Model};
-    use crux_core::App;
+    use crate::{App, Event, Model};
+    use crux_core::App as _;
     use opml::Outline;
 
     #[test]
     fn delete_subscription_from_root() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -988,7 +988,7 @@ mod delete_subscription {
 
     #[test]
     fn delete_subscription_from_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1042,7 +1042,7 @@ mod delete_subscription {
 
     #[test]
     fn delete_subscription_from_folder_with_multi_subs() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1125,13 +1125,13 @@ mod delete_subscription {
 mod rename_subscription {
     use super::*;
     use crate::{Account, AccountType, Accounts};
-    use crate::{CrabNews, Event, Model};
-    use crux_core::App;
+    use crate::{App, Event, Model};
+    use crux_core::App as _;
     use opml::Outline;
 
     #[test]
     fn rename_subscription_in_root() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1182,7 +1182,7 @@ mod rename_subscription {
 
     #[test]
     fn fail_rename_subscription_in_root() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1226,7 +1226,7 @@ mod rename_subscription {
 
     #[test]
     fn rename_subscription_in_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1287,7 +1287,7 @@ mod rename_subscription {
 
     #[test]
     fn fail_rename_subscription_in_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1337,7 +1337,7 @@ mod rename_subscription {
 
     #[test]
     fn rename_subscription_in_folder_with_multi_subs() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1424,7 +1424,7 @@ mod rename_subscription {
 
     #[test]
     fn fail_rename_subscription_in_folder_with_multi_subs() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1492,13 +1492,13 @@ mod rename_subscription {
 mod move_subscription {
     use super::*;
     use crate::{Account, AccountType, Accounts};
-    use crate::{CrabNews, Event, Model};
-    use crux_core::App;
+    use crate::{App, Event, Model};
+    use crux_core::App as _;
     use opml::Outline;
 
     #[test]
     fn move_subscription_from_root_to_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1560,7 +1560,7 @@ mod move_subscription {
 
     #[test]
     fn fail_move_subscription_from_root_to_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1619,7 +1619,7 @@ mod move_subscription {
 
     #[test]
     fn move_subscription_from_folder_to_root() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1681,7 +1681,7 @@ mod move_subscription {
 
     #[test]
     fn fail_move_subscription_from_folder_to_root() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1740,7 +1740,7 @@ mod move_subscription {
 
     #[test]
     fn move_subscription_from_folder_to_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 
@@ -1812,7 +1812,7 @@ mod move_subscription {
 
     #[test]
     fn fail_move_subscription_from_folder_to_folder() {
-        let app = CrabNews;
+        let app = App;
         let mut model: Model = Model::default();
         let account = Account::new(&AccountType::Local);
 

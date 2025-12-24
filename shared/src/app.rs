@@ -1,7 +1,7 @@
 use crux_core::{
     macros::effect,
     render::{render, RenderOperation},
-    App, Command,
+    Command,
 };
 use crux_http::{command::Http, protocol::HttpRequest};
 use serde::{Deserialize, Serialize};
@@ -110,9 +110,9 @@ pub struct ViewModel {
 
 // ANCHOR: app
 #[derive(Default)]
-pub struct CrabNews;
+pub struct App;
 
-impl App for CrabNews {
+impl crux_core::App for App {
     type Model = Model;
     type Event = Event;
     type ViewModel = ViewModel;
