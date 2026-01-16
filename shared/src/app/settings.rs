@@ -1,8 +1,9 @@
-use config::{Config, ConfigError};
+// THIS IS COMPLETELY WRONG. CAN'T HAVE LOGIC IN THE APP.
+// MAKE A PORT (OR USE CRUX_KV???) TO THE DRIVEN ADAPTER/REPOSITORY
+// TO STORE THE PREFERENCES IN A DATABASE
+// use config::{Config, ConfigError};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-
-const PREFS_FILE: &str = "/Users/andreacfromtheapp/.config/crab-news/preferences.toml";
+// use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 #[non_exhaustive]
@@ -59,15 +60,15 @@ pub enum RefreshInterval {
     HoursFour,
 }
 
-pub fn read_config() -> Result<HashMap<String, String>, ConfigError> {
-    let settings = Config::builder()
-        .add_source(config::File::from_str(PREFS_FILE, config::FileFormat::Toml))
-        .build()?;
+// pub fn read_config() -> Result<HashMap<String, String>, ConfigError> {
+//     let settings = Config::builder()
+//         .add_source(config::File::from_str("wrong", config::FileFormat::Toml))
+//         .build()?;
 
-    Ok(settings
-        .try_deserialize::<HashMap<String, String>>()
-        .unwrap())
-}
+//     Ok(settings
+//         .try_deserialize::<HashMap<String, String>>()
+//         .unwrap())
+// }
 
 // #[cfg(test)]
 // mod configurations {

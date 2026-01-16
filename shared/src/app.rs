@@ -25,7 +25,7 @@ pub use subscriptions::*;
 #[non_exhaustive]
 pub enum Event {
     // EVENTS FROM THE SHELL
-    GetPreferences,
+    // GetPreferences,
     // SetPreferences(Preferences),
     CreateAccount(AccountType),
     DeleteAccount(Account),
@@ -126,19 +126,19 @@ impl crux_core::App for App {
         _caps: &(), // will be deprecated, so prefix with underscore for now
     ) -> Command<Effect, Event> {
         match event {
-            Event::GetPreferences => match settings::read_config() {
-                Ok(preferences) => {
-                    model.preferences = preferences;
-                    render()
-                }
-                Err(err) => {
-                    model.notification = Notification {
-                        title: "Preferences Error".to_string(),
-                        message: err.to_string(),
-                    };
-                    render()
-                }
-            },
+            // Event::GetPreferences => match settings::read_config() {
+            //     Ok(preferences) => {
+            //         model.preferences = preferences;
+            //         render()
+            //     }
+            //     Err(err) => {
+            //         model.notification = Notification {
+            //             title: "Preferences Error".to_string(),
+            //             message: err.to_string(),
+            //         };
+            //         render()
+            //     }
+            // },
             Event::CreateAccount(account_type) => {
                 match Accounts::add_account(&model.accounts, &account_type) {
                     Ok(accts) => {
