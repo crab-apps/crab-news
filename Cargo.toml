@@ -8,7 +8,20 @@ edition = "2021"
 repository = "https://github.com/crab-apps/crab-news"
 license = "Apache-2.0"
 description = "A multi-platform RSS client for desktop and mobile written in Rust."
-keywords = ["atom", "rss", "feed-reader", "rss-reader", "news-client"]
+keywords = [
+  "atom",
+  "rss",
+  "feed-reader",
+  "rss-reader",
+  "news-client",
+  "rustlang",
+  "swift",
+  "kotlin",
+  "elmlang",
+  "ratatui",
+  "iced-rs",
+  "slint",
+]
 rust-version = "1.83"
 
 [workspace.dependencies]
@@ -17,8 +30,8 @@ crux_core = "0.15"
 crux_http = "0.14"
 serde = "1.0"
 
-# [workspace.metadata.bin]
-# cargo-xcode = { version = "=1.7.0" }
+[workspace.metadata.bin]
+cargo-xcode = { version = "=1.7.0" }
 
 [profile]
 
