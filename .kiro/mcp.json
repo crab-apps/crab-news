@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "crux-crab-news": {
+      "command": "/Users/andreacfromtheapp/IT/Rust/projects/crux-mcp/target/release/crux-mcp",
+      "args": [],
+      "env": {
+        "CRUX_COMPONENT": "/Users/andreacfromtheapp/IT/Rust/projects/crab-news/target/wasm32-wasip2/release/shared.wasm"
+      }
+    }
+  }
+}
