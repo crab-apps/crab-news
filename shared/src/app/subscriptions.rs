@@ -1,14 +1,14 @@
 use super::Error;
+use super::Feeds;
 use crate::define_newtype;
 
 use chrono::Local;
 use feed_rs::model::Feed;
-use feed_rs::parser::{self, ParseFeedError};
 use opml::{self, Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 
 // ANCHOR: types
-// Generate newtypes using the macro
+// Generate new types using the macro
 define_newtype!(OpmlFile);
 define_newtype!(OpmlName);
 define_newtype!(FolderName);
@@ -22,20 +22,22 @@ define_newtype!(SubscriptionLink);
 pub type OldFolder = Option<FolderName>;
 pub type NewFolder = Option<FolderName>;
 pub type Subscription = Outline;
-pub type Feeds = Vec<Feed>;
 // ANCHOR_END: types
 
 // NOTE - crate: https://crates.io/crates/opml to deal with subscriptions and outlines.
 // NOTE - crate: https://crates.io/crates/feed-rs to deal with feeds data *after* subscriptions.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Subscriptions {
-    #[serde(skip)]
     pub feeds: Feeds,
     pub subs: OPML,
 }
 
-impl Subscriptions {
-    // ANCHOR: helper functions
+trait SubscriptionHelpers {
+    fn set_test_folder(title: &str) -> Outline;
+    fn set_test_sub(title: &str, link: &str) -> Outline;
+}
+
+impl SubscriptionHelpers for Subscriptions {
     fn set_test_folder(title: &str) -> Outline {
         Outline {
             text: title.to_string(),
@@ -51,28 +53,33 @@ impl Subscriptions {
             ..Outline::default()
         }
     }
+}
 
-    fn set_error(action: &str, item: &str, reason: &str) -> self::Error {
-        self::Error::CrabError {
-            action: action.to_string(),
-            item: item.to_string(),
-            reason: reason.to_string(),
-        }
-    }
-    // ANCHOR_END: helper functions
+trait ImportSubscriptions {
+    fn import_subscriptions(&self, subs_opml_file: &OpmlFile) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
 
+impl ImportSubscriptions for Subscriptions {
     // TODO on duplicates, prompt user for merge or replace
-    pub fn import(&self, subs_opml_file: &OpmlFile) -> Result<Self, self::Error> {
+    fn import_subscriptions(&self, subs_opml_file: &OpmlFile) -> Result<Self, Error> {
         // TODO use proper Shell/WASM functionality to pass on File operations
         let mut file = std::fs::File::open(subs_opml_file.to_string()).unwrap();
         Ok(Self {
             subs: OPML::from_reader(&mut file)?,
-            feeds: vec![],
+            feeds: Feeds { feeds: vec![] },
         })
     }
+}
 
+trait ExportSubscriptions {
+    fn export_subscriptions(&self, subs_opml_name: &OpmlName) -> Result<String, Error>;
+}
+
+impl ExportSubscriptions for Subscriptions {
     // TODO once shell is implemented, check failures
-    pub fn export(&self, subs_opml_name: &OpmlName) -> Result<String, self::Error> {
+    fn export_subscriptions(&self, subs_opml_name: &OpmlName) -> Result<String, Error> {
         let xml_tag = r#"<?xml version="1.0" encoding="UTF-8"?>"#.to_string();
         let custom_head = Head {
             title: Some(subs_opml_name.to_string()),
@@ -93,12 +100,20 @@ impl Subscriptions {
             Err(e) => Err(Error::Io(e)),
         }
     }
+}
 
+trait AddFolder {
+    fn add_folder(&self, folder_name: &FolderName) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
+
+impl AddFolder for Subscriptions {
     // NOTE folders are only allowed at root level. no nesting.
-    pub fn add_folder(&self, folder_name: &FolderName) -> Result<Self, self::Error> {
+    fn add_folder(&self, folder_name: &FolderName) -> Result<Self, Error> {
         let mut subs = self.clone();
         let test_folder = Self::set_test_folder(folder_name.as_ref());
-        let duplicate_err = Self::set_error(
+        let duplicate_err = Error::set_error(
             "Cannot add new folder",
             folder_name.0.as_str(),
             "It already exists.",
@@ -111,9 +126,17 @@ impl Subscriptions {
             Ok(subs)
         }
     }
+}
 
+trait DeleteFolder {
+    fn delete_folder(&self, folder_name: &FolderName) -> Self
+    where
+        Self: Sized;
+}
+
+impl DeleteFolder for Subscriptions {
     // NOTE folders are only allowed at root level. no nesting.
-    pub fn delete_folder(&self, folder_name: &FolderName) -> Self {
+    fn delete_folder(&self, folder_name: &FolderName) -> Self {
         let mut subs = self.clone();
         subs.subs
             .body
@@ -121,16 +144,28 @@ impl Subscriptions {
             .retain(|name| name.text != folder_name.to_string());
         subs
     }
+}
 
-    // NOTE folders are only allowed at root level. no nesting.
-    pub fn rename_folder(
+trait RenameFolder {
+    fn rename_folder(
         &self,
         old_folder_name: &OldFolderName,
         new_folder_name: &NewFolderName,
-    ) -> Result<Self, self::Error> {
+    ) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
+
+impl RenameFolder for Subscriptions {
+    // NOTE folders are only allowed at root level. no nesting.
+    fn rename_folder(
+        &self,
+        old_folder_name: &OldFolderName,
+        new_folder_name: &NewFolderName,
+    ) -> Result<Self, Error> {
         let mut subs = self.clone();
         let test_folder = Self::set_test_folder(new_folder_name.0.as_str());
-        let duplicate_err = Self::set_error(
+        let duplicate_err = Error::set_error(
             "Cannot rename folder to",
             new_folder_name.0.as_str(),
             "It already exists.",
@@ -151,17 +186,30 @@ impl Subscriptions {
             Ok(subs)
         }
     }
+}
 
-    // NOTE adding a duplicate sub should always fail no matter where it exists
-    pub fn add_subscription(
+trait AddSubscription {
+    fn add_subscription(
         &self,
         folder_name: &Option<FolderName>,
         sub_title: &SubscriptionTitle,
         sub_link: &SubscriptionLink,
-    ) -> Result<Self, self::Error> {
+    ) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
+
+impl AddSubscription for Subscriptions {
+    // NOTE adding a duplicate sub should always fail no matter where it exists
+    fn add_subscription(
+        &self,
+        folder_name: &Option<FolderName>,
+        sub_title: &SubscriptionTitle,
+        sub_link: &SubscriptionLink,
+    ) -> Result<Self, Error> {
         let mut subs = self.clone();
         let test_subscription = Self::set_test_sub(sub_title.0.as_str(), sub_link.0.as_str());
-        let duplicate_err = Self::set_error(
+        let duplicate_err = Error::set_error(
             "Cannot add new subscription",
             sub_title.0.as_str(),
             "You are already subscribed.",
@@ -193,8 +241,20 @@ impl Subscriptions {
             Ok(subs)
         }
     }
+}
 
-    pub fn delete_subscription(
+trait DeleteSubscription {
+    fn delete_subscription(
+        &self,
+        folder_name: &Option<FolderName>,
+        sub_title: &SubscriptionTitle,
+    ) -> Self
+    where
+        Self: Sized;
+}
+
+impl DeleteSubscription for Subscriptions {
+    fn delete_subscription(
         &self,
         folder_name: &Option<FolderName>,
         sub_title: &SubscriptionTitle,
@@ -219,18 +279,32 @@ impl Subscriptions {
         }
         subs
     }
+}
 
-    // NOTE rename to an existing sub should always fail no matter where it exists
-    pub fn rename_subscription(
+trait RenameSubscription {
+    fn rename_subscription(
         &self,
         folder_name: &Option<FolderName>,
         old_name: &OldFolderName,
         old_link: &OldLink,
         new_name: &NewFolderName,
-    ) -> Result<Self, self::Error> {
+    ) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
+
+impl RenameSubscription for Subscriptions {
+    // NOTE rename to an existing sub should always fail no matter where it exists
+    fn rename_subscription(
+        &self,
+        folder_name: &Option<FolderName>,
+        old_name: &OldFolderName,
+        old_link: &OldLink,
+        new_name: &NewFolderName,
+    ) -> Result<Self, Error> {
         let mut subs = self.clone();
         let test_subscription = Self::set_test_sub(new_name.0.as_str(), old_link.0.as_str());
-        let duplicate_err = Self::set_error(
+        let duplicate_err = Error::set_error(
             "Cannot rename subscription to",
             new_name.0.as_str(),
             "It already exists.",
@@ -272,15 +346,28 @@ impl Subscriptions {
             Ok(subs)
         }
     }
+}
 
-    pub fn move_subscription(
+trait MoveSubscription {
+    fn move_subscription(
         &self,
         subscription: &Subscription,
         old_folder: &OldFolder,
         new_folder: &NewFolder,
-    ) -> Result<Self, self::Error> {
+    ) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
+
+impl MoveSubscription for Subscriptions {
+    fn move_subscription(
+        &self,
+        subscription: &Subscription,
+        old_folder: &OldFolder,
+        new_folder: &NewFolder,
+    ) -> Result<Self, Error> {
         let mut subs = self.clone();
-        let duplicate_err = Self::set_error(
+        let duplicate_err = Error::set_error(
             "Cannot move subscription to",
             subscription.text.as_str(),
             "It already exists.",
@@ -337,20 +424,106 @@ impl Subscriptions {
             (None, None) => Err(duplicate_err),
         }
     }
+}
 
-    pub fn add_feed(&self, body: Vec<u8>) -> Result<Self, ParseFeedError> {
+trait AddFeed {
+    fn add_feed(&self, body: Vec<u8>) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
+
+impl AddFeed for Subscriptions {
+    fn add_feed(&self, body: Vec<u8>) -> Result<Self, Error> {
         let mut subs = self.clone();
-        let feed = parser::parse(&*body)?;
-        subs.feeds.push(feed);
+        let feeds = subs.feeds.add_feed(body)?;
+        subs.feeds = feeds;
         Ok(subs)
     }
+}
 
-    pub fn find_feed(&self, sub_title: &SubscriptionTitle) -> Feed {
-        self.feeds
-            .iter()
-            .find(|feed| feed.title.clone().unwrap().content == sub_title.to_string())
-            .unwrap()
-            .clone()
+trait FindFeed {
+    fn find_feed(&self, feed_title: &SubscriptionTitle) -> Result<Feed, Error>;
+}
+
+impl FindFeed for Subscriptions {
+    fn find_feed(&self, feed_title: &SubscriptionTitle) -> Result<Feed, Error> {
+        self.feeds.find_feed(feed_title)
+    }
+}
+
+impl Subscriptions {
+    pub fn import(&self, subs_opml_file: &OpmlFile) -> Result<Self, Error> {
+        Self::import_subscriptions(self, subs_opml_file)
+    }
+
+    pub fn export(&self, subs_opml_name: &OpmlName) -> Result<String, Error> {
+        Self::export_subscriptions(self, subs_opml_name)
+    }
+
+    pub fn add_folder(&self, folder_name: &FolderName) -> Result<Self, Error> {
+        <Self as AddFolder>::add_folder(self, folder_name)
+    }
+
+    pub fn delete_folder(&self, folder_name: &FolderName) -> Self {
+        <Self as DeleteFolder>::delete_folder(self, folder_name)
+    }
+
+    pub fn rename_folder(
+        &self,
+        old_folder_name: &OldFolderName,
+        new_folder_name: &NewFolderName,
+    ) -> Result<Self, Error> {
+        <Self as RenameFolder>::rename_folder(self, old_folder_name, new_folder_name)
+    }
+
+    pub fn add_subscription(
+        &self,
+        folder_name: &Option<FolderName>,
+        sub_title: &SubscriptionTitle,
+        sub_link: &SubscriptionLink,
+    ) -> Result<Self, Error> {
+        <Self as AddSubscription>::add_subscription(self, folder_name, sub_title, sub_link)
+    }
+
+    pub fn delete_subscription(
+        &self,
+        folder_name: &Option<FolderName>,
+        sub_title: &SubscriptionTitle,
+    ) -> Self {
+        <Self as DeleteSubscription>::delete_subscription(self, folder_name, sub_title)
+    }
+
+    pub fn rename_subscription(
+        &self,
+        folder_name: &Option<FolderName>,
+        old_name: &OldFolderName,
+        old_link: &OldLink,
+        new_name: &NewFolderName,
+    ) -> Result<Self, Error> {
+        <Self as RenameSubscription>::rename_subscription(
+            self,
+            folder_name,
+            old_name,
+            old_link,
+            new_name,
+        )
+    }
+
+    pub fn move_subscription(
+        &self,
+        subscription: &Subscription,
+        old_folder: &OldFolder,
+        new_folder: &NewFolder,
+    ) -> Result<Self, Error> {
+        <Self as MoveSubscription>::move_subscription(self, subscription, old_folder, new_folder)
+    }
+
+    pub fn add_feed(&self, body: Vec<u8>) -> Result<Self, Error> {
+        <Self as AddFeed>::add_feed(self, body)
+    }
+
+    pub fn find_feed(&self, feed_title: &SubscriptionTitle) -> Result<Feed, Error> {
+        <Self as FindFeed>::find_feed(self, feed_title)
     }
 }
 
@@ -370,7 +543,7 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let subs_opml_file = OpmlFile("test_files/example_import.opml".to_string());
         let example_subs = r#"<opml version="2.0"><head><title>Subscriptions.opml</title><dateCreated>Sat, 18 Jun 2005 12:11:52 GMT</dateCreated><ownerName>Crab News</ownerName></head><body><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/atom.xml"/><outline text="Group Name" title="Group Name"><outline text="Feed Name" title="Feed Name" description="" type="rss" version="RSS" htmlUrl="https://example.com/" xmlUrl="https://example.com/rss.xml"/></outline></body></opml>"#;
 
@@ -382,7 +555,7 @@ mod import_export {
         let added_subs = model.accounts.acct[account_index].subs.clone();
         let expected_subs = Subscriptions {
             subs: OPML::from_str(example_subs).unwrap(),
-            feeds: vec![],
+            feeds: Feeds::default(),
         };
 
         assert_eq!(added_subs, expected_subs);
@@ -455,7 +628,7 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
         let subs_opml_name = OpmlName("test_files/Subscriptions.opml".to_string());
 
@@ -464,7 +637,7 @@ mod import_export {
 
         model.accounts.acct[account_index].subs = Subscriptions {
             subs: OPML::from_str(&example_subs).unwrap(),
-            feeds: vec![],
+            feeds: Feeds::default(),
         };
         let imported_content = model.accounts.acct[account_index].subs.clone();
 
@@ -478,7 +651,7 @@ mod import_export {
         let mut exported_file = std::fs::File::open(subs_opml_name.0).unwrap();
         let exported_content = Subscriptions {
             subs: OPML::from_reader(&mut exported_file).unwrap(),
-            feeds: vec![],
+            feeds: Feeds::default(),
         };
 
         assert_eq!(exported_content, imported_content);
@@ -491,7 +664,7 @@ mod import_export {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let date_created = Some(Local::now().format("%Y - %a %b %e %T").to_string());
         let subs_opml_name = OpmlName("test_files/Subscriptions.opml".to_string());
 
@@ -500,7 +673,7 @@ mod import_export {
 
         model.accounts.acct[account_index].subs = Subscriptions {
             subs: OPML::from_str(&example_subs).unwrap(),
-            feeds: vec![],
+            feeds: Feeds::default(),
         };
 
         let _ = app.update(
@@ -558,7 +731,7 @@ mod folder {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let folder_name = FolderName("Added Folder".to_string());
         let added_folder = &Outline {
             text: folder_name.to_string(),
@@ -584,7 +757,7 @@ mod folder {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let folder_name_one = FolderName("Added Folder One".to_string());
         let folder_name_two = FolderName("Added Folder Two".to_string());
         let added_folder_one = &Outline {
@@ -656,7 +829,7 @@ mod folder {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let deleted_folder = &Outline {
             text: "Deleted Folder".to_string(),
             title: Some("Deleted Folder".to_string()),
@@ -691,7 +864,7 @@ mod folder {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let rename_folder = &Outline {
             text: "Rename Folder".to_string(),
             title: Some("Rename Folder".to_string()),
@@ -782,7 +955,7 @@ mod add_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let sub_title = SubscriptionTitle("New Sub Root".to_string());
         let sub_link = SubscriptionLink("https://example.com/atom.xml".to_string());
         let expected_sub = &Outline {
@@ -814,7 +987,7 @@ mod add_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let folder_name = FolderName("New Sub Folder".to_string());
         let sub_title = SubscriptionTitle("New Sub Folder".to_string());
         let sub_link = SubscriptionLink("https://example.com/atom.xml".to_string());
@@ -949,7 +1122,7 @@ mod delete_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let deleted_sub = &Outline {
             text: "Deleted Sub Root".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -993,7 +1166,7 @@ mod delete_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let folder_name = FolderName("Deleted Sub Folder".to_string());
         let deleted_sub = &Outline {
             text: "Sub Name".to_string(),
@@ -1047,7 +1220,7 @@ mod delete_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let folder_name = FolderName("Deleted Multi Subs".to_string());
         let delete_sub = &Outline {
             text: "Deleted Sub".to_string(),
@@ -1136,7 +1309,7 @@ mod rename_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
             xml_url: Some("https://example.com/atom.xml".to_string()),
@@ -1231,7 +1404,7 @@ mod rename_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let folder_name = FolderName("Renamed Sub Folder".to_string());
         let rename_sub = &Outline {
             text: "Old Sub".to_string(),
@@ -1342,7 +1515,7 @@ mod rename_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let folder_name = FolderName("Renamed Multi Sub Folder".to_string());
         let untouched_sub = &Outline {
             text: "Untouched Sub".to_string(),
@@ -1503,7 +1676,7 @@ mod move_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let folder_name = FolderName("Move Sub To Folder".to_string());
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
@@ -1624,7 +1797,7 @@ mod move_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let folder_name = FolderName("Move Sub To Root".to_string());
         let expected_sub = &Outline {
             text: "Moved Sub".to_string(),
@@ -1745,7 +1918,7 @@ mod move_subscription {
         let account = Account::new(&AccountType::Local);
 
         let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-        let account_index = Accounts::find_account_index(&model.accounts, &account);
+        let account_index = Accounts::find_by_index(&model.accounts, &account);
         let folder_one = FolderName("Folder One".to_string());
         let folder_two = FolderName("Folder Two".to_string());
         let expected_sub = &Outline {
@@ -1875,159 +2048,3 @@ mod move_subscription {
         assert_eq!(actual_error, expected_error);
     }
 }
-
-// #[cfg(test)]
-// mod feeds {
-// use super::*;
-// use crate::{Account, AccountType, Accounts, AccountsExt};
-// use crate::{CrabNews, Effect, Event, Model};
-
-// mode shell START
-// use anyhow::Result;
-// use crux_core::Core;
-// use crux_http::protocol::{HttpRequest, HttpResponse, HttpResult};
-// use std::collections::VecDeque;
-
-// #[allow(clippy::large_enum_variant)]
-// enum Task {
-//     Event(Event),
-//     Effect(Effect),
-// }
-
-// pub(crate) fn run(core: &Core<CrabNews>, event: Event) -> Result<Vec<HttpRequest>> {
-//     let mut queue: VecDeque<Task> = VecDeque::new();
-
-//     queue.push_back(Task::Event(event));
-
-//     let mut received: Vec<HttpRequest> = vec![];
-
-//     while !queue.is_empty() {
-//         let task = queue.pop_front().expect("an event");
-
-//         match task {
-//             Task::Event(event) => {
-//                 enqueue_effects(&mut queue, core.process_event(event));
-//             }
-//             Task::Effect(effect) => match effect {
-//                 Effect::Render(_) => (),
-//                 Effect::Http(mut request) => {
-//                     let http_request = &request.operation;
-
-//                     received.push(http_request.clone());
-//                     let response = HttpResponse::ok().json("Hello").build();
-
-//                     enqueue_effects(
-//                         &mut queue,
-//                         core.resolve(&mut request, HttpResult::Ok(response))
-//                             .expect("effect should resolve"),
-//                     );
-//                 }
-//             },
-//         };
-//     }
-
-//     Ok(received)
-// }
-
-// fn enqueue_effects(queue: &mut VecDeque<Task>, effects: Vec<Effect>) {
-//     queue.append(&mut effects.into_iter().map(Task::Effect).collect())
-// }
-// mod shell END
-
-// #[test]
-// fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
-//     let app = CrabNews;
-//     let mut model: Model = Model::default();
-//     let sub_title = "Gentle Wash Records".to_string();
-//     let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
-
-//     let account = Account::new(&AccountType::Local);
-//     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-//     let account_index = Accounts::find_account_index(&model.accounts, &account);
-
-//     let _ = app.update(
-//         Event::AddSubscription(account.clone(), None, sub_title, sub_link.to_string()),
-//         &mut model, &()
-//     );
-
-//     let core: Core<CrabNews> = Core::default();
-
-//     let received = run(&core, Event::GetFeed(account, sub_link.to_string()))?;
-
-//     assert_eq!(received, vec![HttpRequest::get(sub_link).build()]);
-//     Ok(())
-// }
-
-// #[test]
-// fn add_new_feed() {
-//     let app = CrabNews;
-//     let mut model: Model = Model::default();
-
-//     let account = Account::new(&AccountType::Local);
-//     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-//     let account_index = Accounts::find_account_index(&model.accounts, &account);
-
-//     let sub_title = "Gentle Wash Records".to_string();
-//     let example_rss = r#"<?xml version="1.0" encoding="UTF-8" ?>
-//       <rss version="2.0">
-//         <channel>
-//           <title>Gentle Wash Records</title>
-//           <description>This is an example of an RSS feed</description>
-//           <link>http://www.example.com/main.html</link>
-//           <lastBuildDate>Mon, 06 Sep 2010 00:01:00 +0000</lastBuildDate>
-//           <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
-//           <ttl>1800</ttl>
-
-//           <item>
-//             <title>Example entry</title>
-//             <description>Here is some text containing an interesting description.</description>
-//             <link>http://www.example.com/blog/post/1</link>
-//             <guid isPermaLink="true">7bd204c6-1655-4c27-aeee-53f933c5395f</guid>
-//             <pubDate>Sun, 06 Sep 2009 16:20:00 +0000</pubDate>
-//           </item>
-
-//         </channel>
-//       </rss>"#;
-
-//     let body = Vec::from(example_rss.as_bytes());
-//     let _ = app.update(Event::SetFeed(account, example_rss.as_bytes()), &mut model, &());
-//     let added_feed = Subscriptions::find_feed(&model.accounts.acct[account_index].subs, &sub_title);
-
-//     assert_eq!(added_feed.title.unwrap().content, sub_title);
-// }
-
-// #[test]
-// fn fail_add_feed_already_exists() {
-//     let app = CrabNews;
-//     let mut model: Model = Model::default();
-//     let account = Account::new(&AccountType::Local);
-//     let account_index = Accounts::find_account_index(&model.accounts, &account);
-//     let sub_title = "Gentle Wash Records".to_string();
-//     let sub_link = "https://gentlewashrecords.com/atom.xml".to_string();
-
-//     let _ = app.update(Event::CreateAccount(AccountType::Local), &mut model, &());
-//     let _ = app.update(
-//         Event::AddNewSubscription(
-//             account.clone(),
-//             None,
-//             sub_title.to_string(),
-//             sub_link.to_string(),
-//         ),
-//         &mut model, &()
-//     );
-//     let _response = app
-//         .update(Event::GetFeed(account.clone(), sub_link), &mut model, &())
-//         .expect_one_event();
-//     // let _ = app.update(Event::SetFeed(account.clone(), response), &mut model, &());
-
-//     let added_feed = Subscriptions::find_feed(&model.accounts.acct[account_index].subs, &sub_title);
-//     let added_feed_title = added_feed.title.clone().unwrap().content;
-//     let actual_error = model.notification.message;
-//     let expected_error = format!(
-//         "Cannot add new subscription \"{}\". You are already subscribed.",
-//         added_feed_title
-//     );
-
-//     assert_eq!(actual_error, expected_error);
-// }
-// }

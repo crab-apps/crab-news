@@ -7,14 +7,6 @@ use serde::{Deserialize, Serialize};
 define_newtype!(OldAccountName);
 define_newtype!(NewAccountName);
 
-// TODO add more fields?
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-#[non_exhaustive]
-pub struct Account {
-    pub name: String,
-    pub subs: Subscriptions,
-}
-
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[non_exhaustive]
 pub enum AccountType {
@@ -26,9 +18,20 @@ pub enum AccountType {
     // TODO add cloud accounts
 }
 
-// FIXME make this do proper stuff such as platform checks and authentication
-impl Account {
-    fn set_account_name(account_type: &AccountType) -> &str {
+// TODO add more fields?
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[non_exhaustive]
+pub struct Account {
+    pub name: String,
+    pub subs: Subscriptions,
+}
+
+trait AccountHelpers {
+    fn set_account_name(account_type: &AccountType) -> String;
+}
+
+impl AccountHelpers for Account {
+    fn set_account_name(account_type: &AccountType) -> String {
         match account_type {
             AccountType::Local => "On Device",
             AccountType::Apple => "iCloud",
@@ -36,13 +39,27 @@ impl Account {
             AccountType::Microsoft => "Live 365",
             AccountType::Canonical => "Ubuntu One",
         }
+        .to_string()
     }
+}
 
-    pub fn new(account_type: &AccountType) -> Self {
+trait NewAccount {
+    fn new(account_type: &AccountType) -> Self;
+}
+
+// FIXME make this do proper stuff such as platform checks and authentication
+impl NewAccount for Account {
+    fn new(account_type: &AccountType) -> Self {
         Account {
-            name: Self::set_account_name(account_type).to_string(),
+            name: Self::set_account_name(account_type),
             subs: Subscriptions::default(),
         }
+    }
+}
+
+impl Account {
+    pub fn new(account_type: &AccountType) -> Self {
+        <Self as NewAccount>::new(account_type)
     }
 }
 
@@ -51,27 +68,17 @@ pub struct Accounts {
     pub acct: Vec<Account>,
 }
 
-impl Accounts {
-    // ANCHOR: helper functions
-    fn set_error(action: &str, item: &str, reason: &str) -> self::Error {
-        self::Error::CrabError {
-            action: action.to_string(),
-            item: item.to_string(),
-            reason: reason.to_string(),
-        }
-    }
+trait CreateAccount {
+    fn create_account(&self, account_type: &AccountType) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
 
-    pub fn find_account_index(&self, account: &Account) -> usize {
-        self.acct
-            .iter()
-            .position(|a| a.name == account.name)
-            .unwrap()
-    }
-
-    pub fn add_account(&self, account_type: &AccountType) -> Result<Self, self::Error> {
+impl CreateAccount for Accounts {
+    fn create_account(&self, account_type: &AccountType) -> Result<Self, Error> {
         let mut accounts = self.clone();
         let account_to_add = Account::new(account_type);
-        let duplicate_err = Self::set_error(
+        let duplicate_err = Error::set_error(
             "Cannot add account",
             account_to_add.name.as_str(),
             "It already exists.",
@@ -84,20 +91,40 @@ impl Accounts {
             Ok(accounts)
         }
     }
+}
 
-    pub fn delete_account(&self, account: &Account) -> Self {
+trait DeleteAccount {
+    fn delete_account(&self, account: &Account) -> Self
+    where
+        Self: Sized;
+}
+
+impl DeleteAccount for Accounts {
+    fn delete_account(&self, account: &Account) -> Self {
         let mut accounts = self.clone();
         accounts.acct.retain(|a| a.name != account.name);
         accounts
     }
+}
 
-    pub fn rename_account(
+trait RenameAccount {
+    fn rename_account(
         &self,
         old_account_name: &OldAccountName,
         new_account_name: &NewAccountName,
-    ) -> Result<Self, self::Error> {
+    ) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
+
+impl RenameAccount for Accounts {
+    fn rename_account(
+        &self,
+        old_account_name: &OldAccountName,
+        new_account_name: &NewAccountName,
+    ) -> Result<Self, Error> {
         let mut accounts = self.clone();
-        let doesnt_exist_err = Self::set_error(
+        let does_not_exist_err = Error::set_error(
             "Cannot rename account",
             old_account_name.0.as_str(),
             "It doesn't exists.",
@@ -107,11 +134,46 @@ impl Accounts {
             if a.name == old_account_name.to_string() {
                 a.name = new_account_name.to_string();
             } else {
-                return Err(doesnt_exist_err);
+                return Err(does_not_exist_err);
             }
         }
 
         Ok(accounts)
+    }
+}
+
+trait FindAccount {
+    fn find_account_index(&self, account: &Account) -> usize;
+}
+
+impl FindAccount for Accounts {
+    fn find_account_index(&self, account: &Account) -> usize {
+        self.acct
+            .iter()
+            .position(|a| a.name == account.name)
+            .unwrap()
+    }
+}
+
+impl Accounts {
+    pub fn create(&self, account_type: &AccountType) -> Result<Self, Error> {
+        <Self as CreateAccount>::create_account(self, account_type)
+    }
+
+    pub fn delete(&self, account: &Account) -> Self {
+        <Self as DeleteAccount>::delete_account(self, account)
+    }
+
+    pub fn rename(
+        &self,
+        old_account_name: &OldAccountName,
+        new_account_name: &NewAccountName,
+    ) -> Result<Self, Error> {
+        <Self as RenameAccount>::rename_account(self, old_account_name, new_account_name)
+    }
+
+    pub fn find_by_index(&self, account: &Account) -> usize {
+        <Self as FindAccount>::find_account_index(self, account)
     }
 }
 

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 mod error;
-pub use error::Error;
+use error::Error;
 
 mod settings;
 pub use settings::*;
@@ -17,7 +17,10 @@ mod accounts;
 pub use accounts::*;
 
 mod subscriptions;
-pub use subscriptions::*;
+use subscriptions::*;
+
+mod feeds;
+use feeds::*;
 
 // ANCHOR: events
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -53,7 +56,6 @@ pub enum Event {
     GetFeed(Account, SubscriptionLink),
 
     // EVENTS LOCAL TO THE CORE
-    #[serde(skip)]
     SetFeed(Account, crux_http::Result<crux_http::Response<Vec<u8>>>),
 }
 // ANCHOR_END: events
@@ -140,7 +142,7 @@ impl crux_core::App for App {
             //     }
             // },
             Event::CreateAccount(account_type) => {
-                match Accounts::add_account(&model.accounts, &account_type) {
+                match Accounts::create(&model.accounts, &account_type) {
                     Ok(accts) => {
                         model.accounts = accts;
                         render()
@@ -155,15 +157,11 @@ impl crux_core::App for App {
                 }
             }
             Event::DeleteAccount(account) => {
-                model.accounts = Accounts::delete_account(&model.accounts, &account);
+                model.accounts = Accounts::delete(&model.accounts, &account);
                 render()
             }
             Event::RenameAccount(old_account_name, new_account_name) => {
-                match Accounts::rename_account(
-                    &model.accounts,
-                    &old_account_name,
-                    &new_account_name,
-                ) {
+                match Accounts::rename(&model.accounts, &old_account_name, &new_account_name) {
                     Ok(accts) => {
                         model.accounts = accts;
                         render()
@@ -178,7 +176,7 @@ impl crux_core::App for App {
                 }
             }
             Event::ImportSubscriptions(account, subs_opml_file) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::import(
                     &model.accounts.acct[account_index].subs,
                     &subs_opml_file,
@@ -198,7 +196,7 @@ impl crux_core::App for App {
                 }
             }
             Event::ExportSubscriptions(account, subs_opml_name) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::export(
                     &model.accounts.acct[account_index].subs,
                     &subs_opml_name,
@@ -221,7 +219,7 @@ impl crux_core::App for App {
                 }
             }
             Event::AddNewFolder(account, folder_name) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::add_folder(
                     &model.accounts.acct[account_index].subs,
                     &folder_name,
@@ -240,7 +238,7 @@ impl crux_core::App for App {
                 }
             }
             Event::DeleteFolder(account, folder_name) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_by_index(&model.accounts, &account);
                 model.accounts.acct[account_index].subs = {
                     Subscriptions::delete_folder(
                         &model.accounts.acct[account_index].subs,
@@ -250,7 +248,7 @@ impl crux_core::App for App {
                 render()
             }
             Event::RenameFolder(account, old_folder_name, new_folder_name) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::rename_folder(
                     &model.accounts.acct[account_index].subs,
                     &old_folder_name,
@@ -270,7 +268,7 @@ impl crux_core::App for App {
                 }
             }
             Event::AddSubscription(account, folder_name, sub_title, sub_link) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::add_subscription(
                     &model.accounts.acct[account_index].subs,
                     &folder_name,
@@ -294,7 +292,7 @@ impl crux_core::App for App {
                 //     .send(move |result| Event::SetFeed(account, result));
             }
             Event::DeleteSubscription(account, folder_name, sub_name) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_by_index(&model.accounts, &account);
                 model.accounts.acct[account_index].subs = Subscriptions::delete_subscription(
                     &model.accounts.acct[account_index].subs,
                     &folder_name,
@@ -303,7 +301,7 @@ impl crux_core::App for App {
                 render()
             }
             Event::RenameSubscription(account, folder_name, old_title, old_link, new_name) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::rename_subscription(
                     &model.accounts.acct[account_index].subs,
                     &folder_name,
@@ -325,7 +323,7 @@ impl crux_core::App for App {
                 }
             }
             Event::MoveSubscription(account, subscription, old_folder, new_folder) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::move_subscription(
                     &model.accounts.acct[account_index].subs,
                     &subscription,
@@ -349,7 +347,7 @@ impl crux_core::App for App {
                 .build()
                 .then_send(move |result| Event::SetFeed(account, result)),
             Event::SetFeed(account, Ok(mut response)) => {
-                let account_index = Accounts::find_account_index(&model.accounts, &account);
+                let account_index = Accounts::find_by_index(&model.accounts, &account);
                 let body = response.take_body().unwrap();
                 match Subscriptions::add_feed(&model.accounts.acct[account_index].subs, body) {
                     Ok(subs) => {
