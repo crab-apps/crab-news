@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 
 // ANCHOR: types
 // Generate new types using the macro
-define_newtype!(OpmlName);
 define_newtype!(FolderName);
 define_newtype!(OldFolderName);
 define_newtype!(NewFolderName);
@@ -19,6 +18,8 @@ define_newtype!(OldSubscriptionName);
 define_newtype!(NewSubscriptionName);
 
 // Optional types and type aliases remain the same
+pub type OpmlFileContent = String;
+pub type OpmlFileName = String;
 pub type OldFolder = Option<FolderName>;
 pub type NewFolder = Option<FolderName>;
 pub type Subscription = Outline;
@@ -56,7 +57,7 @@ impl SubscriptionHelpers for Subscriptions {
 }
 
 trait ImportSubscriptions {
-    fn import_subscriptions(&self, opml_file_content: &str) -> Result<Self, Error>
+    fn import_subscriptions(&self, opml_file_content: &OpmlFileContent) -> Result<Self, Error>
     where
         Self: Sized;
 }
@@ -64,7 +65,7 @@ trait ImportSubscriptions {
 // TODO on duplicates, prompt user for merge or replace
 // FIXME refactor this to drive the adapter to store data in the database
 impl ImportSubscriptions for Subscriptions {
-    fn import_subscriptions(&self, opml_file_content: &str) -> Result<Self, Error> {
+    fn import_subscriptions(&self, opml_file_content: &OpmlFileContent) -> Result<Self, Error> {
         let subs = self.clone();
 
         Ok(Self {
@@ -75,15 +76,16 @@ impl ImportSubscriptions for Subscriptions {
 }
 
 trait ExportSubscriptions {
-    fn export_subscriptions(&self, subs_opml_name: &OpmlName) -> Result<String, Error>;
+    fn export_subscriptions(&self, opml_file_name: &OpmlFileName) -> Result<String, Error>;
 }
 
+// TODO once shell is implemented, check failures
+// FIXME refactor this to drive the adapter to read data and pass it on to the shell
 impl ExportSubscriptions for Subscriptions {
-    // TODO once shell is implemented, check failures
-    fn export_subscriptions(&self, subs_opml_name: &OpmlName) -> Result<String, Error> {
+    fn export_subscriptions(&self, opml_file_name: &OpmlFileName) -> Result<String, Error> {
         let xml_tag = r#"<?xml version="1.0" encoding="UTF-8"?>"#.to_string();
         let custom_head = Head {
-            title: Some(subs_opml_name.to_string()),
+            title: Some(opml_file_name.to_string()),
             date_created: Some(Local::now().format("%Y - %a %b %e %T").to_string()),
             owner_name: Some("Crab News".to_string()),
             owner_id: Some("https://github.com/crab-apps/crab-news".to_string()),
@@ -453,12 +455,12 @@ impl FindFeed for Subscriptions {
 }
 
 impl Subscriptions {
-    pub fn import(&self, opml_file_content: &str) -> Result<Self, Error> {
+    pub fn import(&self, opml_file_content: &OpmlFileContent) -> Result<Self, Error> {
         Self::import_subscriptions(self, opml_file_content)
     }
 
-    pub fn export(&self, subs_opml_name: &OpmlName) -> Result<String, Error> {
-        Self::export_subscriptions(self, subs_opml_name)
+    pub fn export(&self, opml_file_name: &OpmlFileName) -> Result<String, Error> {
+        Self::export_subscriptions(self, opml_file_name)
     }
 
     pub fn add_folder(&self, folder_name: &FolderName) -> Result<Self, Error> {
