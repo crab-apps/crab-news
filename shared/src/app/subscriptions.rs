@@ -744,14 +744,15 @@ mod folder {
         };
 
         let _ = app.update(Event::AddNewFolder(account, folder_name), &mut model, &());
-        let does_contain_folder = model.accounts.acct[account_index]
+
+        let does_contain_new_folder = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .contains(added_folder);
 
-        assert!(does_contain_folder);
+        assert!(does_contain_new_folder);
     }
 
     #[test]
@@ -785,6 +786,7 @@ mod folder {
             &mut model,
             &(),
         );
+
         let does_contain_folder_one = model.accounts.acct[account_index]
             .subs
             .subs
@@ -851,14 +853,14 @@ mod folder {
             &(),
         );
 
-        let does_contain_folder = model.accounts.acct[account_index]
+        let does_not_contain_deleted_folder = !model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .contains(deleted_folder);
 
-        assert!(!does_contain_folder);
+        assert!(does_not_contain_deleted_folder);
     }
 
     #[test]
@@ -896,14 +898,14 @@ mod folder {
             &(),
         );
 
-        let does_contain_folder = model.accounts.acct[account_index]
+        let does_contain_renamed_folder = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .contains(expected_folder);
 
-        assert!(does_contain_folder);
+        assert!(does_contain_renamed_folder);
     }
 
     #[test]
@@ -974,14 +976,14 @@ mod add_subscription {
             &(),
         );
 
-        let does_contain_sub = model.accounts.acct[account_index]
+        let does_root_contain_new_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .contains(expected_sub);
 
-        assert!(does_contain_sub);
+        assert!(does_root_contain_new_sub);
     }
 
     #[test]
@@ -1017,18 +1019,17 @@ mod add_subscription {
             &(),
         );
 
-        #[allow(clippy::unnecessary_find_map)]
-        let does_contain_sub = model.accounts.acct[account_index]
+        let does_folder_contain_new_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
-            .unwrap();
+            .any(|outline| {
+                outline.text == folder_name.to_string() && outline.outlines.contains(expected_sub)
+            });
 
-        assert!(does_contain_sub);
+        assert!(does_folder_contain_new_sub);
     }
 
     #[test]
@@ -1153,14 +1154,14 @@ mod delete_subscription {
             &(),
         );
 
-        let does_contain_sub = model.accounts.acct[account_index]
+        let does_root_not_contain_sub = !model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .contains(deleted_sub);
 
-        assert!(!does_contain_sub);
+        assert!(does_root_not_contain_sub);
     }
 
     #[test]
@@ -1203,18 +1204,17 @@ mod delete_subscription {
             &(),
         );
 
-        #[allow(clippy::unnecessary_find_map)]
-        let does_contain_sub = model.accounts.acct[account_index]
+        let does_folder_not_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(deleted_sub)))
-            .unwrap();
+            .any(|outline| {
+                outline.text == folder_name.to_string() && !outline.outlines.contains(deleted_sub)
+            });
 
-        assert!(!does_contain_sub);
+        assert!(does_folder_not_contain_sub);
     }
 
     #[test]
@@ -1272,29 +1272,27 @@ mod delete_subscription {
             &(),
         );
 
-        #[allow(clippy::unnecessary_find_map)]
-        let does_contain_deleted_sub = model.accounts.acct[account_index]
+        let does_folder_not_contain_deleted_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(delete_sub)))
-            .unwrap();
+            .any(|outline| {
+                outline.text == folder_name.to_string() && !outline.outlines.contains(delete_sub)
+            });
 
-        #[allow(clippy::unnecessary_find_map)]
-        let does_contain_expected_sub = model.accounts.acct[account_index]
+        let does_folder_contain_expected_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
-            .unwrap();
+            .any(|outline| {
+                outline.text == folder_name.to_string() && outline.outlines.contains(expected_sub)
+            });
 
-        assert!((!does_contain_deleted_sub && does_contain_expected_sub));
+        assert!((does_folder_not_contain_deleted_sub && does_folder_contain_expected_sub));
     }
 }
 
@@ -1347,14 +1345,14 @@ mod rename_subscription {
             &(),
         );
 
-        let does_contain_sub = model.accounts.acct[account_index]
+        let does_root_contain_renamed_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .contains(expected_sub);
 
-        assert!(does_contain_sub);
+        assert!(does_root_contain_renamed_sub);
     }
 
     #[test]
@@ -1448,18 +1446,17 @@ mod rename_subscription {
             &(),
         );
 
-        #[allow(clippy::unnecessary_find_map)]
-        let does_contain_sub = model.accounts.acct[account_index]
+        let does_folder_contain_renamed_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
-            .unwrap();
+            .any(|outline| {
+                outline.text == folder_name.to_string() && outline.outlines.contains(expected_sub)
+            });
 
-        assert!(does_contain_sub);
+        assert!(does_folder_contain_renamed_sub);
     }
 
     #[test]
@@ -1574,29 +1571,27 @@ mod rename_subscription {
             &(),
         );
 
-        #[allow(clippy::unnecessary_find_map)]
-        let does_contain_untouched_sub = model.accounts.acct[account_index]
+        let does_folder_contain_untouched_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(untouched_sub)))
-            .unwrap();
+            .any(|outline| {
+                outline.text == folder_name.to_string() && outline.outlines.contains(untouched_sub)
+            });
 
-        #[allow(clippy::unnecessary_find_map)]
-        let does_contain_expected_sub = model.accounts.acct[account_index]
+        let does_folder_contain_renamed_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
-            .unwrap();
+            .any(|outline| {
+                outline.text == folder_name.to_string() && outline.outlines.contains(expected_sub)
+            });
 
-        assert!((does_contain_untouched_sub && does_contain_expected_sub));
+        assert!((does_folder_contain_untouched_sub && does_folder_contain_renamed_sub));
     }
 
     #[test]
@@ -1714,25 +1709,24 @@ mod move_subscription {
             &(),
         );
 
-        let does_root_contain_sub = model.accounts.acct[account_index]
+        let does_root_not_contain_sub = !model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .contains(expected_sub);
 
-        #[allow(clippy::unnecessary_find_map)]
         let does_folder_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
-            .unwrap();
+            .any(|outline| {
+                outline.text == folder_name.to_string() && outline.outlines.contains(expected_sub)
+            });
 
-        assert!((!does_root_contain_sub && does_folder_contain_sub));
+        assert!(does_root_not_contain_sub && does_folder_contain_sub);
     }
 
     #[test]
@@ -1842,18 +1836,17 @@ mod move_subscription {
             .outlines
             .contains(expected_sub);
 
-        #[allow(clippy::unnecessary_find_map)]
-        let does_folder_contain_sub = model.accounts.acct[account_index]
+        let does_folder_not_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_name.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
-            .unwrap();
+            .all(|outline| {
+                outline.text == folder_name.to_string() || !outline.outlines.contains(expected_sub)
+            });
 
-        assert!((does_root_contain_sub && !does_folder_contain_sub));
+        assert!(does_root_contain_sub && does_folder_not_contain_sub);
     }
 
     #[test]
@@ -1962,29 +1955,27 @@ mod move_subscription {
             &(),
         );
 
-        #[allow(clippy::unnecessary_find_map)]
-        let does_folder_one_contain_sub = model.accounts.acct[account_index]
+        let does_folder_one_not_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_one.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
-            .unwrap();
+            .any(|outline| {
+                outline.text == folder_one.to_string() && !outline.outlines.contains(expected_sub)
+            });
 
-        #[allow(clippy::unnecessary_find_map)]
         let does_folder_two_contain_sub = model.accounts.acct[account_index]
             .subs
             .subs
             .body
             .outlines
             .iter()
-            .filter(|outline| outline.text == folder_two.to_string())
-            .find_map(|folder| Some(folder.outlines.contains(expected_sub)))
-            .unwrap();
+            .any(|outline| {
+                outline.text == folder_two.to_string() && outline.outlines.contains(expected_sub)
+            });
 
-        assert!((!does_folder_one_contain_sub && does_folder_two_contain_sub));
+        assert!(does_folder_one_not_contain_sub && does_folder_two_contain_sub);
     }
 
     #[test]
