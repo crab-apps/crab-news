@@ -33,7 +33,7 @@ pub enum Event {
     CreateAccount(AccountType),
     DeleteAccount(Account),
     RenameAccount(OldAccountName, NewAccountName),
-    ImportSubscriptions(Account, OpmlFile),
+    ImportSubscriptions(Account, String),
     ExportSubscriptions(Account, OpmlName),
     AddNewFolder(Account, FolderName),
     DeleteFolder(Account, FolderName),
@@ -175,11 +175,11 @@ impl crux_core::App for App {
                     }
                 }
             }
-            Event::ImportSubscriptions(account, subs_opml_file) => {
+            Event::ImportSubscriptions(account, opml_file_content) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::import(
                     &model.accounts.acct[account_index].subs,
-                    &subs_opml_file,
+                    &opml_file_content,
                 ) {
                     // TODO on duplicates, prompt user for merge or replace
                     Ok(subsscriptions) => {
