@@ -48,9 +48,9 @@ pub enum Event {
     RenameSubscription(
         Account,
         Option<FolderName>,
-        OldFolderName,
-        OldLink,
-        NewFolderName,
+        SubscriptionLink,
+        OldSubscriptionName,
+        NewSubscriptionName,
     ),
     MoveSubscription(Account, Subscription, OldFolder, NewFolder),
     GetFeed(Account, SubscriptionLink),
@@ -133,24 +133,24 @@ impl crux_core::App for App {
             //         model.preferences = preferences;
             //         render()
             //     }
-            //     Err(err) => {
+            //     Err(error) => {
             //         model.notification = Notification {
             //             title: "Preferences Error".to_string(),
-            //             message: err.to_string(),
+            //             message: error.to_string(),
             //         };
             //         render()
             //     }
             // },
             Event::CreateAccount(account_type) => {
                 match Accounts::create(&model.accounts, &account_type) {
-                    Ok(accts) => {
-                        model.accounts = accts;
+                    Ok(accounts) => {
+                        model.accounts = accounts;
                         render()
                     }
-                    Err(err) => {
+                    Err(error) => {
                         model.notification = Notification {
                             title: "Account Error".to_string(),
-                            message: err.to_string(),
+                            message: error.to_string(),
                         };
                         render()
                     }
@@ -162,14 +162,14 @@ impl crux_core::App for App {
             }
             Event::RenameAccount(old_account_name, new_account_name) => {
                 match Accounts::rename(&model.accounts, &old_account_name, &new_account_name) {
-                    Ok(accts) => {
-                        model.accounts = accts;
+                    Ok(accounts) => {
+                        model.accounts = accounts;
                         render()
                     }
-                    Err(err) => {
+                    Err(error) => {
                         model.notification = Notification {
                             title: "Account Error".to_string(),
-                            message: err.to_string(),
+                            message: error.to_string(),
                         };
                         render()
                     }
@@ -182,14 +182,14 @@ impl crux_core::App for App {
                     &subs_opml_file,
                 ) {
                     // TODO on duplicates, prompt user for merge or replace
-                    Ok(subs) => {
-                        model.accounts.acct[account_index].subs = subs;
+                    Ok(subsscriptions) => {
+                        model.accounts.acct[account_index].subs = subsscriptions;
                         render()
                     }
-                    Err(err) => {
+                    Err(error) => {
                         model.notification = Notification {
                             title: "Import Error".to_string(),
-                            message: err.to_string(),
+                            message: error.to_string(),
                         };
                         render()
                     }
@@ -208,11 +208,11 @@ impl crux_core::App for App {
                         };
                         render()
                     }
-                    Err(err) => {
+                    Err(error) => {
                         // TODO once shell is implemented, check failures
                         model.notification = Notification {
                             title: "Export Error".to_string(),
-                            message: err.to_string(),
+                            message: error.to_string(),
                         };
                         render()
                     }
@@ -224,14 +224,14 @@ impl crux_core::App for App {
                     &model.accounts.acct[account_index].subs,
                     &folder_name,
                 ) {
-                    Ok(subs) => {
-                        model.accounts.acct[account_index].subs = subs;
+                    Ok(subscriptions) => {
+                        model.accounts.acct[account_index].subs = subscriptions;
                         render()
                     }
-                    Err(err) => {
+                    Err(error) => {
                         model.notification = Notification {
                             title: "New Folder Error".to_string(),
-                            message: err.to_string(),
+                            message: error.to_string(),
                         };
                         render()
                     }
@@ -254,14 +254,14 @@ impl crux_core::App for App {
                     &old_folder_name,
                     &new_folder_name,
                 ) {
-                    Ok(subs) => {
-                        model.accounts.acct[account_index].subs = subs;
+                    Ok(subscriptions) => {
+                        model.accounts.acct[account_index].subs = subscriptions;
                         render()
                     }
-                    Err(err) => {
+                    Err(error) => {
                         model.notification = Notification {
                             title: "Rename Folder Error".to_string(),
-                            message: err.to_string(),
+                            message: error.to_string(),
                         };
                         render()
                     }
@@ -275,14 +275,14 @@ impl crux_core::App for App {
                     &sub_title,
                     &sub_link,
                 ) {
-                    Ok(subs) => {
-                        model.accounts.acct[account_index].subs = subs;
+                    Ok(subscriptions) => {
+                        model.accounts.acct[account_index].subs = subscriptions;
                         render()
                     }
-                    Err(err) => {
+                    Err(error) => {
                         model.notification = Notification {
                             title: "Subscription Error".to_string(),
-                            message: err.to_string(),
+                            message: error.to_string(),
                         };
                         render()
                     }
@@ -291,32 +291,38 @@ impl crux_core::App for App {
                 //     .get(sub_link)
                 //     .send(move |result| Event::SetFeed(account, result));
             }
-            Event::DeleteSubscription(account, folder_name, sub_name) => {
+            Event::DeleteSubscription(account, folder_name, sub_title) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 model.accounts.acct[account_index].subs = Subscriptions::delete_subscription(
                     &model.accounts.acct[account_index].subs,
                     &folder_name,
-                    &sub_name,
+                    &sub_title,
                 );
                 render()
             }
-            Event::RenameSubscription(account, folder_name, old_title, old_link, new_name) => {
+            Event::RenameSubscription(
+                account,
+                folder_name,
+                sub_link,
+                old_sub_name,
+                new_sub_name,
+            ) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::rename_subscription(
                     &model.accounts.acct[account_index].subs,
                     &folder_name,
-                    &old_title,
-                    &old_link,
-                    &new_name,
+                    &sub_link,
+                    &old_sub_name,
+                    &new_sub_name,
                 ) {
-                    Ok(subs) => {
-                        model.accounts.acct[account_index].subs = subs;
+                    Ok(subscriptions) => {
+                        model.accounts.acct[account_index].subs = subscriptions;
                         render()
                     }
-                    Err(err) => {
+                    Err(error) => {
                         model.notification = Notification {
                             title: "Subscription Error".to_string(),
-                            message: err.to_string(),
+                            message: error.to_string(),
                         };
                         render()
                     }
@@ -330,14 +336,14 @@ impl crux_core::App for App {
                     &old_folder,
                     &new_folder,
                 ) {
-                    Ok(subs) => {
-                        model.accounts.acct[account_index].subs = subs;
+                    Ok(subscriptions) => {
+                        model.accounts.acct[account_index].subs = subscriptions;
                         render()
                     }
-                    Err(err) => {
+                    Err(error) => {
                         model.notification = Notification {
                             title: "Subscription Error".to_string(),
-                            message: err.to_string(),
+                            message: error.to_string(),
                         };
                         render()
                     }
@@ -354,19 +360,19 @@ impl crux_core::App for App {
                         model.accounts.acct[account_index].subs = subs;
                         render()
                     }
-                    Err(err) => {
+                    Err(error) => {
                         model.notification = Notification {
                             title: "Feed Error".to_string(),
-                            message: err.to_string(),
+                            message: error.to_string(),
                         };
                         render()
                     }
                 }
             }
-            Event::SetFeed(_, Err(err)) => {
+            Event::SetFeed(_, Err(error)) => {
                 model.notification = Notification {
                     title: "Http Error".to_string(),
-                    message: err.to_string(),
+                    message: error.to_string(),
                 };
                 render()
             }

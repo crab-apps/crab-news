@@ -14,9 +14,10 @@ define_newtype!(OpmlName);
 define_newtype!(FolderName);
 define_newtype!(OldFolderName);
 define_newtype!(NewFolderName);
-define_newtype!(OldLink);
 define_newtype!(SubscriptionTitle);
 define_newtype!(SubscriptionLink);
+define_newtype!(OldSubscriptionName);
+define_newtype!(NewSubscriptionName);
 
 // Optional types and type aliases remain the same
 pub type OldFolder = Option<FolderName>;
@@ -34,7 +35,7 @@ pub struct Subscriptions {
 
 trait SubscriptionHelpers {
     fn set_test_folder(title: &str) -> Outline;
-    fn set_test_sub(title: &str, link: &str) -> Outline;
+    fn set_test_sub(title: &str, sub_link: &str) -> Outline;
 }
 
 impl SubscriptionHelpers for Subscriptions {
@@ -46,10 +47,10 @@ impl SubscriptionHelpers for Subscriptions {
         }
     }
 
-    fn set_test_sub(title: &str, link: &str) -> Outline {
+    fn set_test_sub(title: &str, sub_link: &str) -> Outline {
         Outline {
             text: title.to_string(),
-            xml_url: Some(link.to_string()),
+            xml_url: Some(sub_link.to_string()),
             ..Outline::default()
         }
     }
@@ -178,7 +179,7 @@ impl RenameFolder for Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == old_folder_name.to_string())
+                .filter(|folder| folder.text == old_folder_name.to_string())
                 .for_each(|folder| {
                     folder.text = new_folder_name.to_string();
                     folder.title = Some(new_folder_name.to_string());
@@ -221,7 +222,7 @@ impl AddSubscription for Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == *folder_text.to_string())
+                .filter(|folder| folder.text == *folder_text.to_string())
             {
                 if folder.outlines.contains(&test_subscription) {
                     return Err(duplicate_err);
@@ -265,7 +266,7 @@ impl DeleteSubscription for Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == folder_text.to_string())
+                .filter(|folder| folder.text == folder_text.to_string())
                 .for_each(|folder| {
                     folder
                         .outlines
@@ -285,9 +286,9 @@ trait RenameSubscription {
     fn rename_subscription(
         &self,
         folder_name: &Option<FolderName>,
-        old_name: &OldFolderName,
-        old_link: &OldLink,
-        new_name: &NewFolderName,
+        sub_link: &SubscriptionLink,
+        old_sub_name: &OldSubscriptionName,
+        new_sub_name: &NewSubscriptionName,
     ) -> Result<Self, Error>
     where
         Self: Sized;
@@ -298,15 +299,15 @@ impl RenameSubscription for Subscriptions {
     fn rename_subscription(
         &self,
         folder_name: &Option<FolderName>,
-        old_name: &OldFolderName,
-        old_link: &OldLink,
-        new_name: &NewFolderName,
+        sub_link: &SubscriptionLink,
+        old_sub_name: &OldSubscriptionName,
+        new_sub_name: &NewSubscriptionName,
     ) -> Result<Self, Error> {
         let mut subs = self.clone();
-        let test_subscription = Self::set_test_sub(new_name.0.as_str(), old_link.0.as_str());
+        let test_subscription = Self::set_test_sub(new_sub_name.0.as_str(), sub_link.0.as_str());
         let duplicate_err = Error::set_error(
             "Cannot rename subscription to",
-            new_name.0.as_str(),
+            new_sub_name.0.as_str(),
             "It already exists.",
         );
 
@@ -316,7 +317,7 @@ impl RenameSubscription for Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == *folder_text.to_string())
+                .filter(|folder| folder.text == *folder_text.to_string())
             {
                 if folder.outlines.contains(&test_subscription) {
                     return Err(duplicate_err);
@@ -324,9 +325,9 @@ impl RenameSubscription for Subscriptions {
                     folder
                         .outlines
                         .iter_mut()
-                        .filter(|sub| sub.text == old_name.to_string())
+                        .filter(|sub| sub.text == old_sub_name.to_string())
                         .for_each(|sub| {
-                            sub.text = new_name.to_string();
+                            sub.text = new_sub_name.to_string();
                         });
                 }
             }
@@ -341,8 +342,8 @@ impl RenameSubscription for Subscriptions {
                 .body
                 .outlines
                 .iter_mut()
-                .filter(|outline| outline.text == old_name.to_string())
-                .for_each(|sub| sub.text = new_name.to_string());
+                .filter(|sub| sub.text == old_sub_name.to_string())
+                .for_each(|sub| sub.text = new_sub_name.to_string());
             Ok(subs)
         }
     }
@@ -496,16 +497,16 @@ impl Subscriptions {
     pub fn rename_subscription(
         &self,
         folder_name: &Option<FolderName>,
-        old_name: &OldFolderName,
-        old_link: &OldLink,
-        new_name: &NewFolderName,
+        sub_link: &SubscriptionLink,
+        old_sub_name: &OldSubscriptionName,
+        new_sub_name: &NewSubscriptionName,
     ) -> Result<Self, Error> {
         <Self as RenameSubscription>::rename_subscription(
             self,
             folder_name,
-            old_name,
-            old_link,
-            new_name,
+            sub_link,
+            old_sub_name,
+            new_sub_name,
         )
     }
 
@@ -1335,9 +1336,9 @@ mod rename_subscription {
             Event::RenameSubscription(
                 account.clone(),
                 None,
-                OldFolderName(rename_sub.text.to_string()),
-                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
-                NewFolderName(expected_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
+                OldSubscriptionName(rename_sub.text.to_string()),
+                NewSubscriptionName(expected_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1380,9 +1381,9 @@ mod rename_subscription {
             Event::RenameSubscription(
                 account.clone(),
                 None,
-                OldFolderName(rename_sub.text.to_string()),
-                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
-                NewFolderName(rename_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
+                OldSubscriptionName(rename_sub.text.to_string()),
+                NewSubscriptionName(rename_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1436,9 +1437,9 @@ mod rename_subscription {
             Event::RenameSubscription(
                 account.clone(),
                 Some(folder_name.clone()),
-                OldFolderName(rename_sub.text.to_string()),
-                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
-                NewFolderName(expected_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
+                OldSubscriptionName(rename_sub.text.to_string()),
+                NewSubscriptionName(expected_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1491,9 +1492,9 @@ mod rename_subscription {
             Event::RenameSubscription(
                 account.clone(),
                 Some(folder_name.clone()),
-                OldFolderName(rename_sub.text.to_string()),
-                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
-                NewFolderName(rename_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
+                OldSubscriptionName(rename_sub.text.to_string()),
+                NewSubscriptionName(rename_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1562,9 +1563,9 @@ mod rename_subscription {
             Event::RenameSubscription(
                 account.clone(),
                 Some(folder_name.clone()),
-                OldFolderName(rename_sub.text.to_string()),
-                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
-                NewFolderName(expected_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
+                OldSubscriptionName(rename_sub.text.to_string()),
+                NewSubscriptionName(expected_sub.text.to_string()),
             ),
             &mut model,
             &(),
@@ -1643,9 +1644,9 @@ mod rename_subscription {
             Event::RenameSubscription(
                 account.clone(),
                 Some(folder_name.clone()),
-                OldFolderName(rename_sub.text.to_string()),
-                OldLink(rename_sub.xml_url.clone().unwrap().clone()),
-                NewFolderName(rename_sub.text.to_string()),
+                SubscriptionLink(rename_sub.xml_url.clone().unwrap().clone()),
+                OldSubscriptionName(rename_sub.text.to_string()),
+                NewSubscriptionName(rename_sub.text.to_string()),
             ),
             &mut model,
             &(),
