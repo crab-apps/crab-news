@@ -141,6 +141,7 @@ impl crux_core::App for App {
             //         render()
             //     }
             // },
+            //
             Event::CreateAccount(account_type) => {
                 match Accounts::create(&model.accounts, &account_type) {
                     Ok(accounts) => {
@@ -156,10 +157,12 @@ impl crux_core::App for App {
                     }
                 }
             }
+
             Event::DeleteAccount(account) => {
                 model.accounts = Accounts::delete(&model.accounts, &account);
                 render()
             }
+
             Event::RenameAccount(old_account_name, new_account_name) => {
                 match Accounts::rename(&model.accounts, &old_account_name, &new_account_name) {
                     Ok(accounts) => {
@@ -175,6 +178,7 @@ impl crux_core::App for App {
                     }
                 }
             }
+
             Event::ImportSubscriptions(account, opml_file_content) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::import(
@@ -219,6 +223,7 @@ impl crux_core::App for App {
                     }
                 }
             }
+
             Event::AddNewFolder(account, folder_name) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::add_folder(
@@ -238,6 +243,7 @@ impl crux_core::App for App {
                     }
                 }
             }
+
             Event::DeleteFolder(account, folder_name) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 model.accounts.acct[account_index].subs = {
@@ -248,6 +254,7 @@ impl crux_core::App for App {
                 };
                 render()
             }
+
             Event::RenameFolder(account, old_folder_name, new_folder_name) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::rename_folder(
@@ -268,6 +275,7 @@ impl crux_core::App for App {
                     }
                 }
             }
+
             Event::AddSubscription(account, folder_name, sub_title, sub_link) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::add_subscription(
@@ -292,6 +300,7 @@ impl crux_core::App for App {
                 //     .get(sub_link)
                 //     .send(move |result| Event::SetFeed(account, result));
             }
+
             Event::DeleteSubscription(account, folder_name, sub_title) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 model.accounts.acct[account_index].subs = Subscriptions::delete_subscription(
@@ -301,6 +310,7 @@ impl crux_core::App for App {
                 );
                 render()
             }
+
             Event::RenameSubscription(
                 account,
                 folder_name,
@@ -329,6 +339,7 @@ impl crux_core::App for App {
                     }
                 }
             }
+
             Event::MoveSubscription(account, subscription, old_folder, new_folder) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 match Subscriptions::move_subscription(
@@ -350,9 +361,11 @@ impl crux_core::App for App {
                     }
                 }
             }
+
             Event::GetFeed(account, sub_link) => Http::get(&sub_link)
                 .build()
                 .then_send(move |result| Event::SetFeed(account, result)),
+
             Event::SetFeed(account, Ok(mut response)) => {
                 let account_index = Accounts::find_by_index(&model.accounts, &account);
                 let body = response.take_body().unwrap();
@@ -370,6 +383,7 @@ impl crux_core::App for App {
                     }
                 }
             }
+
             Event::SetFeed(_, Err(error)) => {
                 model.notification = Notification {
                     title: "Http Error".to_string(),

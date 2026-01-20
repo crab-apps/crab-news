@@ -8,7 +8,7 @@ use opml::{Head, Outline, OPML};
 use serde::{Deserialize, Serialize};
 
 // ANCHOR: types
-// Generate new types using the macro
+// Generate new types using my custom macro
 define_newtype!(FolderName);
 define_newtype!(OldFolderName);
 define_newtype!(NewFolderName);
@@ -18,11 +18,11 @@ define_newtype!(OldSubscriptionName);
 define_newtype!(NewSubscriptionName);
 
 // Optional types and type aliases remain the same
+pub type Subscription = Outline;
 pub type OpmlFileContent = String;
 pub type OpmlFileName = String;
 pub type OldFolder = Option<FolderName>;
 pub type NewFolder = Option<FolderName>;
-pub type Subscription = Outline;
 // ANCHOR_END: types
 
 // NOTE - crate: https://crates.io/crates/opml to deal with subscriptions and outlines.
@@ -111,8 +111,8 @@ trait AddFolder {
         Self: Sized;
 }
 
+// NOTE folders are only allowed at root level. no nesting.
 impl AddFolder for Subscriptions {
-    // NOTE folders are only allowed at root level. no nesting.
     fn add_folder(&self, folder_name: &FolderName) -> Result<Self, Error> {
         let mut subs = self.clone();
         let test_folder = Self::set_test_folder(folder_name.as_ref());
@@ -137,10 +137,11 @@ trait DeleteFolder {
         Self: Sized;
 }
 
+// NOTE folders are only allowed at root level. no nesting.
 impl DeleteFolder for Subscriptions {
-    // NOTE folders are only allowed at root level. no nesting.
     fn delete_folder(&self, folder_name: &FolderName) -> Self {
         let mut subs = self.clone();
+
         subs.subs
             .body
             .outlines
@@ -159,8 +160,8 @@ trait RenameFolder {
         Self: Sized;
 }
 
+// NOTE folders are only allowed at root level. no nesting.
 impl RenameFolder for Subscriptions {
-    // NOTE folders are only allowed at root level. no nesting.
     fn rename_folder(
         &self,
         old_folder_name: &OldFolderName,
@@ -202,8 +203,8 @@ trait AddSubscription {
         Self: Sized;
 }
 
+// NOTE adding a duplicate sub should always fail no matter where it exists
 impl AddSubscription for Subscriptions {
-    // NOTE adding a duplicate sub should always fail no matter where it exists
     fn add_subscription(
         &self,
         folder_name: &Option<FolderName>,
@@ -263,6 +264,7 @@ impl DeleteSubscription for Subscriptions {
         sub_title: &SubscriptionTitle,
     ) -> Self {
         let mut subs = self.clone();
+
         if let Some(folder_text) = folder_name {
             subs.subs
                 .body
@@ -296,8 +298,8 @@ trait RenameSubscription {
         Self: Sized;
 }
 
+// NOTE rename to an existing sub should always fail no matter where it exists
 impl RenameSubscription for Subscriptions {
-    // NOTE rename to an existing sub should always fail no matter where it exists
     fn rename_subscription(
         &self,
         folder_name: &Option<FolderName>,
@@ -375,6 +377,7 @@ impl MoveSubscription for Subscriptions {
             subscription.text.as_str(),
             "It already exists.",
         );
+
         match (old_folder, new_folder) {
             (None, Some(folder_new)) => {
                 subs = Self::delete_subscription(
@@ -439,6 +442,7 @@ impl AddFeed for Subscriptions {
     fn add_feed(&self, body: Vec<u8>) -> Result<Self, Error> {
         let mut subs = self.clone();
         let feeds = subs.feeds.add_feed(body)?;
+
         subs.feeds = feeds;
         Ok(subs)
     }
