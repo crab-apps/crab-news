@@ -206,13 +206,14 @@ impl crux_core::App for App {
                     &model.accounts.acct[account_index].subs,
                     &opml_file_name,
                 ) {
-                    Ok(success) => {
-                        model.notification = Notification {
-                            title: "Subscriptions Exported".to_string(),
-                            message: success.to_string(),
-                        };
-                        render()
-                    }
+                    Ok(_) => render(),
+                    // Ok(success) => {
+                    //     model.notification = Notification {
+                    //         title: "Subscriptions Exported".to_string(),
+                    //         message: success.to_string(),
+                    //     };
+                    //     render()
+                    // }
                     Err(error) => {
                         // TODO once shell is implemented, check failures
                         model.notification = Notification {
